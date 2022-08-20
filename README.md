@@ -10,7 +10,7 @@ Please don't redistribute any code without permission.
 
 Using WinMerge, the sources of Flan's Mod Ultimate Stability Edition and Flan's Mod 4.10.0 (1.7.10) are compared for differences.
 
-Then the same changes are translated to 1.12.2 (when possible) and implemented on top of Flan's Mode 1.12.2 source code
+Then the same changes are translated to 1.12.2 (when possible) and implemented on top of Flan's Mod 1.12.2 source code
 
 ## Progress:
 
