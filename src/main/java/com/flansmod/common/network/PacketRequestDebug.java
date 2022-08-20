@@ -17,31 +17,39 @@ import com.flansmod.common.FlansMod;
 
 public class PacketRequestDebug extends PacketBase
 {
+	private boolean debug;
+	
 	public PacketRequestDebug()
 	{
+	}
+	public PacketRequestDebug(boolean debug)
+	{
+		this.debug = debug;
 	}
 	
 	@Override
 	public void encodeInto(ChannelHandlerContext ctx, ByteBuf data)
 	{
+		data.writeByte(this.debug? 1: 0);
 	}
 	
 	@Override
 	public void decodeInto(ChannelHandlerContext ctx, ByteBuf data)
 	{
+		this.debug = data.readByte()!=0;
 	}
 	
 	@Override
 	public void handleServerSide(EntityPlayerMP playerEntity)
 	{
 		if(FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().canSendCommands(playerEntity.getGameProfile()))
-			FlansMod.packetHandler.sendTo(new PacketRequestDebug(), playerEntity);
+			FlansMod.packetHandler.sendTo(new PacketRequestDebug(true), playerEntity);
 	}
 	
 	@Override
 	public void handleClientSide(EntityPlayer clientPlayer)
 	{
-		FlansMod.DEBUG = true;
+		FlansMod.DEBUG = this.debug;
 	}
 	
 }

@@ -32,6 +32,7 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
+import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -79,6 +80,17 @@ public class FlansModClient extends FlansMod
 	 */
 	public static float antiRecoil;
 	
+	public static float shootTimeLeft, shootTimeRight;
+	
+	public static float playerRecoilPitch;
+    public static float playerRecoilYaw;
+    
+    public static float antiRecoilPitch;
+    public static float antiRecoilYaw;
+    
+    public static int lastBulletReload = 0;
+    public static int shotState = -1;
+	
 	// Gun animations
 	/**
 	 * Gun animation variables for each entity holding a gun. Currently only applicable to the player
@@ -99,6 +111,7 @@ public class FlansModClient extends FlansMod
 	 * The transition variable for zooming in / out with a smoother. 0 = unscoped, 1 = scoped
 	 */
 	public static float zoomProgress = 0F, lastZoomProgress = 0F;
+	public static float stanceProgress = 0F, lastStanceProgress = 0F;
 	/**
 	 * The zoom level of the last scope used, for transitioning out of being scoped, even after the scope is forgotten
 	 */
@@ -133,6 +146,16 @@ public class FlansModClient extends FlansMod
 	
 	public static List<BlockPos> blockLightOverrides = new ArrayList<>();
 	public static int lightOverrideRefreshRate = 5;
+	
+	/*public static AimType aimType;
+    public static FlanMouseButton fireButton;
+    public static FlanMouseButton aimButton;*/
+    public static float fov;
+
+    public static boolean hitMarker = false;
+    public static boolean hitMarkerHeadshot = false;
+    public static float hitMarkerPenAmount = 1F;
+    public static boolean hitMarkerExplosion = false;
 	
 	private static WorldRenderer wr;
 	
@@ -285,6 +308,20 @@ public class FlansModClient extends FlansMod
 			playerRecoil *= 0.8F;
 		if(hitMarkerTime > 0)
 			hitMarkerTime--;
+		if (playerRecoilPitch > 0) {
+            ItemStack itemBeingUsed = minecraft.player.inventory.getCurrentItem();
+            GunType typeHeld = null;
+            if (itemBeingUsed != null && itemBeingUsed.getItem() instanceof ItemGun)
+                typeHeld = ((ItemGun) itemBeingUsed.getItem()).GetType();
+
+            if (typeHeld != null) {
+                playerRecoilPitch *= typeHeld.getRecoilControl(itemBeingUsed, minecraft.player.isSprinting(), minecraft.player.isSneaking());
+            } else {
+                // idk why this would happen.
+                playerRecoilPitch *= 0.8F;
+            }
+        }
+		
 		minecraft.player.rotationPitch -= playerRecoil;
 		antiRecoil += playerRecoil;
 		
@@ -329,6 +366,13 @@ public class FlansModClient extends FlansMod
 			zoomProgress = 1F - (1F - zoomProgress) * 0.66F;
 		}
 		
+		lastStanceProgress = stanceProgress;
+        if (!inPlane) {
+        	stanceProgress *= 0.66F;
+        } else {
+            stanceProgress = 1F - (1F - stanceProgress) * 0.66F;
+        }
+        
 		if(controlModeSwitchTimer > 0)
 			controlModeSwitchTimer--;
 		
@@ -657,4 +701,25 @@ public class FlansModClient extends FlansMod
 				}
 			});
 	}
+	
+	/*public static void setAimType(AimType aimInputType) {
+        Property cw = FlansMod.configFile.get("Input Settings", "Aim Type", "toggle", "The type of aiming that you want to use 'toggle' or 'hold'");
+        cw.set(aimInputType.toString());
+        FlansMod.configFile.save();
+        aimType = aimInputType;
+    }
+
+    public static void setAimButton(FlanMouseButton buttonInput) {
+        Property cw = FlansMod.configFile.get("Input Settings", "Aim Button", "left", "The mouse button used to aim a gun 'left' or 'right'");
+        cw.set(buttonInput.toString());
+        FlansMod.configFile.save();
+        aimButton = buttonInput;
+    }
+
+    public static void setFireButton(FlanMouseButton buttonInput) {
+        Property cw = FlansMod.configFile.get("Input Settings", "Fire Button", "right", "The mouse button used to fire a gun 'left' or 'right'");
+        cw.set(buttonInput.toString());
+        FlansMod.configFile.save();
+        fireButton = buttonInput;
+    }*/
 }

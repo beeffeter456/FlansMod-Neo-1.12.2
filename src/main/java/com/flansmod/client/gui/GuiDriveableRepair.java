@@ -3,6 +3,7 @@ package com.flansmod.client.gui;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
@@ -50,6 +51,7 @@ public class GuiDriveableRepair extends GuiScreen
 	{
 		super();
 		driver = player;
+		if (!((EntitySeat) player.getRidingEntity()).foundDriveable) {Minecraft.getMinecraft().player.closeScreen();}
 		driving = ((EntitySeat)player.getRidingEntity()).driveable;
 		for(DriveablePart part : driving.getDriveableData().parts.values())
 		{

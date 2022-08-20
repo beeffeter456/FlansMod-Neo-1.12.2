@@ -12,6 +12,7 @@ import net.minecraft.network.NetworkManager;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ITickable;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeChunkManager.Ticket;
 
@@ -34,6 +35,7 @@ public class TileEntitySpawner extends TileEntity implements ITeamObject, ITicka
 	private int dimension;
 	public int currentDelay;
 	public boolean isSpawner = false;
+	public AxisAlignedBB nearbyBB;
 	
 	//Chunk loading
 	private Ticket chunkTicket;
@@ -52,6 +54,8 @@ public class TileEntitySpawner extends TileEntity implements ITeamObject, ITicka
 	@Override
 	public SPacketUpdateTileEntity getUpdatePacket()
 	{
+		// When the TE is initialised, the xcoord is not know. This would make sense to be in the constructor, but it's not. Eh.
+		nearbyBB = new AxisAlignedBB(pos.getX() - 3, pos.getY() - 3, pos.getZ() - 3, pos.getX() + 3, pos.getY() + 3, pos.getZ() + 3);
 		NBTTagCompound tags = new NBTTagCompound();
 		tags.setByte("TeamID", base == null ? (byte)0 : (byte)base.getOwnerID());
 		tags.setString("Map", base == null || base.getMap() == null ? "" : base.getMap().shortName);
@@ -100,29 +104,32 @@ public class TileEntitySpawner extends TileEntity implements ITeamObject, ITicka
 		{
 			currentDelay--;
 		}
-		if(currentDelay == 0)
+		if(currentDelay <= 0)
 		{
-			currentDelay = spawnDelay;
+			currentDelay = spawnDelay > 0?  spawnDelay: 20;
 			for(int i = 0; i < stacksToSpawn.size(); i++)
 			{
 				if(world.getBlockState(pos).getValue(TYPE) == 2)
 				{
-					if(spawnedEntity != null && !spawnedEntity.isDead)
+					if (world.getEntitiesWithinAABB(Entity.class, nearbyBB).size() == 0) 
 					{
-						continue;
-					}
-					ItemStack stack = stacksToSpawn.get(i);
-					if(stack != null && stack.getItem() instanceof ItemPlane)
-					{
-						spawnedEntity = ((ItemPlane)stack.getItem()).spawnPlane(world, pos.getX() + 0.5F, pos.getY() + 0.5F, pos.getZ() + 0.5F, stack);
-					}
-					if(stack != null && stack.getItem() instanceof ItemVehicle)
-					{
-						spawnedEntity = ((ItemVehicle)stack.getItem()).spawnVehicle(world, pos.getX() + 0.5F, pos.getY() + 0.5F, pos.getZ() + 0.5F, stack);
-					}
-					if(stack != null && stack.getItem() instanceof ItemAAGun)
-					{
-						spawnedEntity = ((ItemAAGun)stack.getItem()).spawnAAGun(world, pos.getX() + 0.5F, pos.getY(), pos.getZ() + 0.5F, stack);
+						if(spawnedEntity != null && !spawnedEntity.isDead)
+						{
+							// continue;
+						}
+						ItemStack stack = stacksToSpawn.get(i);
+						if(stack != null && stack.getItem() instanceof ItemPlane)
+						{
+							spawnedEntity = ((ItemPlane)stack.getItem()).spawnPlane(world, pos.getX() + 0.5F, pos.getY() + 0.5F, pos.getZ() + 0.5F, stack);
+						}
+						if(stack != null && stack.getItem() instanceof ItemVehicle)
+						{
+							spawnedEntity = ((ItemVehicle)stack.getItem()).spawnVehicle(world, pos.getX() + 0.5F, pos.getY() + 0.5F, pos.getZ() + 0.5F, stack);
+						}
+						if(stack != null && stack.getItem() instanceof ItemAAGun)
+						{
+							spawnedEntity = ((ItemAAGun)stack.getItem()).spawnAAGun(world, pos.getX() + 0.5F, pos.getY(), pos.getZ() + 0.5F, stack);
+						}
 					}
 				}
 				else
@@ -159,6 +166,8 @@ public class TileEntitySpawner extends TileEntity implements ITeamObject, ITicka
 		super.readFromNBT(nbt);
 		isSpawner = nbt.getBoolean("isSpawner");
 		currentDelay = spawnDelay = nbt.getInteger("delay");
+		if(currentDelay < 20)
+			currentDelay = 20;
 		baseID = nbt.getInteger("Base");
 		dimension = nbt.getInteger("dim");
 		setBase(TeamsManager.getInstance().getBase(baseID));

@@ -14,7 +14,7 @@ import net.minecraft.util.math.Vec3d;
 import com.flansmod.common.PlayerData;
 import com.flansmod.common.types.InfoType;
 
-public class GametypeZombies extends Gametype
+public class GametypeZombies extends GameType
 {
 	public boolean friendlyFire = false;
 	public int humanPrepTime = 30 * 20;

@@ -212,10 +212,14 @@ public class KeyInputHandler
 						float reloadDelay = EnchantmentModule.ModifyReloadTime(type.reloadTime, player, player.getHeldItemOffhand());
 						
 						GunAnimations animations = FlansModClient.getGunAnimations(player, EnumHand.MAIN_HAND);
-						
+	                	
 						int pumpDelay = type.model == null ? 0 : type.model.pumpDelayAfterReload;
-						int pumpTime = type.model == null ? 1 : type.model.pumpTime;
-						animations.doReload(type.reloadTime, pumpDelay, pumpTime);
+			            int pumpTime = type.model == null ? 1 : type.model.pumpTime;
+			            int chargeDelay = type.model == null ? 0 : type.model.chargeDelayAfterReload;
+			            int chargeTime = type.model == null ? 1 : type.model.chargeTime;
+			            int amount = 0;
+			            boolean singlesReload = false;
+						animations.doReload(type.reloadTime, pumpDelay, pumpTime, chargeDelay, chargeTime, amount, singlesReload);
 						
 						data.reloadingRight = true;
 						data.burstRoundsRemainingRight = 0;

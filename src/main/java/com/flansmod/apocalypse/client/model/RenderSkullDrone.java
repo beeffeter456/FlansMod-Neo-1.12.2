@@ -26,6 +26,7 @@ import com.flansmod.apocalypse.common.entity.EntitySkullBoss;
 import com.flansmod.apocalypse.common.entity.EntityTeleporter;
 import com.flansmod.client.ClientProxy;
 import com.flansmod.client.handlers.FlansModResourceHandler;
+import com.flansmod.client.model.CustomItemRenderType;
 import com.flansmod.client.model.ModelGun;
 import com.flansmod.common.guns.GunType;
 import com.flansmod.common.guns.ItemGun;
@@ -87,7 +88,8 @@ public class RenderSkullDrone extends Render<EntitySkullDrone>
 				
 				//GlStateManager.rotate(-90F, 0F, 0F, 1F);
 				bindTexture(FlansModResourceHandler.getTexture(gunType));
-				ClientProxy.gunRenderer.renderGun(stack, gunType, 1F / 16F, model, entity.animations, 0F);
+				CustomItemRenderType type = CustomItemRenderType.ENTITY;
+				ClientProxy.gunRenderer.renderGun(stack, gunType, 1F / 16F, model, entity.animations, 0F, type);
 			}
 			else
 			{

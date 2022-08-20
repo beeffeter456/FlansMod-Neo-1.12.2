@@ -21,7 +21,7 @@ public class RenderNull<E extends Entity> extends Render<E>
 	public RenderNull(RenderManager renderManager)
 	{
 		super(renderManager);
-		shadowSize = 0.5F;
+		shadowSize = 0;
 	}
 	
 	public void func_157_a(Entity entity, double d, double d1, double d2, float f, float f1)

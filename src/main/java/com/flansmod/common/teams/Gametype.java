@@ -21,13 +21,13 @@ import com.flansmod.common.PlayerHandler;
 import com.flansmod.common.network.PacketBase;
 import com.flansmod.common.types.InfoType;
 
-public abstract class Gametype
+public abstract class GameType
 {
-	public static HashMap<String, Gametype> gametypes = new HashMap<>();
+	public static HashMap<String, GameType> gametypes = new HashMap<>();
 	public static TeamsManager teamsManager = TeamsManager.getInstance();
 	public static Random rand = new Random();
 	
-	public static Gametype getGametype(String type)
+	public static GameType getGametype(String type)
 	{
 		return gametypes.get(type);
 	}
@@ -36,17 +36,18 @@ public abstract class Gametype
 	public String shortName;
 	public int numTeamsRequired;
 	
-	public Gametype(String s, String s1, int numTeams)
+	public GameType(String name, String shortName, int numTeams)
 	{
-		name = s;
-		shortName = s1;
+		this.name = name;
+		this.shortName = shortName;
 		numTeamsRequired = numTeams;
-		gametypes.put(shortName, this);
+		gametypes.put(this.shortName, this);
 	}
 	
 	/**
 	 * Called when a round starts
 	 */
+	
 	public abstract void roundStart();
 	
 	/**

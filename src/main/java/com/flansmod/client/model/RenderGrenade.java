@@ -20,7 +20,7 @@ public class RenderGrenade extends Render<EntityGrenade> implements CustomItemRe
 	public RenderGrenade(RenderManager renderManager)
 	{
 		super(renderManager);
-		shadowSize = 0.5F;
+		shadowSize = 0.1F;
 	}
 	
 	@Override

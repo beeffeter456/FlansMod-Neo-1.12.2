@@ -202,13 +202,23 @@ public class EntitySkullDrone extends EntityLiving implements IInventory
 				else if(ammoStackInGun.getItem() instanceof ItemBullet || ammoStackInGun.getItem() instanceof ItemGrenade)
 				{
 					//Shoot
+					/*
+
+//					*/
 					DoShoot(gunStack, gunType, ammoStackInGun, true, true);
 					
 					//Apply animations to 3D modelled guns
 					//TODO this doesn't work
 					if(world.isRemote)
-						animations.doShoot(gunType.getPumpDelay(), gunType.getPumpTime());
-					
+					{
+						int pumpDelay = gunType.model == null ? 0 : gunType.model.pumpDelay;
+	                	int pumpTime = gunType.model == null ? 1 : gunType.model.pumpTime;
+	                	int hammerDelay = gunType.model == null ? 0 : gunType.model.hammerDelay;
+	                	int casingDelay = gunType.model == null ? 0 : gunType.model.casingDelay;
+	                	float hammerAngle = gunType.model == null ? 0 : gunType.model.hammerAngle;
+	                	float althammerAngle = gunType.model == null ? 0 : gunType.model.althammerAngle;
+	                	animations.doShoot(pumpDelay, pumpTime, hammerDelay, hammerAngle, althammerAngle, casingDelay);
+					}
 					//Damage the bullet item
 					ammoStackInGun.setItemDamage(ammoStackInGun.getItemDamage() + 1);
 					

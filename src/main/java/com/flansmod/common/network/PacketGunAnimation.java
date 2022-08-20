@@ -22,8 +22,16 @@ public class PacketGunAnimation extends PacketBase
 	private Integer pumpdelay;
 	private Integer pumptime;
 	private Float recoil;
-	private Integer reloadtime;
+	private Integer reloadtime = 0;
 	private EnumHand hand;
+	private Integer amount = 0;
+	private Boolean singlesReload = false;
+	private Integer hammerDelay = 0;
+	private Integer casingDelay = 0;
+	private Float hammerAngle = 0f;
+	private Float althammerAngle = 0f;
+	private Integer chargeDelay = 0;
+	private Integer chargeTime = 0;
 	
 	public PacketGunAnimation()
 	{
@@ -71,6 +79,7 @@ public class PacketGunAnimation extends PacketBase
 		data.writeInt(hand.equals(EnumHand.MAIN_HAND)?0:1);
 		encodeInto(ctx, data, type);
 		encodeInto(ctx, data, type2);
+		
 	}
 
 	private void encodeInto(ChannelHandlerContext ctx, ByteBuf data,AnimationType type)
@@ -156,7 +165,7 @@ public class PacketGunAnimation extends PacketBase
 				break;
 			
 			case RELOAD:
-				animations.doReload(reloadtime, pumpdelay, pumptime);
+				animations.doReload(reloadtime, pumpdelay, pumptime, chargeDelay, chargeTime, amount, singlesReload);
 				PlayerData data = PlayerHandler.getPlayerData(player);
 				data.shootTimeRight = data.shootTimeLeft = reloadtime;
 				data.SetBurstRoundsRemaining(hand, 0);
@@ -166,7 +175,7 @@ public class PacketGunAnimation extends PacketBase
 			case SHOOT:
 				//TODO lookatstate not send by Server, may cause problems in future
 				animations.lookAt = LookAtState.NONE;
-				animations.doShoot(pumpdelay, pumptime);
+				animations.doShoot(pumpdelay, pumptime, hammerDelay, hammerAngle, althammerAngle, casingDelay);
 				FlansModClient.playerRecoil += recoil;
 				animations.recoil += recoil;
 				break;

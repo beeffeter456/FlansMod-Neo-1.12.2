@@ -16,19 +16,19 @@ import com.flansmod.common.driveables.EnumDriveablePart;
 public class PacketDriveableDamage extends PacketBase
 {
 	public int entityId;
-	public int[] health;
+	public float[] health;
 	public boolean[] onFire;
 	
 	public PacketDriveableDamage()
 	{
-		health = new int[EnumDriveablePart.values().length];
+		health = new float[EnumDriveablePart.values().length];
 		onFire = new boolean[EnumDriveablePart.values().length];
 	}
 	
 	public PacketDriveableDamage(EntityDriveable driveable)
 	{
 		entityId = driveable.getEntityId();
-		health = new int[EnumDriveablePart.values().length];
+		health = new float[EnumDriveablePart.values().length];
 		onFire = new boolean[EnumDriveablePart.values().length];
 		for(int i = 0; i < EnumDriveablePart.values().length; i++)
 		{
@@ -45,7 +45,7 @@ public class PacketDriveableDamage extends PacketBase
 		data.writeInt(entityId);
 		for(int i = 0; i < EnumDriveablePart.values().length; i++)
 		{
-			data.writeInt(health[i]);
+			data.writeFloat(health[i]);
 			data.writeBoolean(onFire[i]);
 		}
 	}
@@ -56,7 +56,7 @@ public class PacketDriveableDamage extends PacketBase
 		entityId = data.readInt();
 		for(int i = 0; i < EnumDriveablePart.values().length; i++)
 		{
-			health[i] = data.readInt();
+			health[i] = data.readFloat();
 			onFire[i] = data.readBoolean();
 		}
 	}
@@ -72,12 +72,15 @@ public class PacketDriveableDamage extends PacketBase
 	public void handleClientSide(EntityPlayer clientPlayer)
 	{
 		EntityDriveable driveable = null;
-		for(Object obj : clientPlayer.world.loadedEntityList)
+		if (clientPlayer != null && clientPlayer.world != null && clientPlayer.world.loadedEntityList != null) 
 		{
-			if(obj instanceof EntityDriveable && ((Entity)obj).getEntityId() == entityId)
+			for(Object obj : clientPlayer.world.loadedEntityList)
 			{
-				driveable = (EntityDriveable)obj;
-				break;
+				if(obj instanceof EntityDriveable && ((Entity)obj).getEntityId() == entityId)
+				{
+					driveable = (EntityDriveable)obj;
+					break;
+				}
 			}
 		}
 		if(driveable != null)

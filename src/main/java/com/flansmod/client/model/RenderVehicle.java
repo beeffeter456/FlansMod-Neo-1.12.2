@@ -1,5 +1,6 @@
 package com.flansmod.client.model;
 
+import com.flansmod.common.vector.Vector3f;
 import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.Minecraft;
@@ -38,238 +39,264 @@ public class RenderVehicle extends Render<EntityVehicle> implements CustomItemRe
 	public RenderVehicle(RenderManager renderManager)
 	{
 		super(renderManager);
-		shadowSize = 0.5F;
+		shadowSize = 1.0F;
 		MinecraftForge.EVENT_BUS.register(this);
 	}
 	
-	public void render(EntityVehicle vehicle, double d, double d1, double d2, float f, float f1)
-	{
+	public void render(EntityVehicle vehicle, double d, double d1, double d2, float f, float f1) {
+		if (vehicle.getControllingPassenger() != null) {
+			if (vehicle.getControllingPassenger().getClass().toString().indexOf("mcheli.aircraft.MCH_EntitySeat") > 0) {
+				return;
+			}
+		}
+
 		bindEntityTexture(vehicle);
 		VehicleType type = vehicle.getVehicleType();
 		GlStateManager.pushMatrix();
 		{
-			GlStateManager.translate((float)d, (float)d1, (float)d2);
+			GlStateManager.translate((float) d, (float) d1, (float) d2);
 			float dYaw = (vehicle.axes.getYaw() - vehicle.prevRotationYaw);
-			while(dYaw > 180F)
-			{
+			while (dYaw > 180F) {
 				dYaw -= 360F;
 			}
-			while(dYaw <= -180F)
-			{
+			while (dYaw <= -180F) {
 				dYaw += 360F;
 			}
 			float dPitch = (vehicle.axes.getPitch() - vehicle.prevRotationPitch);
-			while(dPitch > 180F)
-			{
+			while (dPitch > 180F) {
 				dPitch -= 360F;
 			}
-			while(dPitch <= -180F)
-			{
+			while (dPitch <= -180F) {
 				dPitch += 360F;
 			}
 			float dRoll = (vehicle.axes.getRoll() - vehicle.prevRotationRoll);
-			while(dRoll > 180F)
-			{
+			while (dRoll > 180F) {
 				dRoll -= 360F;
 			}
-			while(dRoll <= -180F)
-			{
+			while (dRoll <= -180F) {
 				dRoll += 360F;
 			}
 			GlStateManager.rotate(180F - vehicle.prevRotationYaw - dYaw * f1, 0.0F, 1.0F, 0.0F);
 			GlStateManager.rotate(vehicle.prevRotationPitch + dPitch * f1, 0.0F, 0.0F, 1.0F);
 			GlStateManager.rotate(vehicle.prevRotationRoll + dRoll * f1, 1.0F, 0.0F, 0.0F);
 			GlStateManager.rotate(180F, 0.0F, 1.0F, 0.0F);
-			
+
 			float modelScale = type.modelScale;
 			GlStateManager.pushMatrix();
 			{
-				float recoilDPos = (float)Math.sin(Math.toRadians(vehicle.recoilPos)) -
-					(float)Math.sin(Math.toRadians(vehicle.lastRecoilPos));
-				float recoilPos = (float)Math.sin(Math.toRadians(vehicle.lastRecoilPos)) + recoilDPos * f1;
-				
+				float recoilDPos = (float) Math.sin(Math.toRadians(vehicle.recoilPos)) -
+						(float) Math.sin(Math.toRadians(vehicle.lastRecoilPos));
+				float recoilPos = (float) Math.sin(Math.toRadians(vehicle.lastRecoilPos)) + recoilDPos * f1;
+
 				GlStateManager.scale(modelScale, modelScale, modelScale);
-				ModelVehicle modVehicle = (ModelVehicle)type.model;
-				if(modVehicle != null)
-					modVehicle.render(vehicle, f1);
-				
-				for(int i = 0; i < vehicle.trackLinksLeft.length; i++)
+				ModelVehicle modVehicle = (ModelVehicle) type.model;
+
+				GL11.glPushMatrix();
 				{
-					AnimTrackLink link = vehicle.trackLinksLeft[i];
-					float rotZ = link.zRot;
+					if (modVehicle != null)
+						modVehicle.render(vehicle, f1);
+
+					for (int i = 0; i < vehicle.trackLinksLeft.length; i++) {
+						AnimTrackLink link = vehicle.trackLinksLeft[i];
+						float rotZ = link.zRot;
+						GlStateManager.pushMatrix();
+						GlStateManager.translate(link.position.x / 16F, link.position.y / 16F, link.position.z / 16F);
+						for (; rotZ > 180F; rotZ -= 360F) {
+						}
+						for (; rotZ <= -180F; rotZ += 360F) {
+						}
+						GlStateManager.rotate(rotZ * (float) (180 / Math.PI), 0, 0, 1);
+						if (modVehicle != null)
+							modVehicle.renderFancyTracks(vehicle, f1);
+						GlStateManager.popMatrix();
+					}
+
+					for (int i = 0; i < vehicle.trackLinksRight.length; i++) {
+						AnimTrackLink link = vehicle.trackLinksRight[i];
+						float rotZ = link.zRot;
+						for (; rotZ > 180F; rotZ -= 360F) {
+						}
+						for (; rotZ <= -180F; rotZ += 360F) {
+						}
+						GlStateManager.pushMatrix();
+						GlStateManager.translate(link.position.x / 16F, link.position.y / 16F, link.position.z / 16F);
+						GlStateManager.rotate(rotZ * (float) (180 / Math.PI), 0, 0, 1);
+						if (modVehicle != null)
+							modVehicle.renderFancyTracks(vehicle, f1);
+						GlStateManager.popMatrix();
+					}
+
 					GlStateManager.pushMatrix();
-					GlStateManager.translate(link.position.x / 16F, link.position.y / 16F, link.position.z / 16F);
-					for(; rotZ > 180F; rotZ -= 360F)
-					{
-					}
-					for(; rotZ <= -180F; rotZ += 360F)
-					{
-					}
-					GlStateManager.rotate(rotZ * (float)(180 / Math.PI), 0, 0, 1);
-					modVehicle.renderFancyTracks(vehicle, f1);
-					GlStateManager.popMatrix();
-				}
-				
-				for(int i = 0; i < vehicle.trackLinksRight.length; i++)
-				{
-					AnimTrackLink link = vehicle.trackLinksRight[i];
-					float rotZ = link.zRot;
-					for(; rotZ > 180F; rotZ -= 360F)
-					{
-					}
-					for(; rotZ <= -180F; rotZ += 360F)
-					{
-					}
-					GlStateManager.pushMatrix();
-					GlStateManager.translate(link.position.x / 16F, link.position.y / 16F, link.position.z / 16F);
-					GlStateManager.rotate(rotZ * (float)(180 / Math.PI), 0, 0, 1);
-					modVehicle.renderFancyTracks(vehicle, f1);
-					GlStateManager.popMatrix();
-				}
-				
-				GlStateManager.pushMatrix();
-				if(type.turretOrigin != null && vehicle.isPartIntact(EnumDriveablePart.turret) &&
-					vehicle.getSeat(0) != null)
-				{
-					dYaw = (vehicle.getSeat(0).looking.getYaw() - vehicle.getSeat(0).prevLooking.getYaw());
-					while(dYaw > 180F)
-					{
-						dYaw -= 360F;
-					}
-					while(dYaw <= -180F)
-					{
-						dYaw += 360F;
-					}
-					float yaw = vehicle.getSeat(0).prevLooking.getYaw() + dYaw * f1;
-					
-					GlStateManager.translate(type.turretOrigin.x, type.turretOrigin.y, type.turretOrigin.z);
-					GlStateManager.rotate(-yaw, 0.0F, 1.0F, 0.0F);
-					GlStateManager.translate(-type.turretOrigin.x, -type.turretOrigin.y, -type.turretOrigin.z);
-					
-					if(modVehicle != null)
-						modVehicle.renderTurret(0.0F, 0.0F, -0.1F, 0.0F, 0.0F, 0.0625F, vehicle, f1);
-					
-					//rotate and render barrel
-					if(modVehicle != null)
-					{
-						EntitySeat[] seats = vehicle.getSeats();
-						GlStateManager.translate(modVehicle.barrelAttach.x,
-							modVehicle.barrelAttach.y,
-							-modVehicle.barrelAttach.z);
-						float bPitch = (seats[0].looking.getPitch() - seats[0].prevLooking.getPitch());
-						float aPitch = seats[0].prevLooking.getPitch() + bPitch * f1;
-						
-						GlStateManager.rotate(-aPitch, 0F, 0F, 1F);
-						GlStateManager.translate(recoilPos * -(5F / 16F), 0F, 0F);
-						modVehicle.renderAnimBarrel(0.0F, 0.0F, -0.1F, 0.0F, 0.0F, 0.0625F, vehicle, f1);
-					}
-					
-					if(FlansMod.DEBUG)
-					{
+					if (type.turretOrigin != null && vehicle.isPartIntact(EnumDriveablePart.turret) &&
+							vehicle.getSeat(0) != null) {
+						dYaw = (vehicle.getSeat(0).looking.getYaw() - vehicle.getSeat(0).prevLooking.getYaw());
+						float pitch = vehicle.getSeat(0).looking.getPitch();
+						while (dYaw > 180F) {
+							dYaw -= 360F;
+						}
+						while (dYaw <= -180F) {
+							dYaw += 360F;
+						}
+						float yaw = vehicle.getSeat(0).prevLooking.getYaw() + dYaw * f1;
+
+						//rotate and render turret
 						GlStateManager.translate(type.turretOrigin.x, type.turretOrigin.y, type.turretOrigin.z);
+						GlStateManager.rotate(-yaw, 0.0F, 1.0F, 0.0F);
+						GlStateManager.translate(-type.turretOrigin.x, -type.turretOrigin.y, -type.turretOrigin.z);
+
+						if (modVehicle != null)
+							modVehicle.renderTurret(0.0F, 0.0F, -0.1F, 0.0F, 0.0F, 0.0625F, vehicle, f1);
+
+						//rotate and render barrel
+						if (modVehicle != null) {
+							EntitySeat[] seats = vehicle.getSeats();
+							GlStateManager.translate(modVehicle.barrelAttach.x,
+									modVehicle.barrelAttach.y,
+									-modVehicle.barrelAttach.z);
+							float bPitch = (seats[0].looking.getPitch() - seats[0].prevLooking.getPitch());
+							float aPitch = seats[0].prevLooking.getPitch() + bPitch * f1;
+
+							GlStateManager.rotate(-aPitch, 0F, 0F, 1F);
+							GlStateManager.translate(recoilPos * -(5F / 16F), 0F, 0F);
+							modVehicle.renderAnimBarrel(0.0F, 0.0F, -0.1F, 0.0F, 0.0F, 0.0625F, vehicle, f1);
+						}
+
+					}
+				}
+				GlStateManager.popMatrix();
+
+				GlStateManager.pushMatrix();
+				if (FlansMod.DEBUG) {
+					if (type.turretOrigin != null && vehicle.isPartIntact(EnumDriveablePart.turret) && vehicle.getSeats() != null && vehicle.getSeat(0) != null) {
+						dYaw = (vehicle.getSeat(0).looking.getYaw() - vehicle.getSeat(0).prevLooking.getYaw());
+						for (; dYaw > 180F; dYaw -= 360F) {
+						}
+						for (; dYaw <= -180F; dYaw += 360F) {
+						}
+						float yaw = vehicle.getSeat(0).prevLooking.getYaw() + dYaw * f1;
+
+						GlStateManager.translate(type.turretOrigin.x, type.turretOrigin.y, type.turretOrigin.z);
+						GlStateManager.rotate(-yaw, 0.0F, 1.0F, 0.0F);
+						// GlStateManager.translate(-type.turretOrigin.x, -type.turretOrigin.y, -type.turretOrigin.z);
+						// GlStateManager.translate(type.turretOrigin.x, type.turretOrigin.y, type.turretOrigin.z);
 						GlStateManager.rotate(-vehicle.getSeat(0).looking.getPitch(), 0.0F, 0.0F, 1.0F);
 						GlStateManager.translate(-type.turretOrigin.x, -type.turretOrigin.y, -type.turretOrigin.z);
-						
+
 						//Render shoot points
 						GlStateManager.color(0F, 0F, 1F, 0.3F);
-						for(ShootPoint point : type.shootPointsPrimary)
-						{
+						for (ShootPoint point : type.shootPointsPrimary) {
 							DriveablePosition driveablePosition = point.rootPos;
-							if(driveablePosition.part == EnumDriveablePart.turret)
-							{
+							if (driveablePosition.part == EnumDriveablePart.turret) {
 								renderOffsetAABB(new AxisAlignedBB(
-										driveablePosition.position.x - 0.25F,
-										driveablePosition.position.y - 0.25F,
-										driveablePosition.position.z - 0.25F,
-										driveablePosition.position.x + 0.25F,
-										driveablePosition.position.y + 0.25F,
-										driveablePosition.position.z + 0.25F),
-									0, 0, 0);
+												driveablePosition.position.x - 0.25F,
+												driveablePosition.position.y - 0.25F,
+												driveablePosition.position.z - 0.25F,
+												driveablePosition.position.x + 0.25F,
+												driveablePosition.position.y + 0.25F,
+												driveablePosition.position.z + 0.25F),
+										0, 0, 0);
 							}
 						}
-						
+
 						GlStateManager.color(0F, 1F, 0F, 0.3F);
-						for(ShootPoint point : type.shootPointsSecondary)
-						{
+						for (ShootPoint point : type.shootPointsSecondary) {
 							DriveablePosition driveablePosition = point.rootPos;
-							if(driveablePosition.part == EnumDriveablePart.turret)
+							if (driveablePosition.part == EnumDriveablePart.turret)
 								renderOffsetAABB(new AxisAlignedBB(
-										driveablePosition.position.x - 0.25F,
-										driveablePosition.position.y - 0.25F,
-										driveablePosition.position.z - 0.25F,
-										driveablePosition.position.x + 0.25F,
-										driveablePosition.position.y + 0.25F,
-										driveablePosition.position.z + 0.25F),
-									0, 0, 0);
+												driveablePosition.position.x - 0.25F,
+												driveablePosition.position.y - 0.25F,
+												driveablePosition.position.z - 0.25F,
+												driveablePosition.position.x + 0.25F,
+												driveablePosition.position.y + 0.25F,
+												driveablePosition.position.z + 0.25F),
+										0, 0, 0);
 						}
 					}
 				}
 				GlStateManager.popMatrix();
-				if(modVehicle != null)
-				{
+				if (modVehicle != null) {
 					GlStateManager.pushMatrix();
-					
+
 					GlStateManager.translate(modVehicle.drillHeadOrigin.x, modVehicle.drillHeadOrigin.y,
-						modVehicle.drillHeadOrigin.z);
+							modVehicle.drillHeadOrigin.z);
 					GlStateManager.rotate(vehicle.harvesterAngle * 50F, 1.0F, 0.0F, 0.0F);
 					GlStateManager.translate(-modVehicle.drillHeadOrigin.x, -modVehicle.drillHeadOrigin.y,
-						-modVehicle.drillHeadOrigin.z);
+							-modVehicle.drillHeadOrigin.z);
 					modVehicle.renderDrillBit(vehicle, f1);
-					
+
 					GlStateManager.popMatrix();
+				}
+
+				if (modVehicle != null) {
+					Vector3f newRot = Interpolate(vehicle.doorRot, vehicle.prevDoorRot, f1);
+					Vector3f newPos = Interpolate(vehicle.doorPos, vehicle.prevDoorPos, f1);
+
+					GL11.glPushMatrix();
+					GL11.glTranslatef(modVehicle.doorAttach.x + newPos.x / 16, modVehicle.doorAttach.y + newPos.y / 16, -modVehicle.doorAttach.z + newPos.z / 16);
+					GL11.glRotatef(newRot.x, 1F, 0F, 0F);
+					GL11.glRotatef(-newRot.y, 0F, 1F, 0F);
+					GL11.glRotatef(newRot.z, 0F, 0F, 1F);
+					modVehicle.renderDoor(vehicle, 0.0625F);
+					GL11.glPopMatrix();
+
+					Vector3f newRot2 = Interpolate(vehicle.door2Rot, vehicle.prevDoor2Rot, f1);
+					Vector3f newPos2 = Interpolate(vehicle.door2Pos, vehicle.prevDoor2Pos, f1);
+
+					GL11.glPushMatrix();
+					GL11.glTranslatef(modVehicle.door2Attach.x + newPos2.x / 16, modVehicle.door2Attach.y + newPos2.y / 16, -modVehicle.door2Attach.z + newPos2.z / 16);
+					GL11.glRotatef(newRot2.x, 1F, 0F, 0F);
+					GL11.glRotatef(-newRot2.y, 0F, 1F, 0F);
+					GL11.glRotatef(newRot2.z, 0F, 0F, 1F);
+					modVehicle.renderDoor2(vehicle, 0.0625F);
+					GL11.glPopMatrix();
 				}
 			}
 			GlStateManager.popMatrix();
-			
-			if(FlansMod.DEBUG)
-			{
+
+			if (FlansMod.DEBUG) {
 				GlStateManager.disableTexture2D();
 				GlStateManager.enableBlend();
 				GlStateManager.disableDepth();
 				GlStateManager.color(1F, 0F, 0F, 0.3F);
 				GlStateManager.scale(1F, 1F, 1F);
-				for(DriveablePart part : vehicle.getDriveableData().parts.values())
-				{
-					if(part.box == null)
+				for (DriveablePart part : vehicle.getDriveableData().parts.values()) {
+					if (part.box == null)
 						continue;
-					
+
 					ModelDriveable.renderOffsetAABB(new AxisAlignedBB(part.box.x, part.box.y, part.box.z, (part.box.x + part.box.w),
-						(part.box.y + part.box.h), (part.box.z + part.box.d)), 0, 0, 0);
+							(part.box.y + part.box.h), (part.box.z + part.box.d)), 0, 0, 0);
 				}
-				
+
 				// Render shoot points
 				GlStateManager.color(0F, 0F, 1F, 0.3F);
-				for(ShootPoint point : type.shootPointsPrimary)
-				{
+				for (ShootPoint point : type.shootPointsPrimary) {
 					DriveablePosition driveablePosition = point.rootPos;
-					if(driveablePosition.part != EnumDriveablePart.turret)
-					{
+					if (driveablePosition.part != EnumDriveablePart.turret) {
 						ModelDriveable.renderOffsetAABB(new AxisAlignedBB(
-								driveablePosition.position.x - 0.25F,
-								driveablePosition.position.y - 0.25F,
-								driveablePosition.position.z - 0.25F,
-								driveablePosition.position.x + 0.25F,
-								driveablePosition.position.y + 0.25F,
-								driveablePosition.position.z + 0.25F),
-							0, 0, 0);
+										driveablePosition.position.x - 0.25F,
+										driveablePosition.position.y - 0.25F,
+										driveablePosition.position.z - 0.25F,
+										driveablePosition.position.x + 0.25F,
+										driveablePosition.position.y + 0.25F,
+										driveablePosition.position.z + 0.25F),
+								0, 0, 0);
 					}
 				}
-				
+
 				GlStateManager.color(0F, 1F, 0F, 0.3F);
-				for(ShootPoint point : type.shootPointsSecondary)
-				{
+				for (ShootPoint point : type.shootPointsSecondary) {
 					DriveablePosition driveablePosition = point.rootPos;
-					if(driveablePosition.part != EnumDriveablePart.turret)
+					if (driveablePosition.part != EnumDriveablePart.turret)
 						ModelDriveable.renderOffsetAABB(new AxisAlignedBB(
-								driveablePosition.position.x - 0.25F,
-								driveablePosition.position.y - 0.25F,
-								driveablePosition.position.z - 0.25F,
-								driveablePosition.position.x + 0.25F,
-								driveablePosition.position.y + 0.25F,
-								driveablePosition.position.z + 0.25F),
-							0, 0, 0);
+										driveablePosition.position.x - 0.25F,
+										driveablePosition.position.y - 0.25F,
+										driveablePosition.position.z - 0.25F,
+										driveablePosition.position.x + 0.25F,
+										driveablePosition.position.y + 0.25F,
+										driveablePosition.position.z + 0.25F),
+								0, 0, 0);
 				}
-				
+
 				GlStateManager.enableTexture2D();
 				GlStateManager.enableDepth();
 				GlStateManager.disableBlend();
@@ -415,6 +442,13 @@ public class RenderVehicle extends Render<EntityVehicle> implements CustomItemRe
 		GlStateManager.disableLighting();
 		//Pop
 		GlStateManager.popMatrix();
+	}
+
+	public Vector3f Interpolate(Vector3f current, Vector3f prev, float f1)
+	{
+		Vector3f result;
+		result = new Vector3f(prev.x + (current.x-prev.x)*f1,prev.y + (current.y-prev.y)*f1, prev.z + (current.z-prev.z)*f1);
+		return result;
 	}
 	
 	public static class Factory implements IRenderFactory<EntityVehicle>

@@ -61,4 +61,14 @@ public class TypeFile
 	{
 		return hash;
 	}
+	
+	@Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (String s : lines) {
+            sb.append(s);
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
 }

@@ -18,6 +18,7 @@ import com.flansmod.common.guns.FiredShot;
 import com.flansmod.common.guns.GunType;
 import com.flansmod.common.guns.ItemGun;
 import com.flansmod.common.guns.raytracing.FlansModRaytracer.PlayerBulletHit;
+import com.flansmod.common.teams.ItemTeamArmour;
 import com.flansmod.common.teams.TeamsManager;
 import com.flansmod.common.vector.Vector3f;
 
@@ -41,6 +42,10 @@ public class PlayerHitbox
 	 * The dimensions of this box
 	 */
 	public Vector3f d;
+	/**
+     * The velocity of this box, in world axes.
+     */
+    public Vector3f vel;
 	/**
 	 * The type of hitbox
 	 */
@@ -81,7 +86,8 @@ public class PlayerHitbox
 		//Move to local coords for this hitbox, but don't modify the original "origin" vector
 		origin = Vector3f.sub(origin, rP, null);
 		origin = axes.findGlobalVectorLocally(origin);
-		motion = axes.findGlobalVectorLocally(motion);
+		motion = axes.findGlobalVectorLocally(Vector3f.sub(motion, vel, null));
+		//motion = axes.findGlobalVectorLocally(motion);
 		
 		//We now have an AABB starting at o and with dimensions d and our ray in the same coordinate system
 		//We are looking for a point at which the ray enters the box, so we need only consider faces that the ray can see. Partition the space into 3 areas in each axis
@@ -161,7 +167,8 @@ public class PlayerHitbox
 		{
 			player.addPotionEffect(new PotionEffect(effect));
 		}
-		float damageModifier = bulletType.penetratingPower < 0.1F ? penetratingPower / bulletType.penetratingPower : 1;
+		
+		/*float damageModifier = bulletType.penetratingPower < 0.1F ? penetratingPower / bulletType.penetratingPower : 1;
 		
 		switch(type)
 		{
@@ -179,7 +186,50 @@ public class PlayerHitbox
 		switch(type)
 		{
 			case BODY: case HEAD: case LEFTARM: case RIGHTARM:
-		{
+		{*/
+		
+		float headPenRes = (player.getCurrentArmor(3) == null || !(player.getCurrentArmor(3).getItem()
+                instanceof ItemTeamArmour)) ? 1F : ((ItemTeamArmour) player.getCurrentArmor(3).getItem())
+                .type.penetrationResistance;
+        float chestPenRes = (player.getCurrentArmor(2) == null || !(player.getCurrentArmor(2).getItem()
+                instanceof ItemTeamArmour)) ? 0.5F : ((ItemTeamArmour) player.getCurrentArmor(2).getItem())
+                .type.penetrationResistance;
+        float legsPenRes = (player.getCurrentArmor(1) == null || !(player.getCurrentArmor(1).getItem()
+                instanceof ItemTeamArmour)) ? 0.35F : ((ItemTeamArmour) player.getCurrentArmor(1).getItem())
+                .type.penetrationResistance;
+        float feetPenRes = (player.getCurrentArmor(0) == null || !(player.getCurrentArmor(0).getItem()
+                instanceof ItemTeamArmour)) ? 0.15F : ((ItemTeamArmour) player.getCurrentArmor(0).getItem())
+                .type.penetrationResistance;
+
+        float totalPenetrationResistance = 0;
+
+        if (type == EnumHitboxType.HEAD) {
+            totalPenetrationResistance = headPenRes;
+        } else {
+            totalPenetrationResistance = chestPenRes + legsPenRes + feetPenRes;
+        }
+
+        float damageModifier = 1;
+        if (penetratingPower <= 0.7F * totalPenetrationResistance && FlansMod.useNewPenetrationSystem) {
+            damageModifier = (float) Math.pow((double) (penetratingPower / (0.7F * totalPenetrationResistance)), 2.5);
+        } else if (!FlansMod.useNewPenetrationSystem) {
+            damageModifier = bullet.type.penetratingPower < 0.1F ? penetratingPower / bullet.type.penetratingPower : 1;
+        }
+
+        bullet.lastHitPenAmount = Math.max(bullet.lastHitPenAmount, damageModifier);
+
+        if (type == EnumHitboxType.HEAD) {
+            damageModifier *= 2F;
+            bullet.lastHitHeadshot = true;
+        }
+
+        switch (type) {
+            case BODY:
+            case HEAD:
+            case LEFTARM:
+            case RIGHTARM: 
+            {
+		
 			//Calculate the hit damage
 			float hitDamage = damage * shot.getBulletType().damageVsLiving * damageModifier;
 			//Create a damage source object

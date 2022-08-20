@@ -70,8 +70,21 @@ import com.flansmod.common.vector.Vector3f;
 
 public class ItemGun extends Item implements IPaintableItem
 {
-	
-	private GunType type;
+	public GunType type;
+    public static boolean crouching = false;
+    public static boolean sprinting = false;
+    public static boolean shooting = false;
+    public String originGunbox = "";
+
+    public String getOriginGunBox() { return originGunbox; }
+    public void setOriginGunBox(String e) { originGunbox = e; }
+    // This is a bodge - the server needs to hold state that is held on the client.
+    public boolean isScoped = false;
+    public int lockOnSoundDelay;
+
+    public int impactX = 0;
+    public int impactY = 0;
+    public int impactZ = 0;
 	
 	public GunType GetType()
 	{
@@ -134,19 +147,26 @@ public class ItemGun extends Item implements IPaintableItem
 			gun.setTagCompound(new NBTTagCompound());
 			return ItemStack.EMPTY.copy();
 		}
+		
+		String s;
+        if (type.getSecondaryFire(gun))
+            s = "secondaryAmmo";
+        else
+            s = "ammo";
+		
 		//If the gun has no ammo tags, give it some
-		if(!gun.getTagCompound().hasKey("ammo"))
+		if(!gun.getTagCompound().hasKey(s))
 		{
 			NBTTagList ammoTagsList = new NBTTagList();
 			for(int i = 0; i < type.numAmmoItemsInGun; i++)
 			{
 				ammoTagsList.appendTag(new NBTTagCompound());
 			}
-			gun.getTagCompound().setTag("ammo", ammoTagsList);
+			gun.getTagCompound().setTag(s, ammoTagsList);
 			return ItemStack.EMPTY.copy();
 		}
 		//Take the list of ammo tags
-		NBTTagList ammoTagsList = gun.getTagCompound().getTagList("ammo", Constants.NBT.TAG_COMPOUND);
+		NBTTagList ammoTagsList = gun.getTagCompound().getTagList(s, Constants.NBT.TAG_COMPOUND);
 		//Get the specific ammo tags required
 		NBTTagCompound ammoTags = ammoTagsList.getCompoundTagAt(id);
 		return new ItemStack(ammoTags);
@@ -162,27 +182,35 @@ public class ItemGun extends Item implements IPaintableItem
 		{
 			gun.setTagCompound(new NBTTagCompound());
 		}
+		
+		String s;
+        if (type.getSecondaryFire(gun))
+            s = "secondaryAmmo";
+        else
+            s = "ammo";
+		
 		//If the gun has no ammo tags, give it some
-		if(!gun.getTagCompound().hasKey("ammo"))
+		if(!gun.getTagCompound().hasKey(s))
 		{
 			NBTTagList ammoTagsList = new NBTTagList();
 			for(int i = 0; i < type.numAmmoItemsInGun; i++)
 			{
 				ammoTagsList.appendTag(new NBTTagCompound());
 			}
-			gun.getTagCompound().setTag("ammo", ammoTagsList);
+			gun.getTagCompound().setTag(s, ammoTagsList);
 		}
 		//Take the list of ammo tags
-		NBTTagList ammoTagsList = gun.getTagCompound().getTagList("ammo", Constants.NBT.TAG_COMPOUND);
+		NBTTagList ammoTagsList = gun.getTagCompound().getTagList(s, Constants.NBT.TAG_COMPOUND);
 		//Get the specific ammo tags required
 		NBTTagCompound ammoTags = ammoTagsList.getCompoundTagAt(id);
 		//Represent empty slots by nulltypes
 		if(bullet == null)
 		{
 			ammoTags = new NBTTagCompound();
+		} else {
+			//Set the tags to match the bullet stack
+			bullet.writeToNBT(ammoTags);
 		}
-		//Set the tags to match the bullet stack
-		bullet.writeToNBT(ammoTags);
 	}
 	
 	/**
@@ -197,78 +225,53 @@ public class ItemGun extends Item implements IPaintableItem
 		}
 	}
 	
-	/**
-	 * Deployable guns only
-	 */
-	@Override
-	public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer entityplayer, EnumHand hand)
-	{
-		ItemStack itemstack = entityplayer.getHeldItem(hand);
+	// _____________________________________________________________________________
+	//
+	// Minecraft base item overrides
+	// _____________________________________________________________________________
 		
-		if(type.deployable)
+	@Override
+	public void addInformation(ItemStack stack, World world, List<String> lines, ITooltipFlag b)
+	{
+		if(stack.hasTagCompound() && stack.getTagCompound().hasKey("LegendaryCrafter"))
 		{
-			//Raytracing
-			float cosYaw = MathHelper.cos(-entityplayer.rotationYaw * 0.01745329F - 3.141593F);
-			float sinYaw = MathHelper.sin(-entityplayer.rotationYaw * 0.01745329F - 3.141593F);
-			float cosPitch = -MathHelper.cos(-entityplayer.rotationPitch * 0.01745329F);
-			float sinPitch = MathHelper.sin(-entityplayer.rotationPitch * 0.01745329F);
-			double length = 5D;
-			Vec3d posVec = new Vec3d(entityplayer.posX, entityplayer.posY + 1.62D - entityplayer.getYOffset(), entityplayer.posZ);
-			Vec3d lookVec = posVec.add(sinYaw * cosPitch * length, sinPitch * length, cosYaw * cosPitch * length);
-			RayTraceResult look = world.rayTraceBlocks(posVec, lookVec, true);
-			
-			//Result check
-			if(look != null && look.typeOfHit == Type.BLOCK)
+			String crafter = stack.getTagCompound().getString("LegendaryCrafter");
+			lines.add("Legendary Skin Crafted by " + crafter);
+		}
+		
+		if(type.description != null)
+		{
+			Collections.addAll(lines, type.description.split("_"));
+		}
+		if(type.showDamage)
+			lines.add("\u00a79Damage" + "\u00a77: " + type.getDamage(stack));
+		if(type.showRecoil)
+			lines.add("\u00a79Recoil" + "\u00a77: " + type.getRecoil(stack));
+		if(type.showSpread)
+			lines.add("\u00a79Accuracy" + "\u00a77: " + type.getSpread(stack));
+		if(type.showReloadTime)
+			lines.add("\u00a79Reload Time" + "\u00a77: " + type.getReloadTime(stack) / 20 + "s");
+		for(AttachmentType attachment : type.getCurrentAttachments(stack))
+		{
+			if(type.showAttachments)
 			{
-				if(look.sideHit == EnumFacing.UP)
-				{
-					int playerDir = MathHelper.floor(((entityplayer.rotationYaw * 4F) / 360F) + 0.5D) & 3;
-					int i = look.getBlockPos().getX();
-					int j = look.getBlockPos().getY();
-					int k = look.getBlockPos().getZ();
-					if(!world.isRemote)
-					{
-						if(world.getBlockState(new BlockPos(i, j, k)).getBlock() == Blocks.SNOW)
-						{
-							j--;
-						}
-						if(isSolid(world, i, j, k) &&
-								(world.getBlockState(new BlockPos(i, j + 1, k)).getBlock() == Blocks.AIR || world.getBlockState(new BlockPos(i, j + 1, k)).getBlock() == Blocks.SNOW)
-								&&
-								(world.getBlockState(new BlockPos(i + (playerDir == 1 ? 1 : 0) - (playerDir == 3 ? 1 : 0), j + 1, k - (playerDir == 0 ? 1 : 0) + (playerDir == 2 ? 1 : 0))).getBlock() == Blocks.AIR)
-								&&
-								(world.getBlockState(new BlockPos(i + (playerDir == 1 ? 1 : 0) - (playerDir == 3 ? 1 : 0), j, k - (playerDir == 0 ? 1 : 0) + (playerDir == 2 ? 1 : 0))).getBlock() == Blocks.AIR
-										|| world.getBlockState(new BlockPos(i + (playerDir == 1 ? 1 : 0) - (playerDir == 3 ? 1 : 0), j, k - (playerDir == 0 ? 1 : 0) + (playerDir == 2 ? 1 : 0))).getBlock() == Blocks.SNOW))
-						{
-							for(EntityMG mg : EntityMG.mgs)
-							{
-								if(mg.blockX == i && mg.blockY == j + 1 && mg.blockZ == k && !mg.isDead)
-									return new ActionResult<>(EnumActionResult.SUCCESS, itemstack);
-							}
-							EntityMG mg = new EntityMG(world, i, j + 1, k, playerDir, type);
-							
-							if(getBulletItemStack(itemstack, 0) != null)
-							{
-								mg.ammo = getBulletItemStack(itemstack, 0);
-							}
-							world.spawnEntity(mg);
-							
-							if(!entityplayer.capabilities.isCreativeMode)
-								itemstack.setCount(0);
-						}
-					}
-				}
+				String line = attachment.name;
+				lines.add(line);
 			}
 		}
-		//Stop the gun bobbing up and down when holding shoot and looking at a block
-		if(world.isRemote)
+		for(int i = 0; i < type.numAmmoItemsInGun; i++)
 		{
-			for(int i = 0; i < 3; i++)
-				Minecraft.getMinecraft().entityRenderer.itemRenderer.updateEquippedItem();
+			ItemStack bulletStack = getBulletItemStack(stack, i);
+			if(bulletStack != null && bulletStack.getItem() instanceof ItemBullet)
+			{
+				BulletType bulletType = ((ItemBullet)bulletStack.getItem()).type;
+				//String line = bulletType.name + (bulletStack.getMaxDamage() == 1 ? "" : " " + (bulletStack.getMaxDamage() - bulletStack.getItemDamage()) + "/" + bulletStack.getMaxDamage());
+				String line = bulletType.name + " " + (bulletStack.getMaxDamage() - bulletStack.getItemDamage()) + "/" + bulletStack.getMaxDamage();
+				lines.add(line);
+			}
 		}
-		return new ActionResult<>(EnumActionResult.PASS, itemstack);
 	}
-	
+		
 	// _____________________________________________________________________________
 	//
 	// Shooting code
@@ -334,6 +337,11 @@ public class ItemGun extends Item implements IPaintableItem
 			PacketPlaySound.sendSoundPacket(player.posX, player.posY, player.posZ, FlansMod.soundRange, player.dimension, type.idleSound, false);
 			soundDelay = type.idleSoundLength;
 		}
+		
+		//If crouching, translate weapon model (zoom)
+        crouching = player.isSneaking();
+        //If running, reposition the gun
+        sprinting = player.isSprinting();
 		
 		if (!gunCanBeHandled(type, player))
 			return;
@@ -434,6 +442,79 @@ public class ItemGun extends Item implements IPaintableItem
 			}
 		}
 	}
+	
+	/**
+	 * Deployable guns only
+	 */
+	@Override
+	public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer entityplayer, EnumHand hand)
+	{
+		ItemStack itemstack = entityplayer.getHeldItem(hand);
+		
+		if(type.deployable)
+		{
+			//Raytracing
+			float cosYaw = MathHelper.cos(-entityplayer.rotationYaw * 0.01745329F - 3.141593F);
+			float sinYaw = MathHelper.sin(-entityplayer.rotationYaw * 0.01745329F - 3.141593F);
+			float cosPitch = -MathHelper.cos(-entityplayer.rotationPitch * 0.01745329F);
+			float sinPitch = MathHelper.sin(-entityplayer.rotationPitch * 0.01745329F);
+			double length = 5D;
+			Vec3d posVec = new Vec3d(entityplayer.posX, entityplayer.posY + 1.62D - entityplayer.getYOffset(), entityplayer.posZ);
+			Vec3d lookVec = posVec.add(sinYaw * cosPitch * length, sinPitch * length, cosYaw * cosPitch * length);
+			RayTraceResult look = world.rayTraceBlocks(posVec, lookVec, true);
+			
+			//Result check
+			if(look != null && look.typeOfHit == Type.BLOCK)
+			{
+				if(look.sideHit == EnumFacing.UP)
+				{
+					int playerDir = MathHelper.floor(((entityplayer.rotationYaw * 4F) / 360F) + 0.5D) & 3;
+					int i = look.getBlockPos().getX();
+					int j = look.getBlockPos().getY();
+					int k = look.getBlockPos().getZ();
+					if(!world.isRemote)
+					{
+						if(world.getBlockState(new BlockPos(i, j, k)).getBlock() == Blocks.SNOW)
+						{
+							j--;
+						}
+						if(isSolid(world, i, j, k) &&
+								(world.getBlockState(new BlockPos(i, j + 1, k)).getBlock() == Blocks.AIR || world.getBlockState(new BlockPos(i, j + 1, k)).getBlock() == Blocks.SNOW)
+								&&
+								(world.getBlockState(new BlockPos(i + (playerDir == 1 ? 1 : 0) - (playerDir == 3 ? 1 : 0), j + 1, k - (playerDir == 0 ? 1 : 0) + (playerDir == 2 ? 1 : 0))).getBlock() == Blocks.AIR)
+								&&
+								(world.getBlockState(new BlockPos(i + (playerDir == 1 ? 1 : 0) - (playerDir == 3 ? 1 : 0), j, k - (playerDir == 0 ? 1 : 0) + (playerDir == 2 ? 1 : 0))).getBlock() == Blocks.AIR
+										|| world.getBlockState(new BlockPos(i + (playerDir == 1 ? 1 : 0) - (playerDir == 3 ? 1 : 0), j, k - (playerDir == 0 ? 1 : 0) + (playerDir == 2 ? 1 : 0))).getBlock() == Blocks.SNOW))
+						{
+							for(EntityMG mg : EntityMG.mgs)
+							{
+								if(mg.blockX == i && mg.blockY == j + 1 && mg.blockZ == k && !mg.isDead)
+									return new ActionResult<>(EnumActionResult.SUCCESS, itemstack);
+							}
+							EntityMG mg = new EntityMG(world, i, j + 1, k, playerDir, type);
+							
+							if(getBulletItemStack(itemstack, 0) != null)
+							{
+								mg.ammo = getBulletItemStack(itemstack, 0);
+							}
+							world.spawnEntity(mg);
+							
+							if(!entityplayer.capabilities.isCreativeMode)
+								itemstack.setCount(0);
+						}
+					}
+				}
+			}
+		}
+		//Stop the gun bobbing up and down when holding shoot and looking at a block
+		if(world.isRemote)
+		{
+			for(int i = 0; i < 3; i++)
+				Minecraft.getMinecraft().entityRenderer.itemRenderer.updateEquippedItem();
+		}
+		return new ActionResult<>(EnumActionResult.PASS, itemstack);
+	}
+	
 	
 	/**
 	 * Used to determine if for example an player is holding a two handed gun but the other hand (the one without a gun) is holding something else
@@ -563,7 +644,13 @@ public class ItemGun extends Item implements IPaintableItem
 							handler.shooting(i < bulletAmount - 1);
 						}
 						
-						animations.doShoot(type.getPumpDelay(), type.getPumpTime());
+						int pumpDelay = type.model == null ? 0 : type.model.pumpDelay;
+	                	int pumpTime = type.model == null ? 1 : type.model.pumpTime;
+	                	int hammerDelay = type.model == null ? 0 : type.model.hammerDelay;
+	                	int casingDelay = type.model == null ? 0 : type.model.casingDelay;
+	                	float hammerAngle = type.model == null ? 0 : type.model.hammerAngle;
+	                	float althammerAngle = type.model == null ? 0 : type.model.althammerAngle;
+	                	animations.doShoot(pumpDelay, pumpTime, hammerDelay, hammerAngle, althammerAngle, casingDelay);
 						Float recoil = type.getRecoil(gunstack);
 						FlansModClient.playerRecoil += recoil;
 						animations.recoil += recoil;
@@ -1063,53 +1150,6 @@ public class ItemGun extends Item implements IPaintableItem
 	}
 	
 	
-	// _____________________________________________________________________________
-	//
-	// Minecraft base item overrides
-	// _____________________________________________________________________________
-	
-	@Override
-	public void addInformation(ItemStack stack, World world, List<String> lines, ITooltipFlag b)
-	{
-		if(stack.hasTagCompound() && stack.getTagCompound().hasKey("LegendaryCrafter"))
-		{
-			String crafter = stack.getTagCompound().getString("LegendaryCrafter");
-			lines.add("Legendary Skin Crafted by " + crafter);
-		}
-		
-		if(type.description != null)
-		{
-			Collections.addAll(lines, type.description.split("_"));
-		}
-		if(type.showDamage)
-			lines.add("\u00a79Damage" + "\u00a77: " + type.getDamage(stack));
-		if(type.showRecoil)
-			lines.add("\u00a79Recoil" + "\u00a77: " + type.getRecoil(stack));
-		if(type.showSpread)
-			lines.add("\u00a79Accuracy" + "\u00a77: " + type.getSpread(stack));
-		if(type.showReloadTime)
-			lines.add("\u00a79Reload Time" + "\u00a77: " + type.getReloadTime(stack) / 20 + "s");
-		for(AttachmentType attachment : type.getCurrentAttachments(stack))
-		{
-			if(type.showAttachments)
-			{
-				String line = attachment.name;
-				lines.add(line);
-			}
-		}
-		for(int i = 0; i < type.numAmmoItemsInGun; i++)
-		{
-			ItemStack bulletStack = getBulletItemStack(stack, i);
-			if(bulletStack != null && bulletStack.getItem() instanceof ItemBullet)
-			{
-				BulletType bulletType = ((ItemBullet)bulletStack.getItem()).type;
-				//String line = bulletType.name + (bulletStack.getMaxDamage() == 1 ? "" : " " + (bulletStack.getMaxDamage() - bulletStack.getItemDamage()) + "/" + bulletStack.getMaxDamage());
-				String line = bulletType.name + " " + (bulletStack.getMaxDamage() - bulletStack.getItemDamage()) + "/" + bulletStack.getMaxDamage();
-				lines.add(line);
-			}
-		}
-	}
-	
 	@Override
 	/** Make sure client and server side NBTtags update */
 	public boolean getShareTag()
@@ -1229,33 +1269,10 @@ public class ItemGun extends Item implements IPaintableItem
 	
 	// ---------------------------------------------
 	
-	@Override
-	public int getMaxItemUseDuration(ItemStack par1ItemStack)
-	{
-		return 100;
-	}
 	
-	@Override
-	public EnumAction getItemUseAction(ItemStack par1ItemStack)
-	{
-		return EnumAction.BOW;
-	}
 	
 	protected static final UUID KNOCKBACK_RESIST_MODIFIER = UUID.fromString("77777777-645C-4F38-A497-9C13A33DB5CF");
 	protected static final UUID MOVEMENT_SPEED_MODIFIER = UUID.fromString("99999999-4180-4865-B01B-BCCE9785ACA3");
-	
-	@Override
-	public Multimap<String, AttributeModifier> getAttributeModifiers(EntityEquipmentSlot slot, ItemStack stack)
-	{
-		Multimap<String, AttributeModifier> multimap = super.getAttributeModifiers(slot, stack);
-		if(slot == EntityEquipmentSlot.MAINHAND)
-		{
-			multimap.put(SharedMonsterAttributes.KNOCKBACK_RESISTANCE.getName(), new AttributeModifier(KNOCKBACK_RESIST_MODIFIER, "KnockbackResist", type.knockbackModifier, 0));
-			multimap.put(SharedMonsterAttributes.MOVEMENT_SPEED.getName(), new AttributeModifier(MOVEMENT_SPEED_MODIFIER, "MovementSpeed", type.moveSpeedModifier - 1.0f, 2));
-			multimap.put(SharedMonsterAttributes.ATTACK_DAMAGE.getName(), new AttributeModifier(ATTACK_DAMAGE_MODIFIER, "Weapon modifier", type.meleeDamage, 0));
-		}
-		return multimap;
-	}
 	
 	@Override
 	public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged)
@@ -1277,4 +1294,41 @@ public class ItemGun extends Item implements IPaintableItem
 	{
 		return false;
 	}
+	
+	
+	
+	@Override
+	public int getMaxItemUseDuration(ItemStack par1ItemStack)
+	{
+		return 100;
+	}
+	
+	@Override
+	public EnumAction getItemUseAction(ItemStack par1ItemStack)
+	{
+		return type != null ? type.itemUseAction : EnumAction.BOW;
+	}
+	
+	@Override
+	public Multimap<String, AttributeModifier> getAttributeModifiers(EntityEquipmentSlot slot, ItemStack stack)
+	{
+		Multimap<String, AttributeModifier> multimap = super.getAttributeModifiers(slot, stack);
+		if(slot == EntityEquipmentSlot.MAINHAND)
+		{
+			multimap.put(SharedMonsterAttributes.KNOCKBACK_RESISTANCE.getName(), new AttributeModifier(KNOCKBACK_RESIST_MODIFIER, "KnockbackResist", type.knockbackModifier, 0));
+			multimap.put(SharedMonsterAttributes.MOVEMENT_SPEED.getName(), new AttributeModifier(MOVEMENT_SPEED_MODIFIER, "MovementSpeed", type.moveSpeedModifier - 1.0f, 2));
+			multimap.put(SharedMonsterAttributes.ATTACK_DAMAGE.getName(), new AttributeModifier(ATTACK_DAMAGE_MODIFIER, "Weapon modifier", type.meleeDamage, 0));
+		}
+		return multimap;
+	}
+	
+	//Round values to n number of decimal points
+    public static float roundFloat(float value, int points) {
+        int pow = 10;
+        for (int i = 1; i < points; i++)
+            pow *= 10;
+        float result = value * pow;
+
+        return (float) (int) ((result - (int) result) >= 0.5f ? result + 1 : result) / pow;
+    }
 }

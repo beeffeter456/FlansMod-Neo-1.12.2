@@ -18,11 +18,18 @@ public class Paintjob
 	public ItemStack[] dyesNeeded;
 	public int ID;
 	public EnumPaintjobRarity rarity;
+	public String displayName;
 	
 	public Paintjob(PaintableType parent, int id, String iconName, String textureName, ItemStack[] dyesNeeded)
 	{
+		this(parent, id, "", iconName, textureName, dyesNeeded);
+	}
+	
+	public Paintjob(PaintableType parent, int id, String displayName, String iconName, String textureName, ItemStack[] dyesNeeded)
+	{
 		this.parent = parent;
 		this.ID = id;
+		this.displayName = displayName;
 		this.iconName = iconName;
 		this.textureName = textureName;
 		this.dyesNeeded = dyesNeeded;

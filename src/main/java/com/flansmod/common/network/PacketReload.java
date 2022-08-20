@@ -24,6 +24,9 @@ public class PacketReload extends PacketBase
 {
 	public boolean isOffHand;
 	public boolean isForced;
+	public Integer amount = 0;
+    public Integer reloadTime = 0;
+    public Boolean singlesReload = false;
 	
 	public PacketReload()
 	{
@@ -35,11 +38,23 @@ public class PacketReload extends PacketBase
 		this.isForced = isForced;
 	}
 	
+	public PacketReload(EnumHand hand, boolean isForced, int count, int reload, boolean single) 
+	{
+		this.isOffHand = hand == EnumHand.OFF_HAND;
+		this.isForced = isForced;
+        amount = count;
+        reloadTime = reload;
+        singlesReload = single;
+    }
+	
 	@Override
 	public void encodeInto(ChannelHandlerContext ctx, ByteBuf data)
 	{
 		data.writeBoolean(isOffHand);
 		data.writeBoolean(isForced);
+		data.writeInt(amount);
+        data.writeInt(reloadTime);
+        data.writeBoolean(singlesReload);
 	}
 	
 	@Override
@@ -47,6 +62,9 @@ public class PacketReload extends PacketBase
 	{
 		isOffHand = data.readBoolean();
 		isForced = data.readBoolean();
+		amount = data.readInt();
+        reloadTime = data.readInt();
+        singlesReload = data.readBoolean();
 	}
 	
 	@Override

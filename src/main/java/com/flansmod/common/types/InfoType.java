@@ -1,5 +1,6 @@
 package com.flansmod.common.types;
 
+import java.nio.file.FileSystems;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -33,10 +34,11 @@ import net.minecraftforge.oredict.OreDictionary;
 import net.minecraftforge.oredict.OreIngredient;
 import net.minecraftforge.registries.IForgeRegistry;
 
+import com.flansmod.api.IInfoType;
 import com.flansmod.common.FlansMod;
 import com.flansmod.common.driveables.DriveableType;
 
-public class InfoType
+public class InfoType implements IInfoType
 {
 	/**
 	 * infoTypes
@@ -58,6 +60,12 @@ public class InfoType
 	public String description = "";
 	public String iconPath = "";
 	public float modelScale = 1F;
+	
+	public String packName = null;
+	public String fileName = null;
+	public static String lastpackName = null;
+	public static String lastfileName = null;
+	
 	/**
 	 * If this is set to false, then this item cannot be dropped
 	 */
@@ -87,6 +95,31 @@ public class InfoType
 	public InfoType(TypeFile file)
 	{
 		contentPack = file.contentPack;
+		
+		//get the name of the content pack without the whole path
+		String[] s1 = contentPack.split(FileSystems.getDefault().getSeparator().replace("\\","\\\\"));
+		if (s1.length > 0)
+		{
+			packName = s1[s1.length - 1];
+		}
+		else
+		{
+			packName = contentPack;
+		}
+		
+		//get the name of the file without the whole path
+		String[] s2 = file.name.split(FileSystems.getDefault().getSeparator().replace("\\","\\\\"));
+		if (s2.length > 0)
+		{
+			fileName = s2[s2.length - 1];
+		}
+		else
+		{
+			fileName = contentPack;
+		}
+		
+		lastpackName = packName;
+		lastfileName = fileName;
 	}
 	
 	public void read(TypeFile file)
@@ -127,11 +160,11 @@ public class InfoType
 		// Check that recommended values were set
 		if(shortName.isEmpty())
 		{
-			FlansMod.log.warn("ShortName not set: " + file.name);
+			FlansMod.log.warn("ShortName not set: " + file.name + " from pack " + packName);
 		}
 		if(name.isEmpty())
 		{
-			FlansMod.log.warn("Name not set: " + file.name);
+			FlansMod.log.warn("Name not set: " + file.name + " from pack " + packName);
 		}
 	}
 	
@@ -209,7 +242,7 @@ public class InfoType
 		}
 		catch(Exception e)
 		{
-			FlansMod.log.error("Reading file failed : " + shortName);
+			FlansMod.log.error("Reading file failed : " + shortName + " from pack : " + packName);
 			FlansMod.log.throwing(e);
 		}
 	}
@@ -236,12 +269,12 @@ public class InfoType
 				}
 				catch(Exception e)
 				{
-					InfoType.LogError(shortName, "Incorrect format for " + key + ". Passed in value is not an integer");
+					InfoType.LogError(shortName, "Incorrect format for " + key + ". Passed in value is not an integer", packName);
 				}
 			}
 			else
 			{
-				InfoType.LogError(shortName, "Incorrect format for " + key + ". Should be \"" + key + " <integer value>\"");
+				InfoType.LogError(shortName, "Incorrect format for " + key + ". Should be \"" + key + " <integer value>\"", packName);
 			}
 		}
 		
@@ -260,12 +293,12 @@ public class InfoType
 				}
 				catch(Exception e)
 				{
-					InfoType.LogError(shortName, "Incorrect format for " + key + ". Passed in value is not an float");
+					InfoType.LogError(shortName, "Incorrect format for " + key + ". Passed in value is not an float", packName);
 				}
 			}
 			else
 			{
-				InfoType.LogError(shortName, "Incorrect format for " + key + ". Should be \"" + key + " <float value>\"");
+				InfoType.LogError(shortName, "Incorrect format for " + key + ". Should be \"" + key + " <float value>\"", packName);
 			}
 		}
 		
@@ -284,12 +317,12 @@ public class InfoType
 				}
 				catch(Exception e)
 				{
-					InfoType.LogError(shortName, "Incorrect format for " + key + ". Passed in value is not an float");
+					InfoType.LogError(shortName, "Incorrect format for " + key + ". Passed in value is not an float", packName);
 				}
 			}
 			else
 			{
-				InfoType.LogError(shortName, "Incorrect format for " + key + ". Should be \"" + key + " <float value>\"");
+				InfoType.LogError(shortName, "Incorrect format for " + key + ". Should be \"" + key + " <float value>\"", packName);
 			}
 		}
 		
@@ -306,7 +339,7 @@ public class InfoType
 			}
 			else
 			{
-				InfoType.LogError(shortName, "Incorrect format for " + key + ". Should be \"" + key + " <singleWord>\"");
+				InfoType.LogError(shortName, "Incorrect format for " + key + ". Should be \"" + key + " <singleWord>\"", packName);
 			}
 		}
 		
@@ -327,7 +360,7 @@ public class InfoType
 			}
 			else
 			{
-				InfoType.LogError(shortName, "Incorrect format for " + key + ". Should be \"" + key + " <long string>\"");
+				InfoType.LogError(shortName, "Incorrect format for " + key + ". Should be \"" + key + " <long string>\"", packName);
 			}
 		}
 		
@@ -342,16 +375,16 @@ public class InfoType
 			{
 				try
 				{
-					currentValue = Boolean.parseBoolean(split[1]);
+					currentValue = Boolean.parseBoolean(split[1].toLowerCase());
 				}
 				catch(Exception e)
 				{
-					InfoType.LogError(shortName, "Incorrect format for " + key + ". Passed in value is not an boolean");
+					InfoType.LogError(shortName, "Incorrect format for " + key + ". Passed in value is not an boolean", packName);
 				}
 			}
 			else
 			{
-				InfoType.LogError(shortName, "Incorrect format for " + key + ". Should be \"" + key + " <true/false>\"");
+				InfoType.LogError(shortName, "Incorrect format for " + key + ". Should be \"" + key + " <true/false>\"", packName);
 			}
 		}
 		
@@ -366,6 +399,11 @@ public class InfoType
 	protected static void LogError(String shortName, String s)
 	{
 		FlansMod.log.error("[Problem in " + shortName + ".txt]" + s);
+	}
+	
+	protected static void LogError(String shortName, String s, String pack)
+	{
+		FlansMod.log.error("[Problem in " + shortName + ".txt from pack " + pack + "]" + s);
 	}
 	
 	@Override
@@ -496,7 +534,7 @@ public class InfoType
 		}
 		catch(Exception e)
 		{
-			FlansMod.log.error("Failed to add recipe for : " + shortName);
+			FlansMod.log.error("Failed to add recipe for : " + shortName + " from pack " + packName);
 			FlansMod.log.throwing(e);
 		}
 	}
@@ -513,11 +551,12 @@ public class InfoType
 				damage = i;
 		}
 		if(damage == -1)
-			FlansMod.log.warn("Failed to find dye colour : " + dyeName + " while adding " + contentPack);
+			FlansMod.log.warn("Failed to find dye colour : " + dyeName + " while adding " + shortName + " from pack " + packName);
 		
 		return damage;
 	}
 	
+	@Override
 	public Item getItem()
 	{
 		return item;
@@ -624,7 +663,16 @@ public class InfoType
 			}
 		}
 		
-		FlansMod.log.warn("Could not find " + id + " in recipe");		
+		if(lastfileName == null || lastpackName == null)
+		{
+			FlansMod.log.warn("Could not find " + id + " in recipe");		
+		}
+		else
+		{
+			FlansMod.log.warn("Could not find " + id + " in recipe of item " + lastfileName + " from pack " + lastpackName);		
+		}
+		
+		
 		return ItemStack.EMPTY.copy();
 	}
 	
@@ -656,6 +704,11 @@ public class InfoType
 	//{
 	//	
 	//}
+	
+	public float GetRecommendedScale() 
+	{
+		return 0.0f;
+	}
 	
 	public static InfoType getType(ItemStack itemStack)
 	{
@@ -761,4 +814,28 @@ public class InfoType
 		else
 			SPECIAL_INGREDIENTS.put(name, fallback);
 	}
+	
+	@Override
+    public String getContentPack() {
+        return contentPack;
+    }
+	
+	public String getContentPackName() {
+        return packName;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getShortName() {
+        return shortName;
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
+    }
 }

@@ -1,6 +1,8 @@
 package com.flansmod.client.model;
 
 import com.flansmod.client.tmt.ModelRendererTurbo;
+import com.flansmod.common.FlansMod;
+import com.flansmod.common.RotatedAxes;
 import com.flansmod.common.driveables.DriveableType;
 import com.flansmod.common.driveables.EntityDriveable;
 import com.flansmod.common.driveables.EntitySeat;
@@ -8,6 +10,8 @@ import com.flansmod.common.driveables.EntityVehicle;
 import com.flansmod.common.driveables.EnumDriveablePart;
 import com.flansmod.common.driveables.VehicleType;
 import com.flansmod.common.vector.Vector3f;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.util.ResourceLocation;
 
 //Extensible ModelVehicle class for rendering vehicle models
 public class ModelVehicle extends ModelDriveable
@@ -25,26 +29,64 @@ public class ModelVehicle extends ModelDriveable
 	public ModelRendererTurbo[] leftTrackModel = new ModelRendererTurbo[0];
 	public ModelRendererTurbo[] rightTrackWheelModels = new ModelRendererTurbo[0];    //These go with the tracks but rotate
 	public ModelRendererTurbo[] leftTrackWheelModels = new ModelRendererTurbo[0];
-	
-	
-	public ModelRendererTurbo[] fancyTrackModel = new ModelRendererTurbo[0];
-	
-	
+
 	public ModelRendererTurbo[][] leftAnimTrackModel = new ModelRendererTurbo[0][0];  //Unlimited frame track animations
 	public ModelRendererTurbo[][] rightAnimTrackModel = new ModelRendererTurbo[0][0];
-	
+
+	public ModelRendererTurbo[] fancyTrackModel = new ModelRendererTurbo[0];
+
+	public ModelRendererTurbo[] rightAnimTrackModel1 = new ModelRendererTurbo[0]; //3 frame track animation
+	public ModelRendererTurbo[] leftAnimTrackModel1 = new ModelRendererTurbo[0];
+	public ModelRendererTurbo[] rightAnimTrackModel2 = new ModelRendererTurbo[0];
+	public ModelRendererTurbo[] leftAnimTrackModel2 = new ModelRendererTurbo[0];
+	public ModelRendererTurbo[] rightAnimTrackModel3 = new ModelRendererTurbo[0];
+	public ModelRendererTurbo[] leftAnimTrackModel3 = new ModelRendererTurbo[0];
+
 	public ModelRendererTurbo[] bodyDoorOpenModel = new ModelRendererTurbo[0];
 	public ModelRendererTurbo[] bodyDoorCloseModel = new ModelRendererTurbo[0];
 	public ModelRendererTurbo[] trailerModel = new ModelRendererTurbo[0];
 	public ModelRendererTurbo[] steeringWheelModel = new ModelRendererTurbo[0];
-	
+
 	public ModelRendererTurbo[] drillHeadModel = new ModelRendererTurbo[0];        //Drill head. Rotates around
-	public Vector3f drillHeadOrigin = new Vector3f();                                //this point
-	
+	public Vector3f drillHeadOrigin = new Vector3f();
+
+	//Body part for Strv103. Very strang.
+	public ModelRendererTurbo[] barrelSpecModel = new ModelRendererTurbo[0];
+
 	//recoiling barrel part
 	public ModelRendererTurbo[] animBarrelModel = new ModelRendererTurbo[0];
 	public Vector3f barrelAttach = new Vector3f();
-	
+
+	//Doors
+	public ModelRendererTurbo[] doorAnimModel = new ModelRendererTurbo[0];
+	public Vector3f doorAttach = new Vector3f();
+	public ModelRendererTurbo[] door2AnimModel = new ModelRendererTurbo[0];
+	public Vector3f door2Attach = new Vector3f();
+
+
+	//IT-1
+	public ModelRendererTurbo[] drakonModel = new ModelRendererTurbo[0];
+	public ModelRendererTurbo[] drakonReloadModel = new ModelRendererTurbo[0];
+
+	public ModelRendererTurbo[] drakonArmModel = new ModelRendererTurbo[0];
+	public ModelRendererTurbo[] drakonRailModel = new ModelRendererTurbo[0];
+	public ModelRendererTurbo[] drakonDoorModel = new ModelRendererTurbo[0];
+
+	public Vector3f drakonArmAttach = new Vector3f(0, 0, 0);
+	public Vector3f drakonRailAttach = new Vector3f(0, 0, 0);
+	public Vector3f drakonDoorAttach = new Vector3f(0, 0, 0);
+
+	public float animFrameLeft = 0;
+	public float animFrameRight = 0;
+	//this point
+
+	//Turret modifier
+	public Vector3f turretScale = new Vector3f(1, 1, 1);
+	public Vector3f turretTrans = new Vector3f(0, 0, 0);
+
+	//model stuff
+	public boolean fancyTurret = false;
+	public String turretName;
 	public int animFrame = 0;
 	
 	
@@ -69,8 +111,12 @@ public class ModelVehicle extends ModelDriveable
 		renderPart(leftTrackWheelModels);
 		renderPart(bodyDoorCloseModel);
 		renderPart(trailerModel);
+		GlStateManager.pushMatrix();
+		GlStateManager.scale(turretScale.x, turretScale.y, turretScale.z);
+		GlStateManager.translate(turretTrans.x, turretTrans.y, turretTrans.z);
 		renderPart(turretModel);
 		renderPart(barrelModel);
+		GlStateManager.popMatrix();
 		renderPart(drillHeadModel);
 		for(ModelRendererTurbo[] mods : ammoModel)
 			renderPart(mods);
@@ -79,12 +125,100 @@ public class ModelVehicle extends ModelDriveable
 			renderPart(latm);
 		for(ModelRendererTurbo[] ratm : rightAnimTrackModel)
 			renderPart(ratm);
+		renderPart(rightAnimTrackModel1);
+		renderPart(leftAnimTrackModel1);
+		renderPart(rightAnimTrackModel2);
+		renderPart(leftAnimTrackModel2);
+		renderPart(rightAnimTrackModel3);
+		renderPart(leftAnimTrackModel3);
 		renderPart(steeringWheelModel);
+		renderPart(steeringWheelModel);renderPart(barrelSpecModel);
+		renderTrackInGUI(type);
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(barrelAttach.x, barrelAttach.y, -barrelAttach.z);
+		renderPart(animBarrelModel);
+		GlStateManager.popMatrix();
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(doorAttach.x, doorAttach.y, -doorAttach.z);
+		renderPart(doorAnimModel);
+		GlStateManager.popMatrix();
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(door2Attach.x, door2Attach.y, -door2Attach.z);
+		renderPart(door2AnimModel);
+		GlStateManager.popMatrix();
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(drakonArmAttach.x, drakonArmAttach.y, drakonArmAttach.z);
+		renderPart(drakonArmModel);
+		GlStateManager.popMatrix();
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(drakonRailAttach.x, drakonRailAttach.y, drakonRailAttach.z);
+		renderPart(drakonRailModel);
+		renderPart(drakonModel);
+		GlStateManager.popMatrix();
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(drakonDoorAttach.x, drakonDoorAttach.y, drakonDoorAttach.z);
+		renderPart(drakonDoorModel);
+		GlStateManager.popMatrix();
+
+	}
+
+	public void renderTrackInGUI(DriveableType type) {
+		AnimTankTrack rightTrack = new AnimTankTrack(type.rightTrackPoints, type.trackLinkLength);
+		AnimTankTrack leftTrack = new AnimTankTrack(type.leftTrackPoints, type.trackLinkLength);
+		AnimTrackLink[] trackLinksLeft;
+		AnimTrackLink[] trackLinksRight;
+		int numLinks = Math.round(rightTrack.getTrackLength() / type.trackLinkLength);
+		trackLinksLeft = new AnimTrackLink[numLinks];
+		trackLinksRight = new AnimTrackLink[numLinks];
+		for (int i = 0; i < numLinks; i++) {
+			float progress = 0.01F + (type.trackLinkLength * i);
+			int trackPart = leftTrack.getTrackPart(progress);
+			trackLinksLeft[i] = new AnimTrackLink(progress);
+			trackLinksRight[i] = new AnimTrackLink(progress);
+			trackLinksLeft[i].position = leftTrack.getPositionOnTrack(progress);
+			trackLinksRight[i].position = rightTrack.getPositionOnTrack(progress);
+			trackLinksLeft[i].rot = new RotatedAxes(0, 0, rotateTowards(leftTrack.points.get((trackPart == 0) ? leftTrack.points.size() - 1 : trackPart - 1), trackLinksLeft[i].position));
+			trackLinksRight[i].rot = new RotatedAxes(0, 0, rotateTowards(rightTrack.points.get((trackPart == 0) ? rightTrack.points.size() - 1 : trackPart - 1), trackLinksRight[i].position));
+			trackLinksLeft[i].zRot = rotateTowards(leftTrack.points.get((trackPart == 0) ? leftTrack.points.size() - 1 : trackPart - 1), trackLinksLeft[i].position);
+			trackLinksRight[i].zRot = rotateTowards(rightTrack.points.get((trackPart == 0) ? rightTrack.points.size() - 1 : trackPart - 1), trackLinksRight[i].position);
+		}
+
+		for (AnimTrackLink link : trackLinksLeft) {
+			float rotZ = link.zRot;
+			GlStateManager.pushMatrix();
+			GlStateManager.translate(link.position.x / 16F, link.position.y / 16F, link.position.z / 16F);
+			for (; rotZ > 180F; rotZ -= 360F) {
+			}
+			for (; rotZ <= -180F; rotZ += 360F) {
+			}
+			GlStateManager.rotate(rotZ * (float) (180 / Math.PI), 0, 0, 1);
+			renderPart(fancyTrackModel);
+			GlStateManager.popMatrix();
+		}
+
+		for (AnimTrackLink link : trackLinksRight) {
+			float rotZ = link.zRot;
+			for (; rotZ > 180F; rotZ -= 360F) {
+			}
+			for (; rotZ <= -180F; rotZ += 360F) {
+			}
+			GlStateManager.pushMatrix();
+			GlStateManager.translate(link.position.x / 16F, link.position.y / 16F, link.position.z / 16F);
+			GlStateManager.rotate(rotZ * (float) (180 / Math.PI), 0, 0, 1);
+			renderPart(fancyTrackModel);
+			GlStateManager.popMatrix();
+		}
+	}
+
+	public float rotateTowards(Vector3f point, Vector3f original) {
+		return (float) Math.atan2(point.y - original.y, point.x - original.x);
 	}
 	
 	public void render(float f5, EntityVehicle vehicle, float f)
 	{
 		boolean rotateWheels = vehicle.getVehicleType().rotateWheels;
+		animFrameLeft = vehicle.animFrameLeft;
+		animFrameRight = vehicle.animFrameRight;
 		animFrame = vehicle.animFrame;
 		
 		//Rendering the body
@@ -106,7 +240,9 @@ public class ModelVehicle extends ModelDriveable
 			}
 			for(ModelRendererTurbo aSteeringWheelModel : steeringWheelModel)
 			{
-				aSteeringWheelModel.rotateAngleX = vehicle.wheelsYaw * 3.14159265F / 180F * 3F;
+				if (!vehicle.hugeBoat)
+					aSteeringWheelModel.rotateAngleX = vehicle.wheelsYaw * 3.14159265F / 180F * 3F;
+				else aSteeringWheelModel.rotateAngleX = -vehicle.wheelsYaw * 3.14159265F / 180F * 3F;
 				aSteeringWheelModel.render(f5, oldRotateOrder);
 			}
 		}
@@ -175,6 +311,20 @@ public class ModelVehicle extends ModelDriveable
 				leftTrackWheelModel.rotateAngleZ = rotateWheels ? -vehicle.wheelsAngle : 0;
 				leftTrackWheelModel.render(f5, oldRotateOrder);
 			}
+
+			if (vehicle.animFrameLeft == 0) {
+				for (ModelRendererTurbo aLeftTrackModel1 : leftAnimTrackModel1) {
+					aLeftTrackModel1.render(f5, oldRotateOrder);
+				}
+			} else if (vehicle.animFrameLeft == 1) {
+				for (ModelRendererTurbo aLeftTrackModel2 : leftAnimTrackModel2) {
+					aLeftTrackModel2.render(f5, oldRotateOrder);
+				}
+			} else if (vehicle.animFrameLeft == 2) {
+				for (ModelRendererTurbo aLeftTrackModel3 : leftAnimTrackModel3) {
+					aLeftTrackModel3.render(f5, oldRotateOrder);
+				}
+			}
 			
 			for(int i = 0; i < leftAnimTrackModel.length; i++)
 			{
@@ -186,7 +336,6 @@ public class ModelVehicle extends ModelDriveable
 					}
 				}
 			}
-			
 		}
 		
 		if(vehicle.isPartIntact(EnumDriveablePart.rightTrack))
@@ -199,6 +348,20 @@ public class ModelVehicle extends ModelDriveable
 			{
 				rightTrackWheelModel.rotateAngleZ = rotateWheels ? -vehicle.wheelsAngle : 0;
 				rightTrackWheelModel.render(f5, oldRotateOrder);
+			}
+
+			if (vehicle.animFrameRight == 0) {
+				for (ModelRendererTurbo aRightTrackModel1 : rightAnimTrackModel1) {
+					aRightTrackModel1.render(f5, oldRotateOrder);
+				}
+			} else if (vehicle.animFrameRight == 1) {
+				for (ModelRendererTurbo aRightTrackModel2 : rightAnimTrackModel2) {
+					aRightTrackModel2.render(f5, oldRotateOrder);
+				}
+			} else if (vehicle.animFrameRight == 2) {
+				for (ModelRendererTurbo aRightTrackModel3 : rightAnimTrackModel3) {
+					aRightTrackModel3.render(f5, oldRotateOrder);
+				}
 			}
 			
 			for(int i = 0; i < rightAnimTrackModel.length; i++)
@@ -238,9 +401,15 @@ public class ModelVehicle extends ModelDriveable
 				for(ModelRendererTurbo gunModelPart : gunModel[0])
 				{
 					//Yaw and render
+					GlStateManager.pushMatrix();
+					GlStateManager.scale(vehicle.getVehicleType().vehicleGunModelScale, vehicle.getVehicleType().vehicleGunModelScale, vehicle.getVehicleType().vehicleGunModelScale);
 					gunModelPart.rotateAngleY = -yaw * 3.14159265F / 180F;
 					gunModelPart.render(f5);
+					GlStateManager.popMatrix();
 				}
+
+				GlStateManager.pushMatrix();
+				GlStateManager.scale(vehicle.getVehicleType().vehicleGunModelScale, vehicle.getVehicleType().vehicleGunModelScale, vehicle.getVehicleType().vehicleGunModelScale);
 				//Yaw and pitch, no recoil parts
 				for(ModelRendererTurbo gunModelPart : gunModel[1])
 				{
@@ -257,6 +426,24 @@ public class ModelVehicle extends ModelDriveable
 					gunModelPart.rotateAngleZ = -pitch * 3.14159265F / 180F;
 					gunModelPart.render(f5);
 				}
+
+				GlStateManager.popMatrix();
+			}
+		}
+	}
+
+	public void renderDoor(EntityVehicle vehicle, float f5) {
+		if (vehicle.isPartIntact(EnumDriveablePart.core)) {
+			for (ModelRendererTurbo aDoorAnimModel : doorAnimModel) {
+				aDoorAnimModel.render(f5);
+			}
+		}
+	}
+
+	public void renderDoor2(EntityVehicle vehicle, float f5) {
+		if (vehicle.isPartIntact(EnumDriveablePart.core)) {
+			for (ModelRendererTurbo aDoor2AnimModel : door2AnimModel) {
+				aDoor2AnimModel.render(f5);
 			}
 		}
 	}
@@ -269,11 +456,29 @@ public class ModelVehicle extends ModelDriveable
 	public void renderTurret(float f, float f1, float f2, float f3, float f4, float f5, EntityVehicle vehicle, float dt)
 	{
 		VehicleType type = vehicle.getVehicleType();
+		GlStateManager.pushMatrix();
+		GlStateManager.scale(turretScale.x, turretScale.y, turretScale.z);
+		GlStateManager.translate(turretTrans.x, turretTrans.y, turretTrans.z);
+		IModelCustom model;
+		ResourceLocation turretobj;
 		
 		//Render main turret barrel
 		{
+			if (fancyTurret) {
+				turretobj = new ResourceLocation(FlansMod.MODID, "models/" + turretName);
+				model = AdvancedModelLoader.loadModel(turretobj);
+				GlStateManager.pushMatrix();
+				float scale = 1.0F;
+				//GlStateManager.scale(scale,scale,scale);
+				//GlStateManager.rotate(0, 0, 1, 0);
+				//GlStateManager.translate(0, -0.55F, 0);
+				model.renderAll();
+				GlStateManager.popMatrix();
+			}
 			float yaw = vehicle.getSeat(0).looking.getYaw();
 			float pitch = vehicle.getSeat(0).looking.getPitch();
+			float dPitch = (vehicle.getSeat(0).looking.getPitch() - vehicle.getSeat(0).prevLooking.getPitch());
+			float aPitch = vehicle.getSeat(0).prevLooking.getPitch() + dPitch * dt;
 			
 			for(ModelRendererTurbo aTurretModel : turretModel)
 			{
@@ -281,9 +486,17 @@ public class ModelVehicle extends ModelDriveable
 			}
 			for(ModelRendererTurbo aBarrelModel : barrelModel)
 			{
-				aBarrelModel.rotateAngleZ = -pitch * 3.14159265F / 180F;
+				// aBarrelModel.rotateAngleZ = -pitch * 3.14159265F / 180F;
+				aBarrelModel.rotateAngleZ = -aPitch * 3.14159265F / 180F;
 				aBarrelModel.render(f5, oldRotateOrder);
 			}
+			GlStateManager.pushMatrix();
+			GlStateManager.translate(barrelAttach.x, barrelAttach.y, -barrelAttach.z);
+			GlStateManager.rotate(-aPitch, 0F, 0F, 1F);
+			for (ModelRendererTurbo aBarrelModel : barrelSpecModel) {
+				aBarrelModel.render(f5, oldRotateOrder);
+			}
+			GlStateManager.popMatrix();
 			for(int i = 0; i < ammoModel.length; i++)
 			{
 				if(i >= type.numMissileSlots || vehicle.getDriveableData().missiles[i] != null)
@@ -295,6 +508,68 @@ public class ModelVehicle extends ModelDriveable
 					}
 				}
 			}
+
+			//Render Drakon models
+			float armAngle = vehicle.drakonArmAngle;
+			float dArmAngle = (vehicle.drakonArmAngle - vehicle.prevDrakonArmAngle);
+			for (; dArmAngle > 180F; dArmAngle -= 360F) {
+			}
+			for (; dArmAngle <= -180F; dArmAngle += 360F) {
+			}
+			float drakonArmAngle = vehicle.prevDrakonArmAngle + dArmAngle * dt;
+
+			float railAngle = vehicle.drakonRailAngle;
+			float dRailAngle = (vehicle.drakonRailAngle - vehicle.prevDrakonRailAngle);
+			for (; dRailAngle > 180F; dRailAngle -= 360F) {
+			}
+			for (; dRailAngle <= -180F; dRailAngle += 360F) {
+			}
+			float drakonRailAngle = vehicle.prevDrakonRailAngle + dRailAngle * dt;
+
+			float doorAngle = vehicle.drakonDoorAngle;
+			float dDoorAngle = (vehicle.drakonDoorAngle - vehicle.prevDrakonDoorAngle);
+			for (; dDoorAngle > 180F; dDoorAngle -= 360F) {
+			}
+			for (; dDoorAngle <= -180F; dDoorAngle += 360F) {
+			}
+			float drakonDoorAngle = vehicle.prevDrakonDoorAngle + dDoorAngle * dt;
+
+
+			GlStateManager.pushMatrix();
+			GlStateManager.translate(drakonArmAttach.x, drakonArmAttach.y, drakonArmAttach.z);
+			GlStateManager.rotate(drakonArmAngle, 0F, 0F, 1F);
+			for (ModelRendererTurbo aArmModel : drakonArmModel) {
+				aArmModel.render(f5, oldRotateOrder);
+			}
+
+			GlStateManager.translate(drakonRailAttach.x - drakonArmAttach.x, drakonRailAttach.y - drakonArmAttach.y, drakonRailAttach.z - drakonArmAttach.z);
+			GlStateManager.rotate(drakonRailAngle, 0F, 0F, 1F);
+			for (ModelRendererTurbo aRailModel : drakonRailModel) {
+				aRailModel.render(f5, oldRotateOrder);
+			}
+			if (vehicle.canFireIT1) {
+				for (ModelRendererTurbo aMissileModel : drakonModel) {
+					aMissileModel.render(f5, oldRotateOrder);
+				}
+			}
+
+			if (vehicle.reloadingDrakon && !vehicle.canFireIT1) {
+				for (ModelRendererTurbo aMissileModel : drakonReloadModel) {
+					aMissileModel.render(f5, oldRotateOrder);
+				}
+			}
+
+			GlStateManager.popMatrix();
+
+			GlStateManager.pushMatrix();
+
+			GlStateManager.translate(drakonDoorAttach.x, drakonDoorAttach.y, drakonDoorAttach.z);
+			GlStateManager.rotate(drakonDoorAngle, 1F, 0F, 0F);
+			for (ModelRendererTurbo aDoorModel : drakonDoorModel) {
+				aDoorModel.render(f5, oldRotateOrder);
+			}
+
+			GlStateManager.popMatrix();
 		}
 		
 		//Render turret guns
@@ -342,6 +617,7 @@ public class ModelVehicle extends ModelDriveable
 				}
 			}
 		}
+		GlStateManager.popMatrix();
 	}
 	
 	public void renderAnimBarrel(float f, float f1, float f2, float f3, float f4, float f5, EntityVehicle vehicle,
@@ -383,6 +659,8 @@ public class ModelVehicle extends ModelDriveable
 		flip(bodyDoorCloseModel);
 		flip(turretModel);
 		flip(barrelModel);
+		flip(barrelSpecModel);
+		flip(animBarrelModel);
 		flip(leftFrontWheelModel);
 		flip(rightFrontWheelModel);
 		flip(leftBackWheelModel);
@@ -396,11 +674,24 @@ public class ModelVehicle extends ModelDriveable
 		flip(frontWheelModel);
 		flip(backWheelModel);
 		flip(drillHeadModel);
-		flip(fancyTrackModel);
-		for(ModelRendererTurbo[] latm : leftAnimTrackModel)
+		flip(rightAnimTrackModel1);
+		flip(leftAnimTrackModel1);
+		flip(rightAnimTrackModel2);
+		flip(leftAnimTrackModel2);
+		flip(rightAnimTrackModel3);
+		flip(leftAnimTrackModel3);
+		flip(drakonArmModel);
+		flip(drakonRailModel);
+		flip(drakonDoorModel);
+		flip(drakonModel);
+		flip(drakonReloadModel);
+		for (ModelRendererTurbo[] latm : leftAnimTrackModel)
 			flip(latm);
-		for(ModelRendererTurbo[] ratm : rightAnimTrackModel)
+		for (ModelRendererTurbo[] ratm : rightAnimTrackModel)
 			flip(ratm);
+		flip(doorAnimModel);
+		flip(door2AnimModel);
+		flip(fancyTrackModel);
 	}
 	
 	
@@ -412,6 +703,8 @@ public class ModelVehicle extends ModelDriveable
 		translate(bodyDoorCloseModel, x, y, z);
 		translate(turretModel, x, y, z);
 		translate(barrelModel, x, y, z);
+		translate(barrelSpecModel, x, y, z);
+		translate(animBarrelModel, x, y, z);
 		translate(leftFrontWheelModel, x, y, z);
 		translate(rightFrontWheelModel, x, y, z);
 		translate(leftBackWheelModel, x, y, z);
@@ -425,9 +718,23 @@ public class ModelVehicle extends ModelDriveable
 		translate(frontWheelModel, x, y, z);
 		translate(backWheelModel, x, y, z);
 		translate(drillHeadModel, x, y, z);
+		translate(rightAnimTrackModel1, x, y, z);
+		translate(leftAnimTrackModel1, x, y, z);
+		translate(rightAnimTrackModel2, x, y, z);
+		translate(leftAnimTrackModel2, x, y, z);
+		translate(rightAnimTrackModel3, x, y, z);
+		translate(leftAnimTrackModel3, x, y, z);
 		for(ModelRendererTurbo[] latm : leftAnimTrackModel)
 			translate(latm, x, y, z);
 		for(ModelRendererTurbo[] ratm : rightAnimTrackModel)
 			translate(ratm, x, y, z);
+		translate(doorAnimModel, x, y, z);
+		translate(door2AnimModel, x, y, z);
+		translate(drakonArmModel, x, y, z);
+		translate(drakonRailModel, x, y, z);
+		translate(drakonDoorModel, x, y, z);
+		translate(drakonReloadModel, x, y, z);
+		translate(drakonModel, x, y, z);
+		translate(fancyTrackModel, x, y, z);
 	}
 }

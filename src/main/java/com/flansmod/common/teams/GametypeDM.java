@@ -11,7 +11,7 @@ import net.minecraft.util.math.Vec3d;
 
 import com.flansmod.common.PlayerData;
 
-public class GametypeDM extends Gametype
+public class GametypeDM extends GameType
 {
 	public int scoreLimit = 25;
 	public int newRoundTimer = 0;

@@ -12,22 +12,36 @@ import com.flansmod.common.FlansMod;
 
 public class PacketHitMarker extends PacketBase
 {
+	public float penAmount = 1F;
+    public boolean headshot = false;
+    public boolean explosionHit = false;
 	
 	public PacketHitMarker()
 	{
-		//no data
+
 	}
+	
+	public PacketHitMarker(boolean head, float pen, boolean explosion)
+    {
+        headshot = head;
+        penAmount = pen;
+        explosionHit = explosion;
+    }
 	
 	@Override
 	public void encodeInto(ChannelHandlerContext ctx, ByteBuf data)
 	{
-		//no data
+		data.writeBoolean(headshot);
+        data.writeFloat(penAmount);
+        data.writeBoolean(explosionHit);
 	}
 	
 	@Override
 	public void decodeInto(ChannelHandlerContext ctx, ByteBuf data)
 	{
-		//no data
+		headshot = data.readBoolean();
+        penAmount = data.readFloat();
+        explosionHit = data.readBoolean();
 	}
 	
 	@Override
@@ -40,6 +54,10 @@ public class PacketHitMarker extends PacketBase
 	@SideOnly(Side.CLIENT)
 	public void handleClientSide(EntityPlayer clientPlayer)
 	{
+		FlansModClient.hitMarker = true;
+        FlansModClient.hitMarkerPenAmount = penAmount;
+        FlansModClient.hitMarkerHeadshot = headshot;
+        FlansModClient.hitMarkerExplosion = explosionHit;
 		FlansModClient.addHitMarker();
 	}
 }

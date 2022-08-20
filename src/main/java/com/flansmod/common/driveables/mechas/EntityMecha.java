@@ -348,15 +348,19 @@ public class EntityMecha extends EntityDriveable
 						
 						//TODO this doesn't work
 						
-							if(left)
-							{
-								leftAnimations.doShoot(gunType.getPumpDelay(), gunType.getPumpTime());
-							}
-							else
-							{
-								rightAnimations.doShoot(gunType.getPumpDelay(), gunType.getPumpTime());
-							}
+						int hammerDelay = gunType.model == null ? 0 : gunType.model.hammerDelay;
+						int casingDelay = gunType.model == null ? 0 : gunType.model.casingDelay;
+						float hammerAngle = gunType.model == null ? 0 : gunType.model.hammerAngle;
+						float althammerAngle = gunType.model == null ? 0 : gunType.model.althammerAngle;
 						
+						if(left)
+						{
+							leftAnimations.doShoot(gunType.getPumpDelay(), gunType.getPumpTime(), hammerDelay, hammerAngle, althammerAngle, casingDelay);
+						}
+						else
+						{
+							rightAnimations.doShoot(gunType.getPumpDelay(), gunType.getPumpTime(), hammerDelay, hammerAngle, althammerAngle, casingDelay);
+						}
 						
 						
 						//Damage the bullet item

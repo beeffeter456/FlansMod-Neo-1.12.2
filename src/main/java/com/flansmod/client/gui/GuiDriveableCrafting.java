@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.lwjgl.input.Mouse;
 
 import io.vavr.collection.List;
 import net.minecraft.client.Minecraft;
@@ -70,6 +71,16 @@ public class GuiDriveableCrafting extends GuiScreen
 	 * Whether or not the currently selected driveable can be crafted
 	 */
 	private boolean canCraft = false;
+	
+	/**
+     * The currently selected Driveable
+     */
+    DriveableType selectedType;
+    /**
+     * The string to be rendered when hovering over a recipe item
+     */
+    String recipeTooltip;
+	
 	public static final int BLUEPRINT_ROW_COUNT = 4;
 	public static final int BLUEPRINT_COLUMN_COUNT = 8;
 	public static final int BLUEPRINT_WIDTH = 18;
@@ -183,7 +194,7 @@ public class GuiDriveableCrafting extends GuiScreen
 					recipeScrollPos--;
 				break;
 			case RECIPE_DOWN_BUTTON_ID:
-				DriveableType selectedType = DriveableType.types.get(selectedBlueprint);
+				selectedType = DriveableType.types.get(selectedBlueprint);
 				int totalCells = RECIPE_ROW_COUNT * RECIPE_COLUMN_COUNT;
 				if(recipeScrollPos * RECIPE_COLUMN_COUNT + totalCells < selectedType.driveableRecipe.size())
 					recipeScrollPos++;
@@ -208,7 +219,7 @@ public class GuiDriveableCrafting extends GuiScreen
 		List<ItemToRender> itemsToRender = getBlueprintItemsToRender();
 
 		// Preview
-		DriveableType selectedType = DriveableType.types.get(selectedBlueprint);
+		selectedType = DriveableType.types.get(selectedBlueprint);
 		drawPreview(selectedType);
 
 		// Stats
@@ -536,7 +547,7 @@ public class GuiDriveableCrafting extends GuiScreen
 		recipeUpButton.enabled = recipeScrollPos > 0;
 
 		int totalRecipeItems = RECIPE_COLUMN_COUNT * RECIPE_ROW_COUNT;
-		DriveableType selectedType = DriveableType.types.get(selectedBlueprint);
+		selectedType = DriveableType.types.get(selectedBlueprint);
 		recipeDownButton.enabled =
 				recipeScrollPos * RECIPE_COLUMN_COUNT + totalRecipeItems < selectedType.driveableRecipe.size() - 1;
 	}
@@ -607,4 +618,34 @@ public class GuiDriveableCrafting extends GuiScreen
 
 	private enum Direction
 	{UP, DOWN}
+	
+	@Override
+    public void handleMouseInput() throws IOException {
+        super.handleMouseInput();
+        int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth;
+        int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
+
+        int recipeX = mouseX - 8 - guiOriginX;
+        int recipeY = mouseY - 138 - guiOriginY;
+        if (recipeX >= 0 && recipeY >= 0 && recipeX < 18 * 4 && recipeY < 17 * 3) {
+            int idX = recipeX / 18;
+            int idY = recipeY / 18;
+
+            int id;
+            if (recipeX % 18 >= 16 || recipeY % 18 >= 16) {
+                id = -1;
+            } else {
+                id = recipeScrollPos * 4 + idY * 4 + idX;
+            }
+
+            if (id < selectedType.driveableRecipe.size() && id > -1) {
+                ItemStack recipeStack = selectedType.driveableRecipe.get(id);
+                recipeTooltip = recipeStack.getDisplayName();
+            } else {
+                recipeTooltip = null;
+            }
+        } else {
+            recipeTooltip = null;
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package com.flansmod.common.tools;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import net.minecraft.client.util.ITooltipFlag;
@@ -8,6 +9,7 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemFood;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
@@ -25,6 +27,7 @@ import com.flansmod.common.PlayerData;
 import com.flansmod.common.PlayerHandler;
 import com.flansmod.common.driveables.DriveablePart;
 import com.flansmod.common.driveables.EntityDriveable;
+import com.flansmod.common.guns.EntityGrenade;
 import com.flansmod.common.network.PacketFlak;
 import com.flansmod.common.types.IFlanItem;
 import com.flansmod.common.types.InfoType;
@@ -55,10 +58,21 @@ public class ItemTool extends ItemFood implements IFlanItem
 	@Override
 	public void addInformation(ItemStack stack, World world, List<String> lines, ITooltipFlag b)
 	{
+		if(!type.contentPack.isEmpty())
+		{
+			lines.add(type.contentPack);
+		}
 		if(type.description != null)
 		{
 			Collections.addAll(lines, type.description.split("_"));
 		}
+		if(stack.getTagCompound() != null){
+			lines.add(stack.getTagCompound().getString("key"));
+		}
+	}
+	
+	public void onCreated(ItemStack itemStack, World world, EntityPlayer player) {
+	    itemStack.setTagCompound(new NBTTagCompound()); 
 	}
 	
 	@Override
@@ -70,26 +84,44 @@ public class ItemTool extends ItemFood implements IFlanItem
 		
 		else if(type.parachute)
 		{
-			//Create a parachute, spawn it and put the player in it
-			if(!world.isRemote)
+			if(EntityParachute.canUseParachute(entityplayer))
 			{
-				EntityParachute parachute = new EntityParachute(world, type, entityplayer);
-				world.spawnEntity(parachute);
-				entityplayer.startRiding(parachute);
+				//Create a parachute, spawn it and put the player in it
+				if(!world.isRemote)
+				{
+					EntityParachute parachute = new EntityParachute(world, type, entityplayer);
+					if(!parachute.isDead)
+					{
+						world.spawnEntity(parachute);
+						entityplayer.startRiding(parachute);
+					}
+				}
+				
+				//If not in creative and the tool should decay, damage it
+				if(!entityplayer.capabilities.isCreativeMode && type.toolLife > 0)
+					itemstack.setItemDamage(itemstack.getItemDamage() + 1);
+				//If the tool is damagable and is destroyed upon being used up, then destroy it
+				if(type.toolLife > 0 && type.destroyOnEmpty && itemstack.getItemDamage() == itemstack.getMaxDamage())
+					itemstack.setCount(itemstack.getCount() - 1);
 			}
-			
-			//If not in creative and the tool should decay, damage it
-			if(!entityplayer.capabilities.isCreativeMode && type.toolLife > 0)
-				itemstack.setItemDamage(itemstack.getItemDamage() + 1);
-			//If the tool is damagable and is destroyed upon being used up, then destroy it
-			if(type.toolLife > 0 && type.destroyOnEmpty && itemstack.getItemDamage() == itemstack.getMaxDamage())
-				itemstack.setCount(itemstack.getCount() - 1);
 			//Our work here is done. Let's be off
 			return new ActionResult<>(EnumActionResult.SUCCESS, itemstack);
+			
 		}
 		else if(type.remote)
 		{
 			PlayerData data = PlayerHandler.getPlayerData(entityplayer, world.isRemote ? Side.CLIENT : Side.SERVER);
+			if(data == null)
+				return null;
+			Iterator<EntityGrenade> i = data.remoteExplosives.iterator();
+			while (i.hasNext())
+			{
+				EntityGrenade grenade = i.next();
+				if(grenade.isDead)
+				{
+					i.remove();
+				}
+			}
 			//If we have some remote explosives out there
 			if(data.remoteExplosives.size() > 0)
 			{
@@ -205,6 +237,19 @@ public class ItemTool extends ItemFood implements IFlanItem
 					return new ActionResult<>(EnumActionResult.SUCCESS, itemstack);
 				}
 			}
+			if(!world.isRemote && type.key){
+				for(int i = 0; i < world.loadedEntityList.size(); i++)
+				{
+					Object obj = world.loadedEntityList.get(i);
+					if(obj instanceof EntityDriveable)
+					{
+						EntityDriveable driveable = (EntityDriveable)obj;
+						//Raytrace
+						driveable.raytraceParts(new Vector3f(posVec), Vector3f.sub(new Vector3f(lookVec), new Vector3f(posVec), null));
+						//If we hit something that is healable
+					}
+				}
+	        }
 		}
 		return new ActionResult<>(EnumActionResult.FAIL, itemstack);
 	}

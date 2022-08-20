@@ -29,11 +29,13 @@ import com.flansmod.common.FlansMod;
 import com.flansmod.common.types.IFlanItem;
 import com.flansmod.common.types.InfoType;
 
-public class ItemTeamArmour extends ItemArmor implements IFlanItem //, ISpecialArmor
+public class ItemTeamArmour extends ItemArmor implements IFlanItem, ISpecialArmor
 {
 	public ArmourType type;
-	private ArmorMaterial material;
+	//private ArmorMaterial material;
 	protected static final UUID[] uuid = new UUID[]{UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()};
+	
+	public ArmorMaterial armorMat;
 	
 	public ItemTeamArmour(ArmourType t)
 	{
@@ -47,6 +49,16 @@ public class ItemTeamArmour extends ItemArmor implements IFlanItem //, ISpecialA
 					t.Toughness), 
 				0, 
 				EntityEquipmentSlot.values()[5 - t.type]);
+		
+		armorMat = EnumHelper.addArmorMaterial(
+				t.shortName, 
+				"", 
+				t.Durability, 
+				new int[] {t.DamageReductionAmount, t.DamageReductionAmount, t.DamageReductionAmount, t.DamageReductionAmount}, 
+				t.Enchantability, 
+				SoundEvents.ITEM_ARMOR_EQUIP_GENERIC, 
+				t.Toughness);
+		
 		type = t;
 		type.item = this;
 		setRegistryName(type.shortName);
@@ -54,6 +66,8 @@ public class ItemTeamArmour extends ItemArmor implements IFlanItem //, ISpecialA
 		
 		if(type.Durability > 0)
 			setMaxDamage(type.Durability);
+		else if (FlansMod.breakableArmor == 1)
+            setMaxDamage(FlansMod.defaultArmorDurability);
 		else
 			setMaxDamage(0);
 	}
@@ -69,11 +83,14 @@ public class ItemTeamArmour extends ItemArmor implements IFlanItem //, ISpecialA
         return type.Enchantability;
     }
 	
-	/*
 	@Override
 	public ArmorProperties getProperties(EntityLivingBase player, ItemStack armor, DamageSource source, double damage, int slot)
 	{
-		return new ArmorProperties(1, type.defence, Integer.MAX_VALUE);
+		if (source instanceof EntityDamageSourceFlans && !((EntityDamageSourceFlans) source).melee) {
+            return new ArmorProperties(1, type.bulletDefence, Integer.MAX_VALUE);
+        } else {
+            return new ArmorProperties(1, type.defence, Integer.MAX_VALUE);
+        }
 	}
 	
 	@Override
@@ -85,9 +102,12 @@ public class ItemTeamArmour extends ItemArmor implements IFlanItem //, ISpecialA
 	@Override
 	public void damageArmor(EntityLivingBase entity, ItemStack stack, DamageSource source, int damage, int slot)
 	{
-		//Do nothing to the armour. It should not break as that would leave the player's team ambiguous
+		//0 = Non-breakable, 1 = All breakable, 2 = Refer to armor config
+        int breakType = FlansMod.breakableArmor;
+        if (breakType == 2 && type.hasDurability || breakType == 1) {
+            stack.damageItem(damage, entity);
+        }
 	}
-	*/
 	
 	@Override
 	public String getArmorTexture(ItemStack stack, Entity entity, EntityEquipmentSlot slot, String armourType)
@@ -115,8 +135,14 @@ public class ItemTeamArmour extends ItemArmor implements IFlanItem //, ISpecialA
 			lines.add("\u00a72+Smoke Protection");
 		if(type.nightVision)
 			lines.add("\u00a72+Night Vision");
+		if (type.invisible)
+            lines.add("\u00a72+Invisibility");
 		if(type.negateFallDamage)
 			lines.add("\u00a72+Negates Fall Damage");
+		if (type.fireResistance)
+            lines.add("\u00a72+Fire Resistance");
+        if (type.waterBreathing)
+            lines.add("\u00a72+Water Breathing");
 	}
 	
 	protected static final UUID KNOCKBACK_RESIST_MODIFIER = UUID.fromString("77777777-645C-4F38-A497-9C13A33DB5CF");
@@ -162,5 +188,16 @@ public class ItemTeamArmour extends ItemArmor implements IFlanItem //, ISpecialA
 			player.addPotionEffect(new PotionEffect(Potion.getPotionById(8), 250, (int)((type.jumpModifier - 1F) * 2F), true, false)); // 8 = jump boost
 		if(type.negateFallDamage)
 			player.fallDistance = 0F;
+		if (type.fireResistance && FlansMod.ticker % 25 == 0)
+            player.addPotionEffect(new PotionEffect(Potion.getPotionById(12), 250));
+        if (type.waterBreathing && FlansMod.ticker % 25 == 0)
+            player.addPotionEffect(new PotionEffect(Potion.getPotionById(13), 250));
+        if (type.onWaterWalking) {
+            if (player.isInWater()) {
+                player.capabilities.allowFlying = true;
+            } else {
+                player.capabilities.isFlying = false;
+            }
+        }
 	}
 }

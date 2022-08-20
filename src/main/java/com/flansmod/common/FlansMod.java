@@ -151,6 +151,22 @@ public class FlansMod
 	public static final String VERSION = "@VERSION@";
 	@Instance(MODID)
 	public static FlansMod INSTANCE;
+	public static boolean printDebugLog = true;
+    public static boolean printStackTrace = false;
+    public static int noticeSpawnKillTime = 10;
+    public static boolean gunCarryLimitEnable = false;
+    public static int gunCarryLimit = 3;
+    public static int breakableArmor = 0;
+    public static int defaultArmorDurability = 500;
+    public static boolean armsEnable = true;
+    public static boolean casingEnable = true;
+    public static boolean crosshairEnable = false;
+    public static boolean realisticRecoil = false;
+    public static boolean enableSightDownwardMovement = true;
+    public static boolean hitCrossHairEnable = true;
+    public static boolean hdHitCrosshair = false;
+    public static boolean bulletGuiEnable = true;
+    public static float[] hitCrossHairColor = new float[]{1.0F, 1.0F, 1.0F, 1.0F};
 	
 	@SidedProxy(clientSide = "com.flansmod.client.ClientProxy", serverSide = "com.flansmod.common.CommonProxy")
 	public static CommonProxy proxy;
@@ -773,6 +789,9 @@ public class FlansMod
 		addAllPaintjobsToCreative = configFile.getBoolean("Add All Paintjobs to Creative", Configuration.CATEGORY_GENERAL, addAllPaintjobsToCreative, "Whether all paintjobs should appear in creative");
 		forceUpdateJSONs = configFile.getBoolean("ForceUpdateJSONs", Configuration.CATEGORY_GENERAL, forceUpdateJSONs, "Turn this on to force re-create all JSON files. Should only be used in dev environment");
 		enchantmentModuleEnabled = configFile.getBoolean("EnchantmentModuleEnabled", Configuration.CATEGORY_GENERAL, enchantmentModuleEnabled, "Enable gun-related enchantments");
+		
+		//Client Side Settings
+        armsEnable = configFile.getBoolean("Enable Arms", Configuration.CATEGORY_GENERAL, armsEnable, "Enable arms rendering");
 		
 		if(configFile.hasChanged())
 			configFile.save();

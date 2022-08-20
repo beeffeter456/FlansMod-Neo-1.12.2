@@ -491,6 +491,10 @@ public class Bone
 		vector = new Vec3d(xVec, yVec, zVec);
 	}
 	
+	public void setParent(Bone parent){
+		attachBone(parent);
+	}
+	
 	protected void add(Vec3d destVec, Vec3d srcVec)
 	{
 		destVec = destVec.add(srcVec);

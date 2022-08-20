@@ -98,6 +98,11 @@ public class GuiDriveableMenu extends GuiContainer
 			FlansMod.getPacketHandler().sendToServer(new PacketDriveableGUI(1));
 			//inventory.player.openGui(FlansMod.INSTANCE, 7, world, entity.chunkCoordX, entity.chunkCoordY, entity.chunkCoordZ);
 		}
+		if (button.id == 6) {
+            FlansMod.getPacketHandler().sendToServer(new PacketDriveableGUI(1));
+            //inventory.player.openGui(FlansMod.INSTANCE, 7, world, entity.chunkCoordX, entity.chunkCoordY, entity.chunkCoordZ);
+
+        }
 
 	}
 

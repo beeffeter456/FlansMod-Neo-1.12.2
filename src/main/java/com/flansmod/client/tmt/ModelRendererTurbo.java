@@ -16,6 +16,7 @@ import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.client.model.TexturedQuad;
 import net.minecraft.client.renderer.GLAllocation;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
@@ -34,6 +35,7 @@ import net.minecraft.util.math.Vec3d;
  */
 public class ModelRendererTurbo extends ModelRenderer
 {
+	public boolean glow = false;
 	public ModelRendererTurbo(ModelBase modelbase, String s)
 	{
 		super(modelbase, s);
@@ -2120,6 +2122,16 @@ public class ModelRendererTurbo extends ModelRenderer
 	 */
 	public void render(float worldScale, boolean oldRotateOrder)
 	{
+		GlStateManager.pushMatrix();
+		if(glow){
+			glowOn();
+		}
+		GlStateManager.alphaFunc(GL11.GL_GREATER, 0.001F);
+		GlStateManager.glEnableClientState(GL11.GL_BLEND);
+		int srcBlend = GlStateManager.glGetInteger(GL11.GL_BLEND_SRC);
+		int dstBlend = GlStateManager.glGetInteger(GL11.GL_BLEND_DST);
+		GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+		
 		if(field_1402_i)
 		{
 			return;
@@ -2190,6 +2202,12 @@ public class ModelRendererTurbo extends ModelRenderer
 				
 			}
 		}
+		if(glow) {
+			glowOff();
+		}
+		GlStateManager.blendFunc(srcBlend, dstBlend);
+		GlStateManager.glDisableClientState(GL11.GL_BLEND);
+		GlStateManager.popMatrix();
 	}
 	
 	@Override
@@ -2324,6 +2342,53 @@ public class ModelRendererTurbo extends ModelRenderer
 		}
 		
 		GlStateManager.glEndList();
+	}
+	
+	//lighting stuff
+	private static float lightmapLastX;
+	private static float lightmapLastY;
+	private static boolean optifineBreak = false;
+		
+	public static void glowOn()
+	{
+		glowOn(15);
+	}
+		
+	public static void glowOn(int glow)
+	{
+		GL11.glPushAttrib(GL11.GL_LIGHTING_BIT);
+	        
+		//GL11.glEnable(GL11.GL_BLEND);
+	   	//GL11.glDisable(GL11.GL_ALPHA_TEST);
+		//GL11.glBlendFunc(GL11.GL_ONE, GL11.GL_ONE);
+
+		try 
+		{
+			lightmapLastX = OpenGlHelper.lastBrightnessX;
+			lightmapLastY = OpenGlHelper.lastBrightnessY;
+	  	} 
+		catch(NoSuchFieldError e) 
+		{
+			optifineBreak = true;
+	    }
+		
+		float glowRatioX = Math.min((glow/15F)*240F + lightmapLastX, 240);
+		float glowRatioY = Math.min((glow/15F)*240F + lightmapLastY, 240);
+	        
+		if(!optifineBreak)
+	 	{
+			OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, glowRatioX, glowRatioY);        	
+		}
+	}
+
+	public static void glowOff() 
+	{
+		if(!optifineBreak)
+		{
+			OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, lightmapLastX, lightmapLastY);
+		}
+	    	
+	 	GL11.glPopAttrib();
 	}
 	
 	private PositionTextureVertex vertices[];

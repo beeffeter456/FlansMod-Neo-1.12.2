@@ -11,7 +11,7 @@ import net.minecraft.util.math.Vec3d;
 
 import com.flansmod.common.PlayerData;
 
-public class GametypeCTF extends Gametype
+public class GametypeCTF extends GameType
 {
 	public boolean friendlyFire = false;
 	public boolean autoBalance = true;

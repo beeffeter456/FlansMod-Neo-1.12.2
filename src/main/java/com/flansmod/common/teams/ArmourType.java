@@ -34,6 +34,20 @@ public class ArmourType extends InfoType
 	public int Enchantability = 10;
 	
 	/**
+     * The amount of damage to absorb. From 0 to 1. Stacks additively between armour
+     * pieces. For bullet damage specifically.
+     */
+    public double bulletDefence;
+
+    /**
+     * How good the armour is at stopping bullets. Same units as bullet penetration. Default 0 to emulate previous behaviour
+     */
+    public float penetrationResistance = 0;
+    /**
+     * The name for the armour texture. Texture path/name is assets/flansmod/armor/<armourTextureName>_1.png or _2 for legs
+     */
+	
+	/**
 	 * The name for the armour texture. Texture path/name is assets/flansmod/armor/<armourTextureName>_1.png or _2 for legs
 	 */
 	public String armourTextureName;
@@ -45,6 +59,10 @@ public class ArmourType extends InfoType
 	 * If true, then the player gets a night vision buff every couple of seconds
 	 */
 	public boolean nightVision = false;
+	 /**
+     * If true, then the player gets a invisiblity buff every couple of seconds
+     */
+    public boolean invisible = false;
 	/**
 	 * The overlay to display when using this helmet. Textures are pulled from the scopes directory
 	 */
@@ -57,6 +75,26 @@ public class ArmourType extends InfoType
 	 * If ture, the player will not receive fall damage
 	 */
 	public boolean negateFallDamage = false;
+	/**
+     * If true, the player will not receive fire damage
+     */
+    public boolean fireResistance = false;
+    /**
+     * If true, the player can breath under water
+     */
+    public boolean waterBreathing = false;
+    /**
+     * If true, the player can walk on water
+     */
+    public boolean onWaterWalking = false;
+    /**
+     * If true, the armor has durability
+     */
+    public boolean hasDurability = false;
+    /**
+     * The durability for the piece of armor
+     */
+    public int durability = 0;
 	
 	@SideOnly(Side.CLIENT)
 	public ModelCustomArmour model;
@@ -92,15 +130,31 @@ public class ArmourType extends InfoType
 			
 			defence = Read(split, "DamageReduction", defence);
 			defence = Read(split, "Defence", defence);
+			if (split[0].equals("DamageReduction") || split[0].equals("Defence"))
+            {
+                bulletDefence = defence;
+            }
+			bulletDefence = Read(split, "BulletDefence", bulletDefence);
+			defence = Read(split, "OtherDefence", defence);
 			moveSpeedModifier = Read(split, "MoveSpeedModifier", moveSpeedModifier);
 			moveSpeedModifier = Read(split, "Slowness", moveSpeedModifier);
 			jumpModifier = Read(split, "JumpModifier", jumpModifier);
 			knockbackModifier = Read(split, "KnockbackReduction", knockbackModifier);
 			knockbackModifier = Read(split, "KnockbackModifier", knockbackModifier);
+			penetrationResistance = Read(split, "PenetrationResistance", penetrationResistance);
 			nightVision = Read(split, "NightVision", nightVision);
+			invisible = Read(split, "Invisible", invisible);
 			negateFallDamage = Read(split, "NegateFallDamage", negateFallDamage);
+			fireResistance = Read(split, "FireResistance", fireResistance);
+			waterBreathing = Read(split, "WaterBreathing", waterBreathing);
 			overlay = Read(split, "Overlay", overlay);
 			smokeProtection = Read(split, "SmokeProtection", smokeProtection);
+			onWaterWalking = Read(split, "OnWaterWalking", onWaterWalking);
+			durability = Read(split, "Durability", durability);
+			if (split[0].equals("Durability")) 
+			{
+                hasDurability = durability > 0;
+            }
 			armourTextureName = Read(split, "ArmourTexture", armourTextureName);
 			armourTextureName = Read(split, "ArmorTexture", armourTextureName);
 			Enchantability = Read(split, "Enchantability", Enchantability);
@@ -111,7 +165,7 @@ public class ArmourType extends InfoType
 		}
 		catch(Exception e)
 		{
-			FlansMod.log.error("Reading armour file failed.");
+			FlansMod.log.error("Reading armour file failed : " + this.shortName + " from pack " + this.packName);
 			FlansMod.log.throwing(e);
 		}
 	}
@@ -152,4 +206,9 @@ public class ArmourType extends InfoType
 	{
 		return model;
 	}
+	
+	@Override
+    public float GetRecommendedScale() {
+        return 50.0f;
+    }
 }

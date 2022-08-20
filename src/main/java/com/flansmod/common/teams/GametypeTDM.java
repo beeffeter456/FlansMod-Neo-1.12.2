@@ -11,7 +11,7 @@ import net.minecraft.util.math.Vec3d;
 
 import com.flansmod.common.PlayerData;
 
-public class GametypeTDM extends Gametype
+public class GametypeTDM extends GameType
 {
 	public boolean friendlyFire = false;
 	public boolean autoBalance = true;
@@ -73,9 +73,7 @@ public class GametypeTDM extends Gametype
 				return friendlyFire;
 		}
 		//Players may not attack spectators
-		if(getPlayerData(player).team == Team.spectators)
-			return false;
-		return true;
+		return (getPlayerData(player).team == Team.spectators);
 	}
 	
 	@Override
@@ -166,17 +164,17 @@ public class GametypeTDM extends Gametype
 	@Override
 	public boolean setVariable(String variable, String value)
 	{
-		if(variable.toLowerCase().equals("scorelimit"))
+		if(variable.equalsIgnoreCase("scorelimit"))
 		{
 			scoreLimit = Integer.parseInt(value);
 			return true;
 		}
-		if(variable.toLowerCase().equals("friendlyfire"))
+		if(variable.equalsIgnoreCase("friendlyfire"))
 		{
 			friendlyFire = Boolean.parseBoolean(value);
 			return true;
 		}
-		if(variable.toLowerCase().equals("autobalance"))
+		if(variable.equalsIgnoreCase("autobalance"))
 		{
 			autoBalance = Boolean.parseBoolean(value);
 			return true;

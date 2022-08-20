@@ -1,5 +1,6 @@
 package com.flansmod.client.model;
 
+import com.flansmod.common.vector.Vector3f;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 
@@ -46,7 +47,7 @@ public class RenderMecha extends Render<EntityMecha> implements CustomItemRender
 	{
 		super(manager);
 		renderItem = Minecraft.getMinecraft().getRenderItem();
-		shadowSize = 0.5F;
+		shadowSize = 1.5F;
 	}
 	
 	public void doRender(EntityMecha mecha, double d, double d1, double d2, float f, float f1)
@@ -57,38 +58,32 @@ public class RenderMecha extends Render<EntityMecha> implements CustomItemRender
 		GlStateManager.pushMatrix();
 		GlStateManager.translate((float)d, (float)d1, (float)d2);
 		float dYaw = (mecha.axes.getYaw() - mecha.prevRotationYaw);
-		for(; dYaw > 180F; dYaw -= 360F)
-		{
-		}
-		for(; dYaw <= -180F; dYaw += 360F)
-		{
-		}
+
+		while (dYaw > 180F) { dYaw -= 360F; }
+		while (dYaw <= -180F) { dYaw += 360F; }
+
 		float dPitch = (mecha.axes.getPitch() - mecha.prevRotationPitch);
-		for(; dPitch > 180F; dPitch -= 360F)
-		{
-		}
-		for(; dPitch <= -180F; dPitch += 360F)
-		{
-		}
+
+		while (dPitch > 180F) { dPitch -= 360F; }
+		while (dPitch <= -180F) { dPitch += 360F; }
+
 		float dRoll = (mecha.axes.getRoll() - mecha.prevRotationRoll);
-		for(; dRoll > 180F; dRoll -= 360F)
-		{
-		}
-		for(; dRoll <= -180F; dRoll += 360F)
-		{
-		}
+
+		while (dRoll > 180F) { dRoll -= 360F; }
+		while (dRoll <= -180F) { dRoll += 360F; }
+
 		GlStateManager.rotate(-mecha.prevRotationYaw - dYaw * f1, 0.0F, 1.0F, 0.0F);
 		GlStateManager.rotate(mecha.prevRotationPitch + dPitch * f1, 0.0F, 0.0F, 1.0F);
 		GlStateManager.rotate(mecha.prevRotationRoll + dRoll * f1, 1.0F, 0.0F, 0.0F);
 		float modelScale = mecha.getMechaType().modelScale;
 		ModelMecha model = (ModelMecha)type.model;
+		if (model == null) { return; }
 		
 		//Body Render
 		{
 			GlStateManager.pushMatrix();
 			GlStateManager.scale(modelScale, modelScale, modelScale);
-			if(model != null)
-				model.render(mecha, f1);
+			model.render(mecha, f1);
 			
 			//Render hips slot : jetpack item
 			ItemStack hipsSlot = mecha.inventory.getStackInSlot(EnumMechaSlotType.hips);
@@ -262,125 +257,209 @@ public class RenderMecha extends Render<EntityMecha> implements CustomItemRender
 			GlStateManager.rotate(mecha.prevRotationPitch + dPitch * f1, 0.0F, 0.0F, 1.0F);
 			GlStateManager.rotate(mecha.prevRotationRoll + dRoll * f1, 1.0F, 0.0F, 0.0F);
 			GlStateManager.scale(modelScale, modelScale, modelScale);
-			if(model != null)
+			float legLength = type.legLength;
+			float rearlegLength = type.RearlegLength;
+			float frontlegLength = type.FrontlegLength;
+			float legTrans = type.LegTrans;
+			float rearlegTrans = type.RearLegTrans;
+			float frontlegTrans = type.FrontLegTrans;
+
+			float dLLUR = mecha.leftLegUpperAngle - mecha.prevLeftLegUpperAngle;
+			float dLLLR = mecha.leftLegLowerAngle - mecha.prevLeftLegLowerAngle;
+			float dLFR = mecha.leftFootAngle - mecha.prevLeftFootAngle;
+			float dRLUR = mecha.rightLegUpperAngle - mecha.prevRightLegUpperAngle;
+			float dRLLR = mecha.rightLegLowerAngle - mecha.prevRightLegLowerAngle;
+			float dRFR = mecha.rightFootAngle - mecha.prevRightFootAngle;
+
+			float leftLegUpperRot = (float)Math.toRadians(mecha.prevLeftLegUpperAngle + dLLUR*f1);
+			float rightLegUpperRot = (float)Math.toRadians(mecha.prevRightLegUpperAngle + dRLUR*f1);
+			float leftLegLowerRot = (float)Math.toRadians(mecha.prevLeftLegLowerAngle + dLLLR*f1);
+			Vector3f leftLegLowerPos;
+			float rightLegLowerRot = (float)Math.toRadians(mecha.prevRightLegLowerAngle + dRLLR*f1);
+			Vector3f rightLegLowerPos;
+			float leftFootRot = (float)Math.toRadians(mecha.prevLeftFootAngle + dLFR*f1);
+			Vector3f leftFootPos;
+			float rightFootRot = (float)Math.toRadians(mecha.rightFootAngle + dRFR*f1);
+			Vector3f rightFootPos;
+
+			float legsYaw = (float)Math.sin(((mecha.ticksExisted) + f1) / type.legSwingTime) * mecha.legSwing;
+			float footH = (float)Math.sin(legsYaw) * legLength;
+			float footV = (float)Math.cos(legsYaw) * legLength;
+			float footRH = (float)Math.sin(legsYaw) * rearlegLength;
+			float footRV = (float)Math.cos(legsYaw) * rearlegLength;
+			float footFH = (float)Math.sin(legsYaw) * frontlegLength;
+			float footFV = (float)Math.cos(legsYaw) * frontlegLength;
+
+			//Hips
+			model.renderHips(scale, mecha, f1);
+
+			GlStateManager.pushMatrix();
 			{
-				float legLength = type.legLength;
-				float rearlegLength = type.RearlegLength;
-				float frontlegLength = type.FrontlegLength;
-				float legTrans = type.LegTrans;
-				float rearlegTrans = type.RearLegTrans;
-				float frontlegTrans = type.FrontLegTrans;
-				
-				float legsYaw = (float)Math.sin(((mecha.ticksExisted) + f1) / type.legSwingTime) * mecha.legSwing;
-				float footH = (float)Math.sin(legsYaw) * legLength;
-				float footV = (float)Math.cos(legsYaw) * legLength;
-				float footRH = (float)Math.sin(legsYaw) * rearlegLength;
-				float footRV = (float)Math.cos(legsYaw) * rearlegLength;
-				float footFH = (float)Math.sin(legsYaw) * frontlegLength;
-				float footFV = (float)Math.cos(legsYaw) * frontlegLength;
-				
-				//Hips
-				model.renderHips(scale, mecha, f1);
-				
+				GlStateManager.translate(legTrans, legLength, 0F);
+
+				//Left Foot
 				GlStateManager.pushMatrix();
-				{
-					GlStateManager.translate(legTrans, legLength, 0F);
-					
-					//Left Foot
-					GlStateManager.pushMatrix();
-					GlStateManager.translate(footH, -footV, 0F);
-					model.renderLeftFoot(scale, mecha, f1);
-					GlStateManager.popMatrix();
-					
-					//Right Foot
-					GlStateManager.pushMatrix();
-					GlStateManager.translate(-footH, -footV, 0F);
-					model.renderRightFoot(scale, mecha, f1);
-					GlStateManager.popMatrix();
-					
-					//Left Leg
-					GlStateManager.pushMatrix();
-					GlStateManager.rotate(legsYaw * 180F / 3.14159265F, 0F, 0F, 1F);
-					GlStateManager.translate(0F, -legLength, 0F);
-					model.renderLeftLeg(scale, mecha, f1);
-					GlStateManager.popMatrix();
-					
-					//Right Leg
-					GlStateManager.pushMatrix();
-					GlStateManager.rotate(-legsYaw * 180F / 3.14159265F, 0F, 0F, 1F);
-					GlStateManager.translate(0F, -legLength, 0F);
-					model.renderRightLeg(scale, mecha, f1);
-					GlStateManager.popMatrix();
-				}
+				GlStateManager.translate(footH, -footV, 0F);
+				model.renderLeftFoot(scale, mecha, f1);
 				GlStateManager.popMatrix();
-				
+
+				//Right Foot
 				GlStateManager.pushMatrix();
-				{
-					GlStateManager.translate(rearlegTrans, rearlegLength, 0F);
-					
-					//Left Rear Foot
-					GlStateManager.pushMatrix();
-					GlStateManager.translate(-footRH, -footRV, 0F);
-					model.renderLeftRearFoot(scale, mecha, f1);
-					GlStateManager.popMatrix();
-					
-					//Right Rear Foot
-					GlStateManager.pushMatrix();
-					GlStateManager.translate(footRH, -footRV, 0F);
-					model.renderRightRearFoot(scale, mecha, f1);
-					GlStateManager.popMatrix();
-					
-					//Left Rear Leg
-					GlStateManager.pushMatrix();
-					GlStateManager.rotate(-legsYaw * 180F / 3.14159265F, 0F, 0F, 1F);
-					GlStateManager.translate(0F, -rearlegLength, 0F);
-					model.renderLeftRearLeg(scale, mecha, f1);
-					GlStateManager.popMatrix();
-					
-					//Right Leg
-					GlStateManager.pushMatrix();
-					GlStateManager.rotate(legsYaw * 180F / 3.14159265F, 0F, 0F, 1F);
-					GlStateManager.translate(0F, -rearlegLength, 0F);
-					model.renderRightRearLeg(scale, mecha, f1);
-					GlStateManager.popMatrix();
-				}
+				GlStateManager.translate(-footH, -footV, 0F);
+				model.renderRightFoot(scale, mecha, f1);
 				GlStateManager.popMatrix();
-				
+
+				//Left Leg
 				GlStateManager.pushMatrix();
-				{
-					GlStateManager.translate(frontlegTrans, frontlegLength, 0F);
-					
-					//Left Front Foot
-					GlStateManager.pushMatrix();
-					GlStateManager.translate(-footFH, -footFV, 0F);
-					model.renderLeftFrontFoot(scale, mecha, f1);
-					GlStateManager.popMatrix();
-					
-					//Right Front Foot
-					GlStateManager.pushMatrix();
-					GlStateManager.translate(footFH, -footFV, 0F);
-					model.renderRightFrontFoot(scale, mecha, f1);
-					GlStateManager.popMatrix();
-					
-					//Left Front Leg
-					GlStateManager.pushMatrix();
-					GlStateManager.rotate(-legsYaw * 180F / 3.14159265F, 0F, 0F, 1F);
-					GlStateManager.translate(0F, -frontlegLength, 0F);
-					model.renderLeftFrontLeg(scale, mecha, f1);
-					GlStateManager.popMatrix();
-					
-					//Right Front Leg
-					GlStateManager.pushMatrix();
-					GlStateManager.rotate(legsYaw * 180F / 3.14159265F, 0F, 0F, 1F);
-					GlStateManager.translate(0F, -frontlegLength, 0F);
-					model.renderRightFrontLeg(scale, mecha, f1);
-					GlStateManager.popMatrix();
-				}
+				GlStateManager.rotate(legsYaw * 180F / 3.14159265F, 0F, 0F, 1F);
+				GlStateManager.translate(0F, -legLength, 0F);
+				model.renderLeftLeg(scale, mecha, f1);
 				GlStateManager.popMatrix();
-				
+
+				//Right Leg
+				GlStateManager.pushMatrix();
+				GlStateManager.rotate(-legsYaw * 180F / 3.14159265F, 0F, 0F, 1F);
+				GlStateManager.translate(0F, -legLength, 0F);
+				model.renderRightLeg(scale, mecha, f1);
+				GlStateManager.popMatrix();
+
+				//Left Leg Upper
+				GlStateManager.pushMatrix();
+				GlStateManager.rotate(leftLegUpperRot * 180F / 3.14159265F, 0F, 0F, 1F);
+				GlStateManager.translate(0F, -legLength, 0F);
+				model.renderLeftAnimLegUpper(scale, mecha, f1);
+				GlStateManager.popMatrix();
+
+				//Right Leg Upper
+				GlStateManager.pushMatrix();
+				GlStateManager.rotate(rightLegUpperRot * 180F / 3.14159265F, 0F, 0F, 1F);
+				GlStateManager.translate(0F, -legLength, 0F);
+				model.renderRightAnimLegUpper(scale, mecha, f1);
+				GlStateManager.popMatrix();
 			}
 			GlStateManager.popMatrix();
+
+			GlStateManager.pushMatrix();
+			{
+				GlStateManager.translate(rearlegTrans, rearlegLength, 0F);
+
+				//Left Rear Foot
+				GlStateManager.pushMatrix();
+				GlStateManager.translate(-footRH, -footRV, 0F);
+				model.renderLeftRearFoot(scale, mecha, f1);
+				GlStateManager.popMatrix();
+
+				//Right Rear Foot
+				GlStateManager.pushMatrix();
+				GlStateManager.translate(footRH, -footRV, 0F);
+				model.renderRightRearFoot(scale, mecha, f1);
+				GlStateManager.popMatrix();
+
+				//Left Rear Leg
+				GlStateManager.pushMatrix();
+				GlStateManager.rotate(-legsYaw * 180F / 3.14159265F, 0F, 0F, 1F);
+				GlStateManager.translate(0F, -rearlegLength, 0F);
+				model.renderLeftRearLeg(scale, mecha, f1);
+				GlStateManager.popMatrix();
+
+				//Right Leg
+				GlStateManager.pushMatrix();
+				GlStateManager.rotate(legsYaw * 180F / 3.14159265F, 0F, 0F, 1F);
+				GlStateManager.translate(0F, -rearlegLength, 0F);
+				model.renderRightRearLeg(scale, mecha, f1);
+				GlStateManager.popMatrix();
+			}
+			GlStateManager.popMatrix();
+
+			GL11.glPushMatrix();
+			{
+				//Left Leg Lower
+				GL11.glPushMatrix();
+				leftLegLowerPos = rotatedChildPosition(model.leftLegUpperOrigin, model.leftLegLowerOrigin, leftLegUpperRot);
+				GL11.glTranslatef(model.leftLegUpperOrigin.x, model.leftLegUpperOrigin.y, model.leftLegUpperOrigin.z);
+				GL11.glTranslatef(leftLegLowerPos.x, -leftLegLowerPos.y, 0F);
+				GL11.glRotatef(leftLegLowerRot * 180F / 3.14159265F, 0F, 0F, 1F);
+				model.renderLeftAnimLegLower(scale, mecha, f1);
+				GL11.glPopMatrix();
+
+				//Right Leg Lower
+				GL11.glPushMatrix();
+				rightLegLowerPos = rotatedChildPosition(model.rightLegUpperOrigin, model.rightLegLowerOrigin, rightLegUpperRot);
+				GL11.glTranslatef(model.rightLegUpperOrigin.x, model.rightLegUpperOrigin.y, model.rightLegUpperOrigin.z);
+				GL11.glTranslatef(rightLegLowerPos.x, -rightLegLowerPos.y, 0F);
+				GL11.glRotatef(rightLegLowerRot * 180F / 3.14159265F, 0F, 0F, 1F);
+				model.renderRightAnimLegLower(scale, mecha, f1);
+				GL11.glPopMatrix();
+
+
+				//Left Foot Anim
+				GL11.glPushMatrix();
+				leftFootPos = rotatedChildPosition(model.leftLegLowerOrigin, model.leftFootOrigin, leftLegLowerRot);
+				GL11.glTranslatef(-model.leftFootOrigin.x, legLength, -model.leftFootOrigin.z);
+				GL11.glTranslatef(leftFootPos.x + leftLegLowerPos.x, -leftFootPos.y - leftLegLowerPos.y, 0F);
+				GL11.glRotatef(leftFootRot * 180F / 3.14159265F, 0F, 0F, 1F);
+				model.renderLeftAnimFoot(scale, mecha, f1);
+				GL11.glPopMatrix();
+
+				//Right Foot Anim
+				GL11.glPushMatrix();
+				rightFootPos = rotatedChildPosition(model.rightLegLowerOrigin, model.rightFootOrigin, rightLegLowerRot);
+				GL11.glTranslatef(-model.rightFootOrigin.x, legLength, -model.rightFootOrigin.z);
+				GL11.glTranslatef(rightFootPos.x + rightLegLowerPos.x, -rightFootPos.y - rightLegLowerPos.y, 0F);
+				GL11.glRotatef(rightFootRot * 180F / 3.14159265F, 0F, 0F, 1F);
+				model.renderRightAnimFoot(scale, mecha, f1);
+				GL11.glPopMatrix();
+			}
+			GL11.glPopMatrix();
+
+			GlStateManager.pushMatrix();
+			{
+				GlStateManager.translate(frontlegTrans, frontlegLength, 0F);
+
+				//Left Front Foot
+				GlStateManager.pushMatrix();
+				GlStateManager.translate(-footFH, -footFV, 0F);
+				model.renderLeftFrontFoot(scale, mecha, f1);
+				GlStateManager.popMatrix();
+
+				//Right Front Foot
+				GlStateManager.pushMatrix();
+				GlStateManager.translate(footFH, -footFV, 0F);
+				model.renderRightFrontFoot(scale, mecha, f1);
+				GlStateManager.popMatrix();
+
+				//Left Front Leg
+				GlStateManager.pushMatrix();
+				GlStateManager.rotate(-legsYaw * 180F / 3.14159265F, 0F, 0F, 1F);
+				GlStateManager.translate(0F, -frontlegLength, 0F);
+				model.renderLeftFrontLeg(scale, mecha, f1);
+				GlStateManager.popMatrix();
+
+				//Right Front Leg
+				GlStateManager.pushMatrix();
+				GlStateManager.rotate(legsYaw * 180F / 3.14159265F, 0F, 0F, 1F);
+				GlStateManager.translate(0F, -frontlegLength, 0F);
+				model.renderRightFrontLeg(scale, mecha, f1);
+				GlStateManager.popMatrix();
+			}
+			GlStateManager.popMatrix();
+
+			GlStateManager.popMatrix();
 		}
+	}
+
+	public Vector3f rotatedChildPosition (Vector3f parentJoint, Vector3f childJoint, float rotation){
+		Vector3f position;
+		float initialRot;
+		float yDiff = parentJoint.y - childJoint.y;
+		float xDiff = parentJoint.x - childJoint.x;
+		float length = (float)Math.sqrt((yDiff*yDiff) + (xDiff*xDiff));
+		initialRot = (float)Math.atan(xDiff/yDiff);
+		float xPos = (float)Math.sin(rotation - initialRot) * length;
+		float yPos = (float)Math.cos(rotation - initialRot) * length;
+		position = new Vector3f(xPos, yPos, 0f);
+		return position;
+
 	}
 	
 	@Override
@@ -426,7 +505,8 @@ public class RenderMecha extends Render<EntityMecha> implements CustomItemRender
 			
 			GlStateManager.rotate(-90F, 0F, 0F, 1F);
 			texturemanager.bindTexture(FlansModResourceHandler.getTexture(gunType));
-			ClientProxy.gunRenderer.renderGun(stack, gunType, 1F / 16F, model, leftHand ? mecha.leftAnimations : mecha.rightAnimations, 0F);
+			CustomItemRenderType type = CustomItemRenderType.ENTITY;
+			ClientProxy.gunRenderer.renderGun(stack, gunType, 1F / 16F, model, leftHand ? mecha.leftAnimations : mecha.rightAnimations, 0F, type);
 		}
 		else
 		{

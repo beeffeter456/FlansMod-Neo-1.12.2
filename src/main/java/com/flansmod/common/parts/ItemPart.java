@@ -1,5 +1,6 @@
 package com.flansmod.common.parts;
 
+import java.util.Collections;
 import java.util.List;
 
 import net.minecraft.client.util.ITooltipFlag;
@@ -34,6 +35,9 @@ public class ItemPart extends Item implements IFlanItem
 	@Override
 	public void addInformation(ItemStack stack, World world, List<String> lines, ITooltipFlag b)
 	{
+		if (type.description != null) {
+            Collections.addAll(lines, type.description.split("_"));
+        }
 		if(type.category == EnumPartCategory.FUEL)
 		{
 			lines.add("Fuel Stored: " + (type.fuel - stack.getItemDamage()) + " / " + type.fuel);

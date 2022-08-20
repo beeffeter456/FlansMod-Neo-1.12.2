@@ -10,6 +10,7 @@ import com.flansmod.common.driveables.EnumPlaneMode;
 import com.flansmod.common.driveables.PlaneType;
 import com.flansmod.common.driveables.Propeller;
 import com.flansmod.common.vector.Vector3f;
+import net.minecraft.client.renderer.GlStateManager;
 
 /**
  * Extensible ModelPlane class for rendering plane models
@@ -31,6 +32,27 @@ public class ModelPlane extends ModelDriveable
 	public ModelRendererTurbo pitchFlapRightModel[] = new ModelRendererTurbo[0];
 	public ModelRendererTurbo pitchFlapLeftWingModel[] = new ModelRendererTurbo[0];
 	public ModelRendererTurbo pitchFlapRightWingModel[] = new ModelRendererTurbo[0];
+
+	//Animated parts
+	//Wings
+	public ModelRendererTurbo leftAnimWingModel[] = new ModelRendererTurbo[0];
+	public ModelRendererTurbo rightAnimWingModel[] = new ModelRendererTurbo[0];
+	public Vector3f leftWingAttach = new Vector3f();
+	public Vector3f rightWingAttach = new Vector3f();
+
+	//Gears
+	public ModelRendererTurbo bodyAnimWheelModel[] = new ModelRendererTurbo[0];
+	public ModelRendererTurbo tailAnimWheelModel[] = new ModelRendererTurbo[0];
+	public ModelRendererTurbo leftAnimWingWheelModel[] = new ModelRendererTurbo[0];
+	public ModelRendererTurbo rightAnimWingWheelModel[] = new ModelRendererTurbo[0];
+	public Vector3f bodyWheelAttach = new Vector3f();
+	public Vector3f tailWheelAttach = new Vector3f();
+	public Vector3f leftWingWheelAttach = new Vector3f();
+	public Vector3f rightWingWheelAttach = new Vector3f();
+
+	//Door
+	public ModelRendererTurbo doorAnimModel[] = new ModelRendererTurbo[0];
+	public Vector3f doorAttach = new Vector3f();
 	
 	//Helicopter bits
 	public ModelRendererTurbo heliMainRotorModels[][] = new ModelRendererTurbo[0][0]; //Helicopter main rotors model array [numProps][prop blades]
@@ -57,6 +79,9 @@ public class ModelPlane extends ModelDriveable
 	public ModelRendererTurbo leftWingPos1Model[] = new ModelRendererTurbo[0];
 	public ModelRendererTurbo leftWingPos2Model[] = new ModelRendererTurbo[0];
 	public ModelRendererTurbo hudModel[] = new ModelRendererTurbo[0];
+
+	//Experimental Valkyrie stuff
+	public ModelRendererTurbo valkyrie[][] = new ModelRendererTurbo[0][0];
 	
 	@Override
 	public void render(EntityDriveable driveable, float f1)
@@ -72,6 +97,14 @@ public class ModelPlane extends ModelDriveable
 		renderPart(noseModel);
 		renderPart(leftWingModel);
 		renderPart(rightWingModel);
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(leftWingAttach.x, leftWingAttach.y, -leftWingAttach.z);
+		renderPart(leftAnimWingModel);
+		GlStateManager.popMatrix();
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(rightWingAttach.x, rightWingAttach.y, -rightWingAttach.z);
+		renderPart(rightAnimWingModel);
+		GlStateManager.popMatrix();
 		renderPart(topWingModel);
 		renderPart(bayModel);
 		renderPart(tailModel);
@@ -85,6 +118,7 @@ public class ModelPlane extends ModelDriveable
 		}
 		for(ModelRendererTurbo[] heliMainRotorModel : heliMainRotorModels) renderPart(heliMainRotorModel);
 		for(ModelRendererTurbo[] heliTailRotorModel : heliTailRotorModels) renderPart(heliTailRotorModel);
+		for (ModelRendererTurbo[] partModel : valkyrie) renderPart(partModel);
 		renderPart(helicopterModeParts);
 		renderPart(skidsModel);
 		renderPart(yawFlapModel);
@@ -100,13 +134,37 @@ public class ModelPlane extends ModelDriveable
 		renderPart(rightWingPos1Model);
 		renderPart(leftWingPos1Model);
 		renderPart(hudModel);
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(bodyWheelAttach.x, bodyWheelAttach.y, -bodyWheelAttach.z);
+		renderPart(bodyAnimWheelModel);
+		GlStateManager.popMatrix();
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(tailWheelAttach.x, tailWheelAttach.y, -tailWheelAttach.z);
+		renderPart(tailAnimWheelModel);
+		GlStateManager.popMatrix();
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(leftWingWheelAttach.x, leftWingWheelAttach.y, -leftWingWheelAttach.z);
+		renderPart(leftAnimWingWheelModel);
+		GlStateManager.popMatrix();
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(rightWingWheelAttach.x, rightWingWheelAttach.y, -rightWingWheelAttach.z);
+		renderPart(rightAnimWingWheelModel);
+		GlStateManager.popMatrix();
+		GlStateManager.pushMatrix();
+		GlStateManager.translate(doorAttach.x, doorAttach.y, -doorAttach.z);
+		renderPart(doorAnimModel);
+		GlStateManager.popMatrix();
 	}
 	
 	public void render(float f5, EntityPlane plane, float f)
 	{
 		PlaneType type = plane.getPlaneType();
 		//Rotating the propeller
-		float angle = plane.propAngle;
+		float dAngle = plane.rotorAngle - plane.prevPropAngle;
+		for(; dAngle > 180F; dAngle -= 360F) {}
+		for(; dAngle <= -180F; dAngle += 360F) {}
+		float angle = plane.prevPropAngle + dAngle*f;
+		//float angle = plane.propAngle;
 		for(Propeller propeller : plane.getPlaneType().propellers)
 		{
 			if(plane.isPartIntact(propeller.planePart) && propellerModels.length > propeller.ID)
@@ -356,6 +414,83 @@ public class ModelPlane extends ModelDriveable
 			}
 		}
 	}
+
+	public void renderValk(EntityPlane plane, float f5, int id)
+	{
+		for (ModelRendererTurbo aModel : valkyrie[id]) {
+			aModel.render(f5);
+		}
+	}
+
+	public void renderLeftWing(EntityPlane plane, float f5)
+	{
+		if(plane.isPartIntact(EnumDriveablePart.leftWing))
+		{
+			for (ModelRendererTurbo aAnimLeftWingModel : leftAnimWingModel) {
+				aAnimLeftWingModel.render(f5);
+			}
+		}
+	}
+
+	public void renderRightWing(EntityPlane plane, float f5)
+	{
+		if(plane.isPartIntact(EnumDriveablePart.rightWing))
+		{
+			for (ModelRendererTurbo aAnimRightWingModel : rightAnimWingModel) {
+				aAnimRightWingModel.render(f5);
+			}
+		}
+	}
+
+	public void renderLeftWingWheel(EntityPlane plane, float f5)
+	{
+		if(plane.isPartIntact(EnumDriveablePart.leftWingWheel))
+		{
+			for (ModelRendererTurbo aAnimLeftWingWheelModel : leftAnimWingWheelModel) {
+				aAnimLeftWingWheelModel.render(f5);
+			}
+		}
+	}
+
+	public void renderRightWingWheel(EntityPlane plane, float f5)
+	{
+		if(plane.isPartIntact(EnumDriveablePart.rightWingWheel))
+		{
+			for (ModelRendererTurbo aAnimRightWingWheelModel : rightAnimWingWheelModel) {
+				aAnimRightWingWheelModel.render(f5);
+			}
+		}
+	}
+
+	public void renderCoreWheel(EntityPlane plane, float f5)
+	{
+		if(plane.isPartIntact(EnumDriveablePart.coreWheel))
+		{
+			for (ModelRendererTurbo aAnimBodyWheelModel : bodyAnimWheelModel) {
+				aAnimBodyWheelModel.render(f5);
+			}
+		}
+	}
+
+	public void renderTailWheel(EntityPlane plane, float f5)
+	{
+		if(plane.isPartIntact(EnumDriveablePart.tailWheel))
+		{
+			for (ModelRendererTurbo aAnimTailWheelModel : tailAnimWheelModel) {
+				aAnimTailWheelModel.render(f5);
+			}
+		}
+	}
+
+	public void renderDoor(EntityPlane plane, float f5)
+	{
+		if(plane.isPartIntact(EnumDriveablePart.core))
+		{
+			for (ModelRendererTurbo aDoorAnimModel : doorAnimModel) {
+				aDoorAnimModel.render(f5);
+			}
+		}
+	}
 	
 	
 	/**
@@ -419,6 +554,17 @@ public class ModelPlane extends ModelDriveable
 		flip(leftWingPos1Model);
 		flip(leftWingPos2Model);
 		flip(hudModel);
+		flip(leftAnimWingModel);
+		flip(rightAnimWingModel);
+		flip(bodyAnimWheelModel);
+		flip(tailAnimWheelModel);
+		flip(leftAnimWingWheelModel);
+		flip(rightAnimWingWheelModel);
+		flip(doorAnimModel);
+		for(ModelRendererTurbo[] valkModel : valkyrie)
+		{
+			flip(valkModel);
+		}
 		
 		for(ModelRendererTurbo[] propellerModel : propellerModels)
 		{
@@ -463,6 +609,17 @@ public class ModelPlane extends ModelDriveable
 		translate(leftWingPos1Model, x, y, z);
 		translate(leftWingPos2Model, x, y, z);
 		translate(hudModel, x, y, z);
+		translate(leftAnimWingModel, x, y, z);
+		translate(rightAnimWingModel, x, y, z);
+		translate(bodyAnimWheelModel, x, y, z);
+		translate(tailAnimWheelModel, x, y, z);
+		translate(leftAnimWingWheelModel, x, y, z);
+		translate(rightAnimWingWheelModel, x, y, z);
+		translate(doorAnimModel, x,y,z);
+		for(ModelRendererTurbo[] valkModel : valkyrie)
+		{
+			translate(valkModel,x,y,z);
+		}
 		
 		for(ModelRendererTurbo[] mods : propellerModels)
 		{

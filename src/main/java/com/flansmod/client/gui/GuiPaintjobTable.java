@@ -29,6 +29,7 @@ import com.flansmod.client.model.RenderGun;
 import com.flansmod.common.FlansMod;
 import com.flansmod.common.RotatedAxes;
 import com.flansmod.common.driveables.DriveableType;
+import com.flansmod.common.guns.AttachmentType;
 import com.flansmod.common.guns.Paintjob;
 import com.flansmod.common.network.PacketGunPaint;
 import com.flansmod.common.paintjob.ContainerPaintjobTable;
@@ -289,7 +290,9 @@ public class GuiPaintjobTable extends GuiContainer
 					{
 						if(!inCustomMode)
 							mc.renderEngine.bindTexture(FlansModResourceHandler.getPaintjobTexture(paintjob));
-						((ModelAttachment)paintableType.GetModel()).renderAttachment(0.0625f);
+						AttachmentType model = (AttachmentType)paintableType;
+						GL11.glScalef(model.modelScale, model.modelScale, model.modelScale);
+						((ModelAttachment)paintableType.GetModel()).renderAttachment(1F / 16F);
 						break;
 					}
 					case plane:
@@ -308,6 +311,11 @@ public class GuiPaintjobTable extends GuiContainer
 				GlStateManager.popMatrix();
 			}
 		}
+	}
+	
+	private void drawModalRectWithCustomSizedTexture(int a, int b, int c, int d, int e, int f, int g, int h)
+	{
+		drawModalRectWithCustomSizedTexture(a, b, c, d, e, f, g, h);
 	}
 	
 	@Override
@@ -699,7 +707,11 @@ public class GuiPaintjobTable extends GuiContainer
 
 						Paintjob paintjob = paintableType.paintjobs.get(9 * j + i);
 						ItemStack stack = gunStack.copy();
-						stack.getTagCompound().setString("Paint", paintjob.iconName);
+						try {
+							stack.getTagCompound().setString("Paint", paintjob.iconName);
+						} catch (NullPointerException e) {
+                            //
+                        }
 						int slotX = 7 + i * 18;
 						int slotY = 129 + j * 18;
 						if(mouseXInGUI >= slotX && mouseXInGUI < slotX + 18 && mouseYInGUI >= slotY && mouseYInGUI < slotY + 18)

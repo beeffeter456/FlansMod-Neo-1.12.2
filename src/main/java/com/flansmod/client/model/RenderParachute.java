@@ -15,7 +15,7 @@ public class RenderParachute extends Render<EntityParachute>
 	public RenderParachute(RenderManager renderManager)
 	{
 		super(renderManager);
-		shadowSize = 0.5F;
+		shadowSize = 2.0F;
 	}
 	
 	@Override

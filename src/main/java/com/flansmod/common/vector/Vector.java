@@ -102,7 +102,8 @@ public abstract class Vector implements Serializable, ReadableVector
 		else
 		{
 			FlansMod.Assert(false, "ZERO LENGTH VECTOR");
-			return this;
+			return scale(0);
+			//return this;
 		}
 	}
 	

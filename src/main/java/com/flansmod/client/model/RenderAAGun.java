@@ -15,11 +15,19 @@ public class RenderAAGun extends Render<EntityAAGun>
 	public RenderAAGun(RenderManager renderManager)
 	{
 		super(renderManager);
-		shadowSize = 0.5F;
+		shadowSize = 1.0F;
 	}
 	
 	public void render(EntityAAGun aa, double d, double d1, double d2, float f, float f1)
 	{
+		if(aa.getControllingPassenger() != null)
+		{
+			if(aa.getControllingPassenger().getClass().toString().indexOf("mcheli.aircraft.MCH_EntitySeat") > 0)
+			{
+				return;
+			}
+		}
+
 		bindEntityTexture(aa);
 		GlStateManager.pushMatrix();
 		GlStateManager.translate((float)d, (float)d1, (float)d2);

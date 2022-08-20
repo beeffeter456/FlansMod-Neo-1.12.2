@@ -32,6 +32,7 @@ public class FlansModResourceHandler
 	private static HashMap<String, ResourceLocation> scopeMap = new HashMap<>();
 	private static HashMap<String, SoundEvent> soundMap = new HashMap<>();
 	private static HashMap<String, ResourceLocation> blockMap = new HashMap<>();
+	private static HashMap<String, ResourceLocation> auxiliaryMap = new HashMap<String, ResourceLocation>();
 	
 	public static ResourceLocation flag = new ResourceLocation("flansmod", "textures/items/flagpole.png");
 	public static ResourceLocation[] opStick = new ResourceLocation[]{new ResourceLocation("flansmod", "textures/items/opStick_ownership.png"),
@@ -107,6 +108,18 @@ public class FlansModResourceHandler
 		}
 		ResourceLocation resLoc = new ResourceLocation("flansmod", "skins/" + paintjob.textureName + ".png");
 		paintjobMap.put(paintjob, resLoc);
+		return resLoc;
+	}
+	
+	/** Get texture from gun auxiliary elements such as casing, muzzle flash */
+	public static ResourceLocation getAuxiliaryTexture(String texture)
+	{
+		if(auxiliaryMap.containsKey(texture))
+		{
+			return auxiliaryMap.get(texture);
+		}
+		ResourceLocation resLoc = new ResourceLocation("flansmod", "skins/" + texture + ".png");
+		auxiliaryMap.put(texture, resLoc);
 		return resLoc;
 	}
 	

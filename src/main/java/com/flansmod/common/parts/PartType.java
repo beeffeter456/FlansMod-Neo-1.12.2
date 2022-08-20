@@ -34,6 +34,10 @@ public class PartType extends InfoType
 	 */
 	public float fuelConsumption = 1.0F;
 	/**
+     * (Engine) Power output of the engine - if using realistic acceleration.
+     */
+    public float enginePower = 10F;
+	/**
 	 * (Fuel) The amount of fuel this fuel tank gives
 	 */
 	public int fuel = 0;
@@ -122,6 +126,8 @@ public class PartType extends InfoType
 				engineSpeed = Float.parseFloat(split[1]);
 			else if(split[0].equals("FuelConsumption"))
 				fuelConsumption = Float.parseFloat(split[1]);
+			else if (split[0].equals("EnginePower"))
+                enginePower = Float.parseFloat(split[1]);
 			else if(split[0].equals("Fuel"))
 				fuel = Integer.parseInt(split[1]);
 				//Recipe
@@ -161,7 +167,7 @@ public class PartType extends InfoType
 		}
 		catch(Exception e)
 		{
-			FlansMod.log.error("Reading part file failed.");
+			FlansMod.log.error("Reading part file failed : " + shortName + " in pack " + packName);
 			FlansMod.log.throwing(e);
 		}
 	}

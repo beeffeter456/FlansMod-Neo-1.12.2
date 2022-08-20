@@ -258,6 +258,12 @@ public class Team extends InfoType
 	}
 	
 	@Override
+	public float GetRecommendedScale() 
+	{
+		return 50.0f;
+	}
+	
+	@Override
 	@SideOnly(Side.CLIENT)
 	public ModelBase GetModel()
 	{

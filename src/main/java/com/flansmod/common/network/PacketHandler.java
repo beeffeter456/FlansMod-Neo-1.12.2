@@ -196,18 +196,23 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 		registerPacket(PacketDriveableKey.class);
 		registerPacket(PacketDriveableKeyHeld.class);
 		registerPacket(PacketFlak.class);
-		registerPacket(PacketGunFire.class);	
+		registerPacket(PacketExplosion.class);
+		registerPacket(PacketGunFire.class);
+		registerPacket(PacketGunMode.class);
 		registerPacket(PacketGunPaint.class);
+		registerPacket(PacketGunSpread.class);
 		registerPacket(PacketKillMessage.class);
 		registerPacket(PacketMechaControl.class);
 		registerPacket(PacketMGFire.class);
 		registerPacket(PacketMGMount.class);
+		registerPacket(PacketParticle.class);
 		registerPacket(PacketPlaneControl.class);
 		registerPacket(PacketPlaySound.class);
 		registerPacket(PacketReload.class);
 		registerPacket(PacketRepairDriveable.class);
 		registerPacket(PacketRoundFinished.class);
 		registerPacket(PacketSeatUpdates.class);
+		registerPacket(PacketSeatCheck.class);
 		registerPacket(PacketTeamInfo.class);
 		registerPacket(PacketTeamSelect.class);
 		registerPacket(PacketVehicleControl.class);
@@ -221,6 +226,15 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 		registerPacket(PacketBulletTrail.class);
 		registerPacket(PacketHitMarker.class);
 		registerPacket(PacketBlockHitEffect.class);
+		registerPacket(PacketRequestDebug.class);
+        registerPacket(PacketFlashBang.class);
+        registerPacket(PacketImpactPoint.class);
+        registerPacket(PacketModConfig.class);
+        registerPacket(PacketGunRecoil.class);
+        registerPacket(PacketGunState.class);
+        registerPacket(PacketHashSend.class);
+        registerPacket(PacketMuzzleFlash.class);
+        registerPacket(PacketHitMarker.class);
 	}
 	
 	/**
@@ -346,4 +360,51 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
 	{
 		sendToAllAround(packet, new NetworkRegistry.TargetPoint(dimension, x, y, z, range));
 	}
+	
+	public void sendToDonut(PacketBase packet, double x, double y, double z, float minRange, float maxRange, int dimension) {
+        List players;
+        if (FMLCommonHandler.instance().getSide().isClient()) {
+            players = Minecraft.getMinecraft().world.playerEntities;
+        } else {
+            players = MinecraftServer.getServer().getConfigurationManager().playerEntityList;
+        }
+
+        float minRangeSq = minRange * minRange;
+        float maxRangeSq = maxRange * maxRange;
+
+        for (Object p : players) {
+            if (p instanceof EntityPlayerMP) {
+                EntityPlayerMP pl = (EntityPlayerMP) p;
+                if (pl.dimension == dimension) {
+                    double dist = (pl.posX - x) * (pl.posX - x) + (pl.posY - y) * (pl.posY - y) + (pl.posZ - z) * (pl.posZ - z);
+                    if (dist > minRangeSq && dist < maxRangeSq) {
+                        sendTo(packet, pl);
+                    }
+                }
+            }
+        }
+    }
+
+    public void sendToAllExcept(PacketBase packet, double x, double y, double z, float range, EntityPlayer player, int dimension) {
+        List players;
+        if (FMLCommonHandler.instance().getSide().isClient()) {
+            players = Minecraft.getMinecraft().world.playerEntities;
+        } else {
+            players = MinecraftServer.getServer().getConfigurationManager().playerEntityList;
+        }
+
+        float rangeSq = range * range;
+
+        for (Object p : players) {
+            if (p instanceof EntityPlayerMP) {
+                EntityPlayerMP pl = (EntityPlayerMP) p;
+                if (pl.dimension == dimension && !pl.getUniqueID().equals(player.getUniqueID())) {
+                    double dist = (pl.posX - x) * (pl.posX - x) + (pl.posY - y) * (pl.posY - y) + (pl.posZ - z) * (pl.posZ - z);
+                    if (dist < rangeSq) {
+                        sendTo(packet, pl);
+                    }
+                }
+            }
+        }
+    }
 }

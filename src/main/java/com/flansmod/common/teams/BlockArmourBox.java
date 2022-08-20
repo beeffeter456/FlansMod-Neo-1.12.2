@@ -20,7 +20,7 @@ public class BlockArmourBox extends Block
 {
 	public ArmourBoxType type;
 	
-	public BlockArmourBox(ArmourBoxType t)
+	public BlockArmourBox(ArmourBoxType t) throws Exception
 	{
 		super(Material.WOOD);
 		type = t;
@@ -28,6 +28,10 @@ public class BlockArmourBox extends Block
 		setTranslationKey(type.shortName);
 		setHardness(2F);
 		setResistance(4F);
+		Block block = Block.getBlockFromName("flansmod:armorBox." + type.shortName);
+        if (block != null) {
+            throw new Exception("Caught an exception during block registration : " + type.shortName + " from pack " + type.packName);
+        }
 		setRegistryName(type.shortName);
 		setCreativeTab(FlansMod.tabFlanTeams);
 		type.block = this;
@@ -50,7 +54,7 @@ public class BlockArmourBox extends Block
 		ItemStack resultStack = new ItemStack(entryPicked.armours[piece].item);
 		
 		CraftingInstance crafting = new CraftingInstance(inventory, entryPicked.requiredStacks[piece], resultStack);
-		if(crafting.canCraft())
+		if(crafting.canCraft(inventory.player))
 		{
 			crafting.craft(inventory.player);
 		}

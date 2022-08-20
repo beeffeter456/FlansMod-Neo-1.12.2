@@ -209,6 +209,11 @@ public class PlayerClass extends InfoType implements IPlayerClass
 									break;
 								case generic: tagName = "generic_" + genericID++;
 									break;
+								// TODO: Implement new attachments to classes
+							    case accessory: break;
+							    case gadget: break;
+							    case pump: break;
+							    case slide: break;
 							}
 							NBTTagCompound specificAttachmentTags = new NBTTagCompound();
 							new ItemStack(attachment.item).writeToNBT(specificAttachmentTags);
@@ -341,6 +346,12 @@ public class PlayerClass extends InfoType implements IPlayerClass
 				return playerClass;
 		}
 		return null;
+	}
+	
+	@Override
+	public float GetRecommendedScale() 
+	{
+		return 50.0f;
 	}
 	
 	@Override

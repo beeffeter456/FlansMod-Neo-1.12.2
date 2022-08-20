@@ -3,8 +3,10 @@ package com.flansmod.common.guns;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 import net.minecraft.client.model.ModelBase;
+import net.minecraft.item.EnumAction;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -12,18 +14,71 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+import com.flansmod.client.model.EnumAnimationType;
+import com.flansmod.client.model.EnumMeleeAnimation;
+import com.flansmod.client.model.ModelCasing;
 import com.flansmod.client.model.ModelDefaultMuzzleFlash;
+import com.flansmod.client.model.ModelFlash;
 import com.flansmod.client.model.ModelGun;
 import com.flansmod.client.model.ModelMG;
 import com.flansmod.client.model.ModelMuzzleFlash;
 import com.flansmod.common.FlansMod;
 import com.flansmod.common.paintjob.PaintableType;
+import com.flansmod.common.types.InfoType;
 import com.flansmod.common.types.TypeFile;
 import com.flansmod.common.vector.Vector3f;
 
 public class GunType extends PaintableType implements IScope
 {
-	//Gun Behaviour Variables
+	public static final Random rand = new Random();
+	
+	// Gun Behaviour Variables
+	
+	//Recoil Variables
+	/**
+	 * The amount to recoil the player's view by when firing a single shot from this gun
+	 */
+	public int recoil;
+    /**
+     * Base value for Upwards cursor/view recoil
+     */
+    public float recoilPitch = 0.0F;
+    /**
+     * Base value for Left/Right cursor/view recoil
+     */
+    public float recoilYaw = 0.0F;
+    /**
+     * Modifier for setting the maximum pitch divergence when randomizing recoil (Recoil 2 + rndRecoil 0.5 == 1.5-2.5 Recoil range)
+     */
+    public float rndRecoilPitchRange = 0.5F;
+    /**
+     * Modifier for setting the maximum yaw divergence when randomizing recoil (Recoil 2 + rndRecoil 0.5 == 1.5-2.5 Recoil range)
+     */
+    public float rndRecoilYawRange = 0.3F;
+    /**
+     * Modifier for decreasing the final pitch recoil while crouching (Recoil 2 + rndRecoil 0.5 + decreaseRecoil 0.5 == 1.0-2.0 Recoil range)
+     */
+    public float decreaseRecoilPitch = 0.5F;
+    /**
+     * Modifier for decreasing the final yaw recoil while crouching (Recoil 2 + rndRecoil 0.5 + decreaseRecoil 0.5 == 1.0-2.0 Recoil range)
+     */
+    //This must never be set to 0, will cause massive issues
+    public float decreaseRecoilYaw = 0.5F;
+    /* Countering gun recoil can be modelled with angle=n^tick where n is the coefficient here. */
+    /**
+     * HIGHER means less force to center, meaning it takes longer to return.
+     */
+    public float recoilCounterCoefficient = 0.8F;
+    /**
+     * The above variable but for sprinting.
+     */
+    public float recoilCounterCoefficientSprinting = 0.9F;
+    /**
+     * The above variable but for sneaking.
+     */
+    public float recoilCounterCoefficientSneaking = 0.7F;
+    
+    //Ammo & Reload Variables
 	/**
 	 * The list of bullet types that can be used in this gun
 	 */
@@ -33,20 +88,32 @@ public class GunType extends PaintableType implements IScope
 	 */
 	public boolean canForceReload = true;
 	/**
+     * Whether the player can receive ammo for this gun from an ammo mag
+     */
+    public boolean allowRearm = true;
+	/**
 	 * The time (in ticks) it takes to reload this gun
 	 */
 	public int reloadTime;
 	/**
-	 * The amount to recoil the player's view by when firing a single shot from this gun
-	 */
-	public int recoil;
+     * Number of ammo items that the gun may hold. Most guns will hold one magazine.
+     * Some may hold more, such as Nerf pistols, revolvers or shotguns
+     */
+    public int numPrimaryAmmoItems = 1;
+	
+    //Projectile Mechanic Variables
 	/**
 	 * The amount that bullets spread out when fired from this gun
 	 */
 	public float bulletSpread;
 	
 	public EnumSpreadPattern spreadPattern = EnumSpreadPattern.cube;
-	
+	public float sneakSpreadMultiplier = 0.63F;
+    public float sprintSpreadMultiplier = 1.75F;
+    /**
+     * If true, spread determined by loaded ammo type
+     */
+    public boolean allowSpreadByBullet = false;
 	/**
 	 * Damage inflicted by this gun. Multiplied by the bullet damage.
 	 */
@@ -55,6 +122,8 @@ public class GunType extends PaintableType implements IScope
 	 * The damage inflicted upon punching someone with this gun
 	 */
 	public float meleeDamage = 1;
+	// Modifier for melee damage against specifically driveable entities.
+    public float meleeDamageDriveableModifier = 1;
 	/**
 	 * The speed of bullets upon leaving this gun. 0.0f means instant.
 	 */
@@ -64,9 +133,17 @@ public class GunType extends PaintableType implements IScope
 	 */
 	public int numBullets = 1;
 	/**
+     * Allows you to set how many bullet entities are fired per shot via the ammo used
+     */
+    public boolean allowNumBulletsByBulletType = false;
+	/**
 	 * The delay between shots in ticks (1/20ths of seconds)
 	 */
 	public float shootDelay = 1.0f;
+	/**
+     * The fire rate of the gun in RPM, 1200 = MAX
+     */
+    public float roundsPerMin = 0;
 	/**
 	 * Number of ammo items that the gun may hold. Most guns will hold one magazine.
 	 * Some may hold more, such as Nerf pistols, revolvers or shotguns
@@ -76,6 +153,8 @@ public class GunType extends PaintableType implements IScope
 	 * The firing mode of the gun. One of semi-auto, full-auto, minigun or burst
 	 */
 	public EnumFireMode mode = EnumFireMode.FULLAUTO;
+	public EnumFireMode[] submode = new EnumFireMode[]{EnumFireMode.FULLAUTO};
+    public EnumFireMode defaultmode = mode;
 	/**
 	 * The number of bullets to fire per burst in burst mode
 	 */
@@ -100,6 +179,7 @@ public class GunType extends PaintableType implements IScope
 	 * The secondary function of this gun. By default, the left mouse button triggers this
 	 */
 	public EnumSecondaryFunction secondaryFunction = EnumSecondaryFunction.ADS_ZOOM;
+	public EnumSecondaryFunction secondaryFunctionWhenShoot = null;
 	/**
 	 * If true, then this gun can be dual wielded
 	 */
@@ -108,6 +188,10 @@ public class GunType extends PaintableType implements IScope
 	 * For one shot items like a panzerfaust
 	 */
 	public boolean consumeGunUponUse = false;
+	/**
+     * Show the crosshair when holding this weapon
+     */
+    public boolean showCrosshair = true;
 	/**
 	 * Item to drop on shooting
 	 */
@@ -130,6 +214,27 @@ public class GunType extends PaintableType implements IScope
 	 */
 	public boolean usableByPlayers = true, usableByMechas = true;
 	
+	/**
+    * Whether Gun makes players to be EnumAction.bow
+    */
+    public EnumAction itemUseAction = EnumAction.BOW;
+    /* Whether the gun can be hipfired while sprinting */
+    /**
+     * 0=use flansmod.cfg default, 1=force allow, 2=force deny
+     **/
+    public int hipFireWhileSprinting = 0;
+
+    //Launcher variables
+    public int canLockOnAngle = 5;
+    public int lockOnSoundTime = 0;
+    public String lockOnSound = "";
+    public int maxRangeLockOn = 80;
+    public boolean canSetPosition = false;
+    /**
+     * Determines what the launcher can lock on to
+     */
+    public boolean lockOnToPlanes = false, lockOnToVehicles = false, lockOnToMechas = false, lockOnToPlayers = false, lockOnToLivings = false;
+    
 	//Information
 	//Show any variables into the GUI when hovering over items.
 	/**
@@ -167,13 +272,73 @@ public class GunType extends PaintableType implements IScope
 	 */
 	public String shootSound;
 	/**
+     * Bullet insert reload sound
+     */
+    public String bulletInsert = "defaultshellinsert";
+    /**
+     * Pump Sound
+     */
+    public String actionSound;
+    /**
+     * The sound to play upon shooting on last round
+     */
+    public String lastShootSound;
+
+    /**
+     * The sound played upon shooting with a suppressor
+     */
+    public String suppressedShootSound;
+	/**
 	 * The length of the sound for looping sounds
 	 */
 	public int shootSoundLength;
-	/**
-	 * Whether to distort the sound or not. Generally only set to false for looping sounds
-	 */
+    /**
+     * The sound to play upon reloading when empty
+     */
+    public String reloadSoundOnEmpty;
+    /**
+     * The sound to play open firing when empty(once)
+     */
+    public String clickSoundOnEmpty;
+    /**
+     * The sound to play while holding the weapon in the hand
+     */
+    public String idleSound;
+
+    //Sound Modifiers
+    /**
+     * Whether to distort the sound or not. Generally only set to false for looping sounds
+     */
 	public boolean distortSound = true;
+	/**
+     * The length of the idle sound for looping sounds (miniguns)
+     */
+    public int idleSoundLength;
+    /**
+     * The block range for idle sounds (for miniguns etc)
+     */
+    public int idleSoundRange = 50;
+    /**
+     * The block range for melee sounds
+     */
+    public int meleeSoundRange = 50;
+    /**
+     * The block range for reload sounds
+     */
+    public int reloadSoundRange = 50;
+    /**
+     * The block range for gunshots sounds
+     */
+    public int gunSoundRange = 50;
+
+    /**
+     * Sound to be played outside of normal range
+     */
+    public String distantShootSound = "";
+    /**
+     * Max range for the sound to be played
+     */
+    public int distantSoundRange = 100;
 	/**
 	 * The sound to play upon reloading
 	 */
@@ -199,7 +364,6 @@ public class GunType extends PaintableType implements IScope
 	 */
 	public String cooldownSound;
 	
-	
 	/**
 	 * The sound to play upon weapon swing
 	 */
@@ -207,8 +371,6 @@ public class GunType extends PaintableType implements IScope
 	/**
 	 * The sound to play while holding the weapon in the hand
 	 */
-	public String idleSound;
-	public int idleSoundLength;
 	
 	
 	//Deployable Settings
@@ -222,8 +384,11 @@ public class GunType extends PaintableType implements IScope
 	@SideOnly(Side.CLIENT)
 	public ModelMG deployableModel;
 	
+	public String deployableModelString;
+	
 	@SideOnly(Side.CLIENT)
 	public ModelMuzzleFlash muzzleFlashModel;
+	public String muzzleFlashModelString;
 	/**
 	 * The deployable model's texture
 	 */
@@ -251,7 +416,41 @@ public class GunType extends PaintableType implements IScope
 	 * The FOV zoom level of the default scope
 	 */
 	public float FOVFactor = 1.5F;
-	
+	/**
+     * Gives night vision while scoped if true
+     */
+    public boolean allowNightVision = false;
+    /**
+     * For adding a bullet casing model to render
+     */
+    public ModelCasing casingModel;
+    public String casingModelString;
+    /**
+     * For adding a muzzle flash model to render
+     */
+    public ModelFlash flashModel;
+    public String flashModelString;
+    /**
+     * Set a bullet casing texture
+     */
+    public String casingTexture;
+    /**
+     * Set a muzzle flash texture
+     */
+    public String flashTexture;
+    /**
+     * Set a hit marker texture
+     */
+    public String hitTexture;
+
+    public String muzzleFlashParticle = "flansmod.muzzleflash";
+    public float muzzleFlashParticleSize = 1F;
+    public Boolean showMuzzleFlashParticles = true;
+    public Boolean showMuzzleFlashParticlesFirstPerson = false;
+    public Vector3f muzzleFlashParticlesHandOffset = new Vector3f();
+    public Vector3f muzzleFlashParticlesShoulderOffset = new Vector3f();
+    
+    //Model variables
 	/**
 	 * For guns with 3D models
 	 */
@@ -272,7 +471,8 @@ public class GunType extends PaintableType implements IScope
 	 * Whether each attachment slot is available
 	 */
 	public boolean allowBarrelAttachments = false, allowScopeAttachments = false,
-			allowStockAttachments = false, allowGripAttachments = false;
+			allowStockAttachments = false, allowGripAttachments = false, allowGadgetAttachments = false,
+            allowSlideAttachments = false, allowPumpAttachments = false, allowAccessoryAttachments = false;
 	/**
 	 * The number of generic attachment slots there are on this gun
 	 */
@@ -296,11 +496,23 @@ public class GunType extends PaintableType implements IScope
 	 * Gives knockback resistance to the player
 	 */
 	public float knockbackModifier = 0F;
-	
+	/**
+     * Default spread of the gun. Do not modify.
+     */
+    private float defaultSpread = 0F;
+    // Modifier for (usually decreasing) spread when gun is ADS. -1 uses default values from flansmod.cfg
+    public float adsSpreadModifier = -1F;
+    // Modifier for (usually decreasing) spread when gun is ADS. -1 uses default values from flansmod.cfg. For shotguns.
+    public float adsSpreadModifierShotgun = -1F;
 	
 	public GunType(TypeFile file)
 	{
 		super(file);
+	}
+	
+	@Override
+    public void preRead(TypeFile file) {
+        super.preRead(file);
 	}
 	
 	@Override
@@ -320,7 +532,7 @@ public class GunType extends PaintableType implements IScope
 	@SideOnly(Side.CLIENT)
 	private void checkMF()
 	{
-		if(muzzleFlashModel == null)
+		if(muzzleFlashModel == null && flashModel == null)
 		{
 			muzzleFlashModel = new ModelDefaultMuzzleFlash();
 		}
@@ -344,12 +556,6 @@ public class GunType extends PaintableType implements IScope
 			dropItemOnShoot = Read(split, "DropItemOnShoot", dropItemOnShoot);
 			numBurstRounds = Read(split, "NumBurstRounds", numBurstRounds);
 			minigunStartSpeed = Read(split, "MinigunStartSpeed", minigunStartSpeed);
-			if(split[0].equals("MeleeDamage"))
-			{
-				meleeDamage = Float.parseFloat(split[1]);
-				if(meleeDamage > 0F)
-					secondaryFunction = EnumSecondaryFunction.MELEE;
-			}
 			
 			//Information
 			showAttachments = Read(split, "ShowAttachments", showAttachments);
@@ -366,16 +572,108 @@ public class GunType extends PaintableType implements IScope
 			warmupSoundLength = Read(split, "WarmupSoundLength", warmupSoundLength);
 			loopedSoundLength = Read(split, "LoopedSoundLength", loopedSoundLength);
 			loopedSoundLength = Read(split, "SpinSoundLength", loopedSoundLength);
-			if(split[0].equals("ShootSound"))
+			
+			if(split[0].equals("MeleeDamage"))
+			{
+				try{ meleeDamage = Float.parseFloat(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for MeleeDamage."); }
+				if(meleeDamage > 0F)
+					secondaryFunction = EnumSecondaryFunction.MELEE;
+			} else if (split[0].equals("MeleeDamageDriveableModifier")) {
+				try{ meleeDamageDriveableModifier = Float.parseFloat(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for MeleeDamageDriveableModifier."); }
+            } else if (split[0].equals("CounterRecoilForce"))
+            	try{ recoilCounterCoefficient = Float.parseFloat(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for CounterRecoilForce."); }
+            else if (split[0].equals("CounterRecoilForceSneaking"))
+            	try{ recoilCounterCoefficientSneaking = Float.parseFloat(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for CounterRecoilForceSneaking."); }
+            else if (split[0].equals("CounterRecoilForceSprinting"))
+            	try{ recoilCounterCoefficientSprinting = Float.parseFloat(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for CounterRecoilForceSprinting."); }
+            else if (split[0].equals("SneakSpreadModifier"))
+            	try{ sneakSpreadMultiplier = Float.parseFloat(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for SneakSpreadModifier."); }
+            else if (split[0].equals("SprintSpreadModifier"))
+            	try{ sprintSpreadMultiplier = Float.parseFloat(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for SprintSpreadModifier."); }
+            else if (split[0].equals("AllowRearm"))
+            	try{ allowRearm = Boolean.parseBoolean(split[1].toLowerCase()); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for AllowRearm."); }
+            else if (split[0].equals("Recoil"))
+            	try{ recoilPitch = Float.parseFloat(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for Recoil."); }
+            else if (split[0].equals("RecoilYaw"))
+            	try{ recoilYaw = Float.parseFloat(split[1]) / 10; } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for RecoilYaw."); }
+            else if (split[0].equals("RandomRecoilRange"))
+            	try{ rndRecoilPitchRange = Float.parseFloat(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for RandomRecoilRange."); }
+            else if (split[0].equals("RandomRecoilYawRange"))
+            	try{ rndRecoilYawRange = Float.parseFloat(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for RandomRecoilYawRange."); }
+            else if (split[0].equals("DecreaseRecoil"))
+            	try{ decreaseRecoilPitch = Float.parseFloat(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for DecreaseRecoil."); }
+            else if (split[0].equals("DecreaseRecoilYaw"))
+            	try{ decreaseRecoilYaw = Float.parseFloat(split[1]) > 0 ? Float.parseFloat(split[1]) : 0.5F; } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for DecreaseRecoilYaw."); }
+            else if (split[0].equals("ADSSpreadModifier"))
+            	try{ adsSpreadModifier = Float.parseFloat(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for ADSSpreadModifier."); }
+            else if (split[0].equals("ADSSpreadModifierShotgun"))
+            	try{ adsSpreadModifierShotgun = Float.parseFloat(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for ADSSpreadModifierShotgun."); }
+            else if (split[0].equals("AllowNumBulletsByBulletType"))
+            	try{ allowNumBulletsByBulletType = Boolean.parseBoolean(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for AllowNumBulletsByBulletType."); }
+            else if (split[0].equals("AllowSpreadByBullet"))
+            	try{ allowSpreadByBullet = Boolean.parseBoolean(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for AllowSpreadByBullet."); }
+            else if (split[0].equals("CanLockAngle"))
+            	try{ canLockOnAngle = Integer.parseInt(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for CanLockAngle."); }
+            else if (split[0].equals("LockOnSoundTime"))
+            	try{ lockOnSoundTime = Integer.parseInt(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for LockOnSoundTime."); }
+            else if (split[0].equals("LockOnToDriveables"))
+            	try{ lockOnToPlanes = lockOnToVehicles = lockOnToMechas = Boolean.parseBoolean(split[1].toLowerCase()); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for LockOnToDriveables."); }
+            else if (split[0].equals("LockOnToVehicles"))
+            	try{ lockOnToVehicles = Boolean.parseBoolean(split[1].toLowerCase()); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for LockOnToVehicles."); }
+            else if (split[0].equals("LockOnToPlanes"))
+            	try{ lockOnToPlanes = Boolean.parseBoolean(split[1].toLowerCase()); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for LockOnToPlanes."); }
+            else if (split[0].equals("LockOnToMechas"))
+            	try{ lockOnToMechas = Boolean.parseBoolean(split[1].toLowerCase()); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for LockOnToMechas."); }
+            else if (split[0].equals("LockOnToPlayers"))
+            	try{ lockOnToPlayers = Boolean.parseBoolean(split[1].toLowerCase()); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for LockOnToPlayers."); }
+            else if (split[0].equals("LockOnToLivings"))
+            	try{ lockOnToLivings = Boolean.parseBoolean(split[1].toLowerCase()); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for LockOnToLivings."); }
+            else if (split[0].equals("ShowCrosshair"))
+            	try{ showCrosshair = Boolean.parseBoolean(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for ShowCrosshair."); }
+            else if (split[0].equals("ItemUseAction"))
+            	try{ itemUseAction = EnumAction.valueOf(split[1].toLowerCase()); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for ItemUseAction."); }
+            else if (split[0].equals("HipFireWhileSprinting"))
+            	try{ hipFireWhileSprinting = Boolean.parseBoolean(split[1].toLowerCase()) ? 1 : 2; } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for HipFireWhileSprinting."); }
+            else if (split[0].equals("MaxRangeLockOn"))
+            	try{ maxRangeLockOn = Integer.parseInt(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for MaxRangeLockOn."); }
+            else if (split[0].equals("RoundsPerMin"))
+            	try{ roundsPerMin = Float.parseFloat(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for RoundsPerMin."); }
+            else if (split[0].equals("IdleSoundRange"))
+            	try{ idleSoundRange = Integer.parseInt(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for IdleSoundRange."); }
+            else if (split[0].equals("MeleeSoundRange"))
+            	try{ meleeSoundRange = Integer.parseInt(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for MeleeSoundRange."); }
+            else if (split[0].equals("ReloadSoundRange"))
+            	try{  reloadSoundRange = Integer.parseInt(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for ReloadSoundRange."); }
+            else if (split[0].equals("GunSoundRange"))
+            	try{ gunSoundRange = Integer.parseInt(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for GunSoundRange."); }
+            else if(split[0].equals("ShootSound"))
 			{
 				shootSound = split[1];
 				FlansMod.proxy.loadSound(contentPack, "guns", split[1]);
-			}
-			else if(split[0].equals("ReloadSound"))
+			} else if (split[0].equals("BulletInsertSound")) {
+	            bulletInsert = split[1];
+	            FlansMod.proxy.loadSound(contentPack, "guns", split[1]);
+	        } else if (split[0].equals("ActionSound")) {
+	            actionSound = split[1];
+	            FlansMod.proxy.loadSound(contentPack, "guns", split[1]);
+	        } else if (split[0].equals("LastShootSound")) {
+	            lastShootSound = split[1];
+	            FlansMod.proxy.loadSound(contentPack, "guns", split[1]);
+	        } else if (split[0].equals("SuppressedShootSound")) {
+	            suppressedShootSound = split[1];
+	            FlansMod.proxy.loadSound(contentPack, "guns", split[1]);
+	        } 
+	        else if(split[0].equals("ReloadSound"))
 			{
 				reloadSound = split[1];
 				FlansMod.proxy.loadSound(contentPack, "guns", split[1]);
-			}
+			} else if (split[0].equals("EmptyReloadSound")) {
+	            reloadSoundOnEmpty = split[1];
+	            FlansMod.proxy.loadSound(contentPack, "guns", split[1]);
+	        } else if (split[0].equals("EmptyClickSound")) {
+	            clickSoundOnEmpty = split[1];
+	            FlansMod.proxy.loadSound(contentPack, "guns", split[1]);
+	        }
 			else if(split[0].equals("IdleSound"))
 			{
 				idleSound = split[1];
@@ -403,18 +701,35 @@ public class GunType extends PaintableType implements IScope
 			{
 				cooldownSound = split[1];
 				FlansMod.proxy.loadSound(contentPack, "guns", split[1]);
-			}
+			} else if (split[0].equals("LockOnSound")) {
+	            lockOnSound = split[1];
+	            FlansMod.proxy.loadSound(contentPack, "guns", split[1]);
+	        } else if (split[0].equals("DistantSound")) {
+	            distantShootSound = split[1];
+	            FlansMod.proxy.loadSound(contentPack, "guns", split[1]);
+	        } else if (split[0].equals("DistantSoundRange")) {
+	            distantSoundRange = Integer.parseInt(split[1]);
+	        }
 			
 			//Modes and zoom settings
 			else if(split[0].equals("Mode"))
+			{
 				mode = EnumFireMode.getFireMode(split[1]);
+				defaultmode = mode;
+	            submode = new EnumFireMode[split.length - 1];
+	            for (int i = 0; i < submode.length; i++) {
+	                submode[i] = EnumFireMode.getFireMode(split[1 + i]);
+	            }
+			}
 			else if(split[0].equals("Scope"))
 			{
 				hasScopeOverlay = true;
 				if(split[1].equals("None"))
 					hasScopeOverlay = false;
 				else defaultScopeTexture = split[1];
-			}
+			} else if (split[0].equals("AllowNightVision")) {
+				try{ allowNightVision = Boolean.parseBoolean(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for allowNightVision."); }
+            }
 			else if(split[0].equals("ZoomLevel"))
 			{
 				zoomLevel = Float.parseFloat(split[1]);
@@ -437,10 +752,41 @@ public class GunType extends PaintableType implements IScope
 			{
 				model = FlansMod.proxy.loadModel(split[1], shortName, ModelGun.class);
 			}
+			else if (FMLCommonHandler.instance().getSide().isClient() && (split[0].equals("CasingModel"))) 
+			{
+                casingModel = FlansMod.proxy.loadModel(split[1], shortName, ModelCasing.class);
+                casingModelString = split[1];
+            }
+			else if (split[0].equals("CasingTexture"))
+	            casingTexture = split[1];
+	        else if (split[0].equals("FlashTexture"))
+	            flashTexture = split[1];
+	        else if (split[0].equals("MuzzleFlashParticle"))
+	            muzzleFlashParticle = split[1];
+	        else if (split[0].equals("MuzzleFlashParticleSize"))
+	        	try{ muzzleFlashParticleSize = Float.parseFloat(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for MuzzleFlashParticleSize."); }
+	        else if (split[0].equals("ShowMuzzleFlashParticle"))
+	        	try{ showMuzzleFlashParticles = Boolean.parseBoolean(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for ShowMuzzleFlashParticle."); }
+	        else if (split[0].equals("ShowMuzzleFlashParticleFirstPerson"))
+	        	try{ showMuzzleFlashParticlesFirstPerson = Boolean.parseBoolean(split[1]); } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for ShowMuzzleFlashParticleFirstPerson."); }
+	        else if (split[0].equals("MuzzleFlashParticleShoulderOffset"))
+	            muzzleFlashParticlesShoulderOffset = new Vector3f(split[1], null);
+	        else if (split[0].equals("MuzzleFlashParticleHandOffset"))
+	            muzzleFlashParticlesHandOffset = new Vector3f(split[1], null);
+	        else if (split[0].equals("Texture"))
+                texture = split[1];
+            else if (split[0].equals("HitTexture"))
+                hitTexture = split[1];
 			else if(FMLCommonHandler.instance().getSide().isClient() && (split[0].equals("MuzzleFlashModel")))
 			{
 				muzzleFlashModel = FlansMod.proxy.loadModel(split[1], shortName, ModelMuzzleFlash.class);
+				muzzleFlashModelString = split[1];
 			}
+			else if (FMLCommonHandler.instance().getSide().isClient() && (split[0].equals("FlashModel"))) 
+			{
+	            flashModel = FlansMod.proxy.loadModel(split[1], shortName, ModelFlash.class);
+	            flashModelString = split[1];
+	        }
 			deployableTexture = Read(split, "DeployedTexture", deployableTexture);
 			standBackDist = Read(split, "StandBackDistance", standBackDist);
 			topViewLimit = Read(split, "TopViewLimit", topViewLimit);
@@ -469,26 +815,35 @@ public class GunType extends PaintableType implements IScope
 				}
 				// Too spammy when packs have optional dependencies
 				//else FlansMod.log.warn("Could not find " + split[1] + " when reading ammo types for " + shortName);
-			}
+			} else if (split[0].equals("NumAmmoSlots") || split[0].equals("NumAmmoItemsInGun") || split[0].equals("LoadIntoGun"))
+				try{ numPrimaryAmmoItems = Integer.parseInt(split[1]);  } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for NumAmmoSlots or NumAmmoItemsInGun or LoadIntoGun."); }
 			else if(split[0].equals("BulletSpeed"))
 			{
-				if(split[1].toLowerCase().equals("instant"))
-				{
-					bulletSpeed = 0.0f;
-				}
-				else bulletSpeed = Float.parseFloat(split[1]);
-				
-				if(bulletSpeed > 3.0f)
-				{
-					bulletSpeed = 0.0f;
+				try{ 
+					if(split[1].toLowerCase().equals("instant"))
+					{
+						bulletSpeed = 0.0f;
+					}
+					else bulletSpeed = Float.parseFloat(split[1]);
+					
+					if(bulletSpeed > 3.0f)
+					{
+						bulletSpeed = 0.0f;
+					}
+				} catch (Exception e) { 
+					InfoType.LogError(shortName, "Incorrect format for BulletSpeed."); 
 				}
 			}
+            else if (split[0].equals("CanSetPosition"))
+            	try{ canSetPosition = Boolean.parseBoolean(split[1].toLowerCase());  } catch (Exception e) { InfoType.LogError(shortName, "Incorrect format for CanSetPosition."); }
 			else if(split[0].equals("SecondaryFunction"))
 				secondaryFunction = EnumSecondaryFunction.get(split[1]);
-				
+			
 				//Custom Melee Stuff
 			else if(split[0].equals("UseCustomMelee") && Boolean.parseBoolean(split[1]))
 				secondaryFunction = EnumSecondaryFunction.CUSTOM_MELEE;
+			else if (split[0].equals("UseCustomMeleeWhenShoot") && Boolean.parseBoolean(split[1]))
+                secondaryFunctionWhenShoot = EnumSecondaryFunction.CUSTOM_MELEE;
 			
 			meleeTime = Read(split, "MeleeTime", meleeTime);
 			
@@ -524,6 +879,12 @@ public class GunType extends PaintableType implements IScope
 			allowGripAttachments = Read(split, "AllowGripAttachments", allowGripAttachments);
 			numGenericAttachmentSlots = Read(split, "NumGenericAttachmentSlots", numGenericAttachmentSlots);
 			
+			allowGadgetAttachments = Read(split, "AllowGadgetAttachments", allowGadgetAttachments);
+			allowSlideAttachments = Read(split, "AllowSlideAttachments", allowSlideAttachments);
+			allowPumpAttachments = Read(split, "AllowPumpAttachments", allowPumpAttachments);
+			allowAccessoryAttachments = Read(split, "AllowAccessoryAttachments", allowAccessoryAttachments);
+			 
+			
 			//Shield settings
 			if(split[0].toLowerCase().equals("shield"))
 			{
@@ -531,14 +892,406 @@ public class GunType extends PaintableType implements IScope
 				shieldDamageAbsorption = Float.parseFloat(split[1]);
 				shieldOrigin = new Vector3f(Float.parseFloat(split[2]) / 16F, Float.parseFloat(split[3]) / 16F, Float.parseFloat(split[4]) / 16F);
 				shieldDimensions = new Vector3f(Float.parseFloat(split[5]) / 16F, Float.parseFloat(split[6]) / 16F, Float.parseFloat(split[7]) / 16F);
-			}
+			} else if (FMLCommonHandler.instance().getSide().isClient()) {
+                processAnimationConfigs(split);
+            }
 		}
 		catch(Exception e)
 		{
-			FlansMod.log.error("Reading gun file failed.");
-			FlansMod.log.throwing(e);
+			if (split != null) {
+                StringBuilder msg = new StringBuilder(" : ");
+                for (String s : split) msg.append(" ").append(s);
+                FlansMod.log.error("Reading gun file failed. " + file.name + msg);
+            } else {
+                FlansMod.log.error("Reading gun file failed. " + file.name);
+            }
+			FlansMod.log.throwing(e);		
 		}
 	}
+	
+	public void processAnimationConfigs(String[] split) {
+        if (split[0].equals("animMinigunBarrelOrigin"))
+            model.minigunBarrelOrigin = parseVector3f(split);
+        else if (split[0].equals("animBarrelAttachPoint"))
+            model.barrelAttachPoint = parseVector3f(split);
+        else if (split[0].equals("animScopeAttachPoint"))
+            model.scopeAttachPoint = parseVector3f(split);
+        else if (split[0].equals("animStockAttachPoint"))
+            model.stockAttachPoint = parseVector3f(split);
+        else if (split[0].equals("animGripAttachPoint"))
+            model.gripAttachPoint = parseVector3f(split);
+        else if (split[0].equals("animGadgetAttachPoint"))
+            model.gadgetAttachPoint = parseVector3f(split);
+        else if (split[0].equals("animSlideAttachPoint"))
+            model.slideAttachPoint = parseVector3f(split);
+        else if (split[0].equals("animPumpAttachPoint"))
+            model.pumpAttachPoint = parseVector3f(split);
+        else if (split[0].equals("animAccessoryAttachPoint"))
+            model.accessoryAttachPoint = parseVector3f(split);
+
+        else if (split[0].equals("animDefaultBarrelFlashPoint"))
+            model.defaultBarrelFlashPoint = parseVector3f(split);
+        else if (split[0].equals("animMuzzleFlashPoint"))
+            model.muzzleFlashPoint = parseVector3f(split);
+
+        else if (split[0].equals("animHasFlash"))
+            model.hasFlash = Boolean.parseBoolean(split[1]);
+        else if (split[0].equals("animHasArms"))
+            model.hasArms = Boolean.parseBoolean(split[1]);
+
+        else if (split[0].equals("animLeftArmPos"))
+            model.leftArmPos = parseVector3f(split);
+        else if (split[0].equals("animLeftArmRot"))
+            model.leftArmRot = parseVector3f(split);
+        else if (split[0].equals("animLeftArmScale"))
+            model.leftArmScale = parseVector3f(split);
+        else if (split[0].equals("animRightArmPos"))
+            model.rightArmPos = parseVector3f(split);
+        else if (split[0].equals("animRightArmRot"))
+            model.rightArmRot = parseVector3f(split);
+        else if (split[0].equals("animRightArmScale"))
+            model.rightArmScale = parseVector3f(split);
+
+        else if (split[0].equals("animRightArmReloadPos"))
+            model.rightArmReloadPos = parseVector3f(split);
+        else if (split[0].equals("animRightArmReloadRot"))
+            model.rightArmReloadRot = parseVector3f(split);
+        else if (split[0].equals("animLeftArmReloadPos"))
+            model.leftArmReloadPos = parseVector3f(split);
+        else if (split[0].equals("animLeftArmReloadRot"))
+            model.leftArmReloadRot = parseVector3f(split);
+
+        else if (split[0].equals("animRightArmChargePos"))
+            model.rightArmChargePos = parseVector3f(split);
+        else if (split[0].equals("animRightArmChargeRot"))
+            model.rightArmChargeRot = parseVector3f(split);
+        else if (split[0].equals("animLeftArmChargePos"))
+            model.leftArmChargePos = parseVector3f(split);
+        else if (split[0].equals("animLeftArmChargeRot"))
+            model.leftArmChargeRot = parseVector3f(split);
+
+        else if (split[0].equals("animStagedRightArmReloadPos"))
+            model.stagedrightArmReloadPos = parseVector3f(split);
+        else if (split[0].equals("animStagedRightArmReloadRot"))
+            model.stagedrightArmReloadRot = parseVector3f(split);
+        else if (split[0].equals("animStagedLeftArmReloadPos"))
+            model.stagedleftArmReloadPos = parseVector3f(split);
+        else if (split[0].equals("animStagedLeftArmReloadRot"))
+            model.stagedleftArmReloadRot = parseVector3f(split);
+
+        else if (split[0].equals("animRightHandAmmo"))
+            model.rightHandAmmo = Boolean.parseBoolean(split[1]);
+        else if (split[0].equals("animLeftHandAmmo"))
+            model.leftHandAmmo = Boolean.parseBoolean(split[1]);
+
+        else if (split[0].equals("animGunSlideDistance"))
+            model.gunSlideDistance = Float.parseFloat(split[1]);
+        else if (split[0].equals("animAltGunSlideDistance"))
+            model.altgunSlideDistance = Float.parseFloat(split[1]);
+        else if (split[0].equals("animRecoilSlideDistance"))
+            model.RecoilSlideDistance = Float.parseFloat(split[1]);
+        else if (split[0].equals("animRotatedSlideDistance"))
+            model.RotateSlideDistance = Float.parseFloat(split[1]);
+        else if (split[0].equals("animShakeDistance"))
+            model.ShakeDistance = Float.parseFloat(split[1]);
+        else if (split[0].equals("animRecoilAmount"))
+            model.recoilAmount = Float.parseFloat(split[1]);
+
+        else if (split[0].equals("animCasingAnimDistance"))
+            model.casingAnimDistance = parseVector3f(split);
+        else if (split[0].equals("animCasingAnimSpread"))
+            model.casingAnimSpread = parseVector3f(split);
+        else if (split[0].equals("animCasingAnimTime"))
+            model.casingAnimTime = Integer.parseInt(split[1]);
+        else if (split[0].equals("animCasingRotateVector"))
+            model.casingRotateVector = parseVector3f(split);
+        else if (split[0].equals("animCasingAttachPoint"))
+            model.casingAttachPoint = parseVector3f(split);
+        else if (split[0].equals("animCasingDelay"))
+            model.casingDelay = Integer.parseInt(split[1]);
+        else if (split[0].equals("animCasingScale"))
+            model.caseScale = Float.parseFloat(split[1]);
+        else if (split[0].equals("animFlashScale"))
+            model.flashScale = Float.parseFloat(split[1]);
+
+        else if (split[0].equals("animChargeHandleDistance"))
+            model.chargeHandleDistance = Float.parseFloat(split[1]);
+        else if (split[0].equals("animChargeDelay"))
+            model.chargeDelay = Integer.parseInt(split[1]);
+        else if (split[0].equals("animChargeDelayAfterReload"))
+            model.chargeDelayAfterReload = Integer.parseInt(split[1]);
+        else if (split[0].equals("animChargeTime"))
+            model.chargeTime = Integer.parseInt(split[1]);
+        else if (split[0].equals("animCountOnRightHandSide"))
+            model.countOnRightHandSide = Boolean.parseBoolean(split[1]);
+        else if (split[0].equals("animIsBulletCounterActive"))
+            model.isBulletCounterActive = Boolean.parseBoolean(split[1]);
+        else if (split[0].equals("animIsAdvBulletCounterActive"))
+            model.isAdvBulletCounterActive = Boolean.parseBoolean(split[1]);
+        else if (split[0].equals("animAnimationType")) {
+            if (split[1].equals("NONE"))
+                model.animationType = EnumAnimationType.NONE;
+            else if (split[1].equals("BOTTOM_CLIP"))
+                model.animationType = EnumAnimationType.BOTTOM_CLIP;
+            else if (split[1].equals("CUSTOMBOTTOM_CLIP"))
+                model.animationType = EnumAnimationType.CUSTOMBOTTOM_CLIP;
+            else if (split[1].equals("PISTOL_CLIP"))
+                model.animationType = EnumAnimationType.PISTOL_CLIP;
+            else if (split[1].equals("CUSTOMPISTOL_CLIP"))
+                model.animationType = EnumAnimationType.CUSTOMPISTOL_CLIP;
+            else if (split[1].equals("TOP_CLIP"))
+                model.animationType = EnumAnimationType.TOP_CLIP;
+            else if (split[1].equals("CUSTOMTOP_CLIP"))
+                model.animationType = EnumAnimationType.CUSTOMTOP_CLIP;
+            else if (split[1].equals("SIDE_CLIP"))
+                model.animationType = EnumAnimationType.SIDE_CLIP;
+            else if (split[1].equals("CUSTOMSIDE_CLIP"))
+                model.animationType = EnumAnimationType.CUSTOMSIDE_CLIP;
+            else if (split[1].equals("P90"))
+                model.animationType = EnumAnimationType.P90;
+            else if (split[1].equals("CUSTOMP90"))
+                model.animationType = EnumAnimationType.CUSTOMP90;
+            else if (split[1].equals("SHOTGUN"))
+                model.animationType = EnumAnimationType.SHOTGUN;
+            else if (split[1].equals("CUSTOMSHOTGUN"))
+                model.animationType = EnumAnimationType.CUSTOMSHOTGUN;
+            else if (split[1].equals("RIFLE"))
+                model.animationType = EnumAnimationType.RIFLE;
+            else if (split[1].equals("CUSTOMRIFLE"))
+                model.animationType = EnumAnimationType.CUSTOMRIFLE;
+            else if (split[1].equals("REVOLVER"))
+                model.animationType = EnumAnimationType.REVOLVER;
+            else if (split[1].equals("CUSTOMREVOLVER"))
+                model.animationType = EnumAnimationType.CUSTOMREVOLVER;
+            else if (split[1].equals("REVOLVER2"))
+                model.animationType = EnumAnimationType.REVOLVER;
+            else if (split[1].equals("CUSTOMREVOLVER2"))
+                model.animationType = EnumAnimationType.CUSTOMREVOLVER;
+            else if (split[1].equals("END_LOADED"))
+                model.animationType = EnumAnimationType.END_LOADED;
+            else if (split[1].equals("CUSTOMEND_LOADED"))
+                model.animationType = EnumAnimationType.CUSTOMEND_LOADED;
+            else if (split[1].equals("RIFLE_TOP"))
+                model.animationType = EnumAnimationType.RIFLE_TOP;
+            else if (split[1].equals("CUSTOMRIFLE_TOP"))
+                model.animationType = EnumAnimationType.CUSTOMRIFLE_TOP;
+            else if (split[1].equals("BULLPUP"))
+                model.animationType = EnumAnimationType.BULLPUP;
+            else if (split[1].equals("CUSTOMBULLPUP"))
+                model.animationType = EnumAnimationType.CUSTOMBULLPUP;
+            else if (split[1].equals("ALT_PISTOL_CLIP"))
+                model.animationType = EnumAnimationType.ALT_PISTOL_CLIP;
+            else if (split[1].equals("CUSTOMALT_PISTOL_CLIP"))
+                model.animationType = EnumAnimationType.CUSTOMALT_PISTOL_CLIP;
+            else if (split[1].equals("GENERIC"))
+                model.animationType = EnumAnimationType.GENERIC;
+            else if (split[1].equals("CUSTOMGENERIC"))
+                model.animationType = EnumAnimationType.CUSTOMGENERIC;
+            else if (split[1].equals("BACK_LOADED"))
+                model.animationType = EnumAnimationType.BACK_LOADED;
+            else if (split[1].equals("CUSTOMBACK_LOADED"))
+                model.animationType = EnumAnimationType.CUSTOMBACK_LOADED;
+            else if (split[1].equals("STRIKER"))
+                model.animationType = EnumAnimationType.STRIKER;
+            else if (split[1].equals("CUSTOMSTRIKER"))
+                model.animationType = EnumAnimationType.CUSTOMSTRIKER;
+            else if (split[1].equals("BREAK_ACTION"))
+                model.animationType = EnumAnimationType.BREAK_ACTION;
+            else if (split[1].equals("CUSTOMBREAK_ACTION"))
+                model.animationType = EnumAnimationType.CUSTOMBREAK_ACTION;
+            else if (split[1].equals("CUSTOM"))
+                model.animationType = EnumAnimationType.CUSTOM;
+        } else if (split[0].equals("animMeleeAnimation")) {
+            if (split[1].equals("DEFAULT"))
+                model.meleeAnimation = EnumMeleeAnimation.DEFAULT;
+            else if (split[1].equals("NONE"))
+                model.meleeAnimation = EnumMeleeAnimation.NONE;
+            else if (split[1].equals("BLUNT_SWING"))
+                model.meleeAnimation = EnumMeleeAnimation.BLUNT_SWING;
+            else if (split[1].equals("BLUNT_BASH"))
+                model.meleeAnimation = EnumMeleeAnimation.BLUNT_BASH;
+            else if (split[1].equals("STAB_UNDERARM"))
+                model.meleeAnimation = EnumMeleeAnimation.STAB_UNDERARM;
+            else if (split[1].equals("STAB_OVERARM"))
+                model.meleeAnimation = EnumMeleeAnimation.STAB_OVERARM;
+        } else if (split[0].equals("animTiltGunTime"))
+            model.tiltGunTime = Float.parseFloat(split[1]);
+        else if (split[0].equals("animUnloadClipTime"))
+            model.unloadClipTime = Float.parseFloat(split[1]);
+        else if (split[0].equals("animLoadClipTime"))
+            model.loadClipTime = Float.parseFloat(split[1]);
+
+        else if (split[0].equals("animScopeIsOnSlide"))
+            model.scopeIsOnSlide = Boolean.parseBoolean(split[1]);
+        else if (split[0].equals("animScopeIsOnBreakAction"))
+            model.scopeIsOnBreakAction = Boolean.parseBoolean(split[1]);
+
+        else if (split[0].equals("animNumBulletsInReloadAnimation"))
+            model.numBulletsInReloadAnimation = Float.parseFloat(split[1]);
+
+        else if (split[0].equals("animPumpDelay"))
+            model.pumpDelay = Integer.parseInt(split[1]);
+        else if (split[0].equals("animPumpDelayAfterReload"))
+            model.pumpDelayAfterReload = Integer.parseInt(split[1]);
+        else if (split[0].equals("animPumpTime"))
+            model.pumpTime = Integer.parseInt(split[1]);
+        else if (split[0].equals("animHammerDelay"))
+            model.hammerDelay = Integer.parseInt(split[1]);
+
+        else if (split[0].equals("animPumpHandleDistance"))
+            model.pumpHandleDistance = Float.parseFloat(split[1]);
+        else if (split[0].equals("animEndLoadedAmmoDistance"))
+            model.endLoadedAmmoDistance = Float.parseFloat(split[1]);
+        else if (split[0].equals("animBreakActionAmmoDistance"))
+            model.breakActionAmmoDistance = Float.parseFloat(split[1]);
+        else if (split[0].equals("animScopeIsOnBreakAction"))
+            model.scopeIsOnBreakAction = Boolean.parseBoolean(split[1]);
+
+        else if (split[0].equals("animGripIsOnPump"))
+            model.gripIsOnPump = Boolean.parseBoolean(split[1]);
+        else if (split[0].equals("animGadgetsOnPump"))
+            model.gripIsOnPump = Boolean.parseBoolean(split[1]);
+
+        else if (split[0].equals("animBarrelBreakPoint"))
+            model.barrelBreakPoint = parseVector3f(split);
+        else if (split[0].equals("animAltBarrelBreakPoint"))
+            model.altbarrelBreakPoint = parseVector3f(split);
+
+        else if (split[0].equals("animRevolverFlipAngle"))
+            model.revolverFlipAngle = Float.parseFloat(split[1]);
+        else if (split[0].equals("animRevolver2FlipAngle"))
+            model.revolver2FlipAngle = Float.parseFloat(split[1]);
+
+        else if (split[0].equals("animRevolverFlipPoint"))
+            model.revolverFlipPoint = parseVector3f(split);
+        else if (split[0].equals("animRevolver2FlipPoint"))
+            model.revolver2FlipPoint = parseVector3f(split);
+
+        else if (split[0].equals("animBreakAngle"))
+            model.breakAngle = Float.parseFloat(split[1]);
+        else if (split[0].equals("animAltBreakAngle"))
+            model.altbreakAngle = Float.parseFloat(split[1]);
+
+        else if (split[0].equals("animSpinningCocking"))
+            model.spinningCocking = Boolean.parseBoolean(split[1]);
+
+        else if (split[0].equals("animSpinPoint"))
+            model.spinPoint = parseVector3f(split);
+        else if (split[0].equals("animHammerSpinPoint"))
+            model.hammerSpinPoint = parseVector3f(split);
+        else if (split[0].equals("animAltHammerSpinPoint"))
+            model.althammerSpinPoint = parseVector3f(split);
+        else if (split[0].equals("animHammerAngle"))
+            model.hammerAngle = Float.parseFloat(split[1]);
+        else if (split[0].equals("animAltHammerAngle"))
+            model.althammerAngle = Float.parseFloat(split[1]);
+
+        else if (split[0].equals("animIsSingleAction"))
+            model.isSingleAction = Boolean.parseBoolean(split[1]);
+        else if (split[0].equals("animSlideLockOnEmpty"))
+            model.slideLockOnEmpty = Boolean.parseBoolean(split[1]);
+        else if (split[0].equals("animLeftHandPump"))
+            model.lefthandPump = Boolean.parseBoolean(split[1]);
+        else if (split[0].equals("animRightHandPump"))
+            model.righthandPump = Boolean.parseBoolean(split[1]);
+        else if (split[0].equals("animLeftHandCharge"))
+            model.leftHandCharge = Boolean.parseBoolean(split[1]);
+        else if (split[0].equals("animRightHandCharge"))
+            model.rightHandCharge = Boolean.parseBoolean(split[1]);
+        else if (split[0].equals("animLeftHandBolt"))
+            model.leftHandBolt = Boolean.parseBoolean(split[1]);
+        else if (split[0].equals("animRightHandBolt"))
+            model.rightHandBolt = Boolean.parseBoolean(split[1]);
+
+        else if (split[0].equals("animPumpModifier"))
+            model.pumpModifier = Float.parseFloat(split[1]);
+        else if (split[0].equals("animChargeModifier"))
+            model.chargeModifier = parseVector3f(split);
+        else if (split[0].equals("animGunOffset"))
+            model.gunOffset = Float.parseFloat(split[1]);
+        else if (split[0].equals("animCrouchZoom"))
+            model.crouchZoom = Float.parseFloat(split[1]);
+        else if (split[0].equals("animFancyStance"))
+            model.fancyStance = Boolean.parseBoolean(split[1]);
+        else if (split[0].equals("animStanceTranslate"))
+            model.stanceTranslate = parseVector3f(split);
+        else if (split[0].equals("animStanceRotate"))
+            model.stanceRotate = parseVector3f(split);
+
+        else if (split[0].equals("animRotateGunVertical"))
+            model.rotateGunVertical = Float.parseFloat(split[1]);
+        else if (split[0].equals("animRotateGunHorizontal"))
+            model.rotateGunHorizontal = Float.parseFloat(split[1]);
+        else if (split[0].equals("animTiltGun"))
+            model.tiltGun = Float.parseFloat(split[1]);
+        else if (split[0].equals("animTranslateGun"))
+            model.translateGun = parseVector3f(split);
+        else if (split[0].equals("animRotateClipVertical"))
+            model.rotateClipVertical = Float.parseFloat(split[1]);
+        else if (split[0].equals("animStagedRotateClipVertical"))
+            model.stagedrotateClipVertical = Float.parseFloat(split[1]);
+        else if (split[0].equals("animRotateClipHorizontal"))
+            model.rotateClipVertical = Float.parseFloat(split[1]);
+        else if (split[0].equals("animStagedRotateClipHorizontal"))
+            model.stagedrotateClipVertical = Float.parseFloat(split[1]);
+        else if (split[0].equals("animTiltClip"))
+            model.tiltClip = Float.parseFloat(split[1]);
+        else if (split[0].equals("animStagedTiltClip"))
+            model.stagedtiltClip = Float.parseFloat(split[1]);
+        else if (split[0].equals("animTranslateClip"))
+            model.translateClip = parseVector3f(split);
+        else if (split[0].equals("animStagedTranslateClip"))
+            model.stagedtranslateClip = parseVector3f(split);
+        else if (split[0].equals("animStagedReload"))
+            model.stagedReload = Boolean.parseBoolean(split[1]);
+
+        else if (split[0].equals("animThirdPersonOffset"))
+            model.thirdPersonOffset = parseVector3f(split);
+        else if (split[0].equals("animItemFrameOffset"))
+            model.itemFrameOffset = parseVector3f(split);
+        else if (split[0].equals("animStillRenderGunWhenScopedOverlay"))
+            model.stillRenderGunWhenScopedOverlay = Boolean.parseBoolean(split[1]);
+        else if (split[0].equals("animAdsEffectMultiplier"))
+            model.adsEffectMultiplier = Float.parseFloat(split[1]);
+    }
+	
+	/**
+     * Used only for driveables
+     */
+    public boolean isAmmo(ShootableType type) {
+        return ammo.contains(type);
+    }
+
+    public boolean isAmmo(ShootableType type, ItemStack stack) {
+        boolean result = ammo.contains(type);
+
+        if (getGrip(stack) != null && getSecondaryFire(stack)) {
+            List<ShootableType> t = new ArrayList<>();
+            for (String s : getGrip(stack).secondaryAmmo) {
+                ShootableType shoot = ShootableType.getShootableType(s);
+                if (type != null)
+                    t.add(shoot);
+            }
+            result = t.contains(type);
+        }
+
+        return result;
+    }
+    
+    public Vector3f parseVector3f(String[] inp) {
+        return new Vector3f(Float.parseFloat(inp[1]), Float.parseFloat(inp[2]), Float.parseFloat(inp[3]));
+    }
+    
+    public boolean isAmmo(ItemStack stack) {
+        if (stack == null)
+            return false;
+        else if (stack.getItem() instanceof ItemBullet) {
+            return isAmmo(((ItemBullet) stack.getItem()).type, stack);
+        } else if (stack.getItem() instanceof ItemGrenade) {
+            return isAmmo(((ItemGrenade) stack.getItem()).type, stack);
+        }
+        return false;
+    }
 	
 	public boolean isCorrectAmmo(ShootableType type)
 	{
@@ -566,6 +1319,10 @@ public class GunType extends PaintableType implements IScope
 	public void reloadModel()
 	{
 		model = FlansMod.proxy.loadModel(modelString, shortName, ModelGun.class);
+		deployableModel = FlansMod.proxy.loadModel(deployableModelString, shortName, ModelMG.class);
+        casingModel = FlansMod.proxy.loadModel(casingModelString, shortName, ModelCasing.class);
+        flashModel = FlansMod.proxy.loadModel(flashModelString, shortName, ModelFlash.class);
+        muzzleFlashModel = FlansMod.proxy.loadModel(muzzleFlashModelString, shortName, ModelMuzzleFlash.class);
 	}
 	
 	@Override
@@ -620,6 +1377,10 @@ public class GunType extends PaintableType implements IScope
 		appendToList(gun, "scope", attachments);
 		appendToList(gun, "stock", attachments);
 		appendToList(gun, "grip", attachments);
+		appendToList(gun, "gadget", attachments);
+        appendToList(gun, "slide", attachments);
+        appendToList(gun, "pump", attachments);
+        appendToList(gun, "accessory", attachments);
 		return attachments;
 	}
 	
@@ -653,6 +1414,22 @@ public class GunType extends PaintableType implements IScope
 		return getAttachment(gun, "grip");
 	}
 	
+	public AttachmentType getGadget(ItemStack gun) {
+        return getAttachment(gun, "gadget");
+    }
+
+    public AttachmentType getSlide(ItemStack gun) {
+        return getAttachment(gun, "slide");
+    }
+
+    public AttachmentType getPump(ItemStack gun) {
+        return getAttachment(gun, "pump");
+    }
+
+    public AttachmentType getAccessory(ItemStack gun) {
+        return getAttachment(gun, "accessory");
+    }
+	
 	public AttachmentType getGeneric(ItemStack gun, int i)
 	{
 		return getAttachment(gun, "generic_" + i);
@@ -678,6 +1455,22 @@ public class GunType extends PaintableType implements IScope
 	{
 		return getAttachmentItemStack(gun, "grip");
 	}
+	
+	public ItemStack getGadgetItemStack(ItemStack gun) {
+        return getAttachmentItemStack(gun, "gadget");
+    }
+
+    public ItemStack getSlideItemStack(ItemStack gun) {
+        return getAttachmentItemStack(gun, "slide");
+    }
+
+    public ItemStack getPumpItemStack(ItemStack gun) {
+        return getAttachmentItemStack(gun, "pump");
+    }
+
+    public ItemStack getAccessoryItemStack(ItemStack gun) {
+        return getAttachmentItemStack(gun, "accessory");
+    }
 	
 	public ItemStack getGenericItemStack(ItemStack gun, int i)
 	{
@@ -722,6 +1515,10 @@ public class GunType extends PaintableType implements IScope
 			attachmentTags.setTag("scope", new NBTTagCompound());
 			attachmentTags.setTag("stock", new NBTTagCompound());
 			attachmentTags.setTag("grip", new NBTTagCompound());
+			attachmentTags.setTag("gadget", new NBTTagCompound());
+            attachmentTags.setTag("slide", new NBTTagCompound());
+            attachmentTags.setTag("pump", new NBTTagCompound());
+            attachmentTags.setTag("accessory", new NBTTagCompound());
 			
 			gun.getTagCompound().setTag("attachments", attachmentTags);
 		}
@@ -740,12 +1537,24 @@ public class GunType extends PaintableType implements IScope
 		return stackMeleeDamage;
 	}
 	
+	public float getMeleeDamage(ItemStack stack, boolean driveable) {
+        float stackMeleeDamage = meleeDamage;
+        for (AttachmentType attachment : getCurrentAttachments(stack)) {
+            stackMeleeDamage *= attachment.meleeDamageMultiplier;
+        }
+        return stackMeleeDamage * (driveable ? meleeDamageDriveableModifier : 1);
+    }
+	
 	/**
 	 * Get the damage of a specific gun, taking into account attachments
 	 */
 	public float getDamage(ItemStack stack)
 	{
 		float stackDamage = damage;
+		
+		if (getGrip(stack) != null && getSecondaryFire(stack))
+            stackDamage = getGrip(stack).secondaryDamage;
+		
 		for(AttachmentType attachment : getCurrentAttachments(stack))
 		{
 			stackDamage *= attachment.damageMultiplier;
@@ -765,6 +1574,66 @@ public class GunType extends PaintableType implements IScope
 		}
 		return stackSpread;
 	}
+	
+	public float getSpread(ItemStack stack, boolean sneaking, boolean sprinting) {
+        float stackSpread = bulletSpread;
+
+        if (getGrip(stack) != null && getSecondaryFire(stack))
+            stackSpread = getGrip(stack).secondarySpread;
+
+        for (AttachmentType attachment : getCurrentAttachments(stack)) {
+            stackSpread *= attachment.spreadMultiplier;
+        }
+        if (sprinting) {
+            stackSpread *= sprintSpreadMultiplier;
+        } else if (sneaking) {
+            stackSpread *= sneakSpreadMultiplier;
+        }
+        return stackSpread;
+    }
+	
+	/**
+     * Get the default spread of a specific gun, taking into account attachments
+     */
+    public float getDefaultSpread(ItemStack stack) {
+        float stackSpread = defaultSpread;
+
+        if (getGrip(stack) != null && getSecondaryFire(stack))
+            stackSpread = getGrip(stack).secondaryDefaultSpread;
+
+        for (AttachmentType attachment : getCurrentAttachments(stack)) {
+            stackSpread *= attachment.spreadMultiplier;
+        }
+        return stackSpread;
+    }
+    
+    /**
+     * Get the recoil of a specific gun, taking into account attachments
+     */
+    public float getRecoilPitch(ItemStack stack) {
+        float stackRecoil = this.recoilPitch + (rand.nextFloat() * this.rndRecoilPitchRange);
+        for (AttachmentType attachment : getCurrentAttachments(stack)) {
+            stackRecoil *= attachment.recoilMultiplier;
+        }
+        return stackRecoil;
+    }
+    
+  //Used for displaying static recoil stats
+    public float getRecoilDisplay(ItemStack stack) {
+        float stackRecoil = this.recoilPitch;
+        for (AttachmentType attachment : getCurrentAttachments(stack)) {
+            stackRecoil *= attachment.recoilMultiplier;
+        }
+        return stackRecoil;
+    }
+
+    public float getRecoilYaw(ItemStack stack) {
+        float stackRecoilYaw = this.recoilYaw + ((rand.nextFloat() - 0.5F) * this.rndRecoilYawRange);
+        for (AttachmentType attachment : getCurrentAttachments(stack)) {
+            stackRecoilYaw *= attachment.recoilMultiplier;
+        }
+        return stackRecoilYaw;
+    }
 	
 	public EnumSpreadPattern getSpreadPattern(ItemStack stack)
 	{
@@ -790,11 +1659,34 @@ public class GunType extends PaintableType implements IScope
 	}
 	
 	/**
+     * Get the bullet speed of a specific gun, taking into account attachments
+     */
+    public float getBulletSpeed(ItemStack stack, ItemStack bulletStack) {
+        float stackBulletSpeed;
+        if (bulletStack != null && bulletStack.getItem() != null && bulletStack.getItem() instanceof ItemBullet) {
+            stackBulletSpeed = bulletSpeed * ((ItemBullet) bulletStack.getItem()).type.speedMultiplier;
+        } else {
+            stackBulletSpeed = bulletSpeed;
+        }
+
+        if (getGrip(stack) != null && getSecondaryFire(stack))
+            stackBulletSpeed = getGrip(stack).secondarySpeed;
+
+        for (AttachmentType attachment : getCurrentAttachments(stack)) {
+            stackBulletSpeed *= attachment.bulletSpeedMultiplier;
+        }
+        return stackBulletSpeed;
+    }
+	/**
 	 * Get the bullet speed of a specific gun, taking into account attachments
 	 */
 	public float getBulletSpeed(ItemStack stack)
 	{
 		float stackBulletSpeed = bulletSpeed;
+		
+		if (getGrip(stack) != null && getSecondaryFire(stack))
+            stackBulletSpeed = getGrip(stack).secondarySpeed;
+		
 		for(AttachmentType attachment : getCurrentAttachments(stack))
 		{
 			stackBulletSpeed *= attachment.bulletSpeedMultiplier;
@@ -808,6 +1700,10 @@ public class GunType extends PaintableType implements IScope
 	public float getReloadTime(ItemStack stack)
 	{
 		float stackReloadTime = reloadTime;
+		
+		if (getGrip(stack) != null && getSecondaryFire(stack))
+            stackReloadTime = getGrip(stack).secondaryReloadTime;
+		
 		for(AttachmentType attachment : getCurrentAttachments(stack))
 		{
 			stackReloadTime *= attachment.reloadTimeMultiplier;
@@ -816,18 +1712,172 @@ public class GunType extends PaintableType implements IScope
 	}
 	
 	/**
+     * Get the fire rate of a specific gun
+     */
+    public float getShootDelay(ItemStack stack) {
+        //Legacy system input as direct ticks
+        if (shootDelay != 0) {
+            float fireRate = shootDelay;
+            if (getGrip(stack) != null && getSecondaryFire(stack))
+                fireRate = getGrip(stack).secondaryShootDelay;
+
+            return fireRate;
+        }
+        //New system, input as RPM
+        else {
+            float fireRate = roundsPerMin;
+
+            if (getGrip(stack) != null && getSecondaryFire(stack))
+                fireRate = getGrip(stack).secondaryShootDelay;
+
+            float fireTicks = 1200 / fireRate;
+
+            return fireRate = fireTicks;
+        }
+    }
+    
+    public float getShootDelay() {
+        if (shootDelay != 0) {
+            return shootDelay;
+        } else {
+            return 1200 / roundsPerMin;
+        }
+    }
+    
+    /**
+     * Get the number of bullets fired per shot of a specific gun
+     */
+    public int getNumBullets(ItemStack stack) {
+        int amount = numBullets;
+
+        if (getGrip(stack) != null && getSecondaryFire(stack))
+            amount = getGrip(stack).secondaryNumBullets;
+
+        return amount;
+    }
+    
+    /**
+     * Get the movement speed of a specific gun, taking into account attachments
+     */
+    public float getMovementSpeed(ItemStack stack) {
+        float stackMovement = moveSpeedModifier;
+        for (AttachmentType attachment : getCurrentAttachments(stack)) {
+            stackMovement *= attachment.moveSpeedMultiplier;
+        }
+        return stackMovement;
+    }
+    
+    /**
+     * Get the recoil counter coefficient of the gun, taking into account attachments
+     */
+    public float getRecoilControl(ItemStack stack, boolean isSprinting, boolean isSneaking) {
+        float control;
+        if (isSprinting) {
+            control = recoilCounterCoefficientSprinting;
+        } else if (isSneaking) {
+            control = recoilCounterCoefficientSneaking;
+        } else {
+            control = recoilCounterCoefficient;
+        }
+
+        for (AttachmentType attachment : getCurrentAttachments(stack)) {
+            if (isSprinting) {
+                control *= attachment.recoilControlMultiplierSprinting;
+            } else if (isSneaking) {
+                control *= attachment.recoilControlMultiplierSneaking;
+            } else {
+                control *= attachment.recoilControlMultiplier;
+            }
+        }
+
+        if (control > 1) {
+            return 1;
+        } else if (control < 0) {
+            return 0;
+        } else {
+            return control;
+        }
+    }
+    
+    public void setFireMode(ItemStack stack, int fireMode) {
+        if (!stack.hasTagCompound()) {
+            stack.setTagCompound(new NBTTagCompound());
+        }
+
+        if (fireMode < EnumFireMode.values().length) {
+            stack.getTagCompound().setByte("GunMode", (byte) fireMode);
+        } else {
+            stack.getTagCompound().setByte("GunMode", (byte) mode.ordinal());
+        }
+    }
+	
+	/**
 	 * Get the firing mode of a specific gun, taking into account attachments
 	 */
 	public EnumFireMode getFireMode(ItemStack stack)
 	{
+		//Check for secondary fire mode
+        if (getGrip(stack) != null && getSecondaryFire(stack))
+            return getGrip(stack).secondaryFireMode;
+		
+        //Else check for any mode overrides from attachments
 		for(AttachmentType attachment : getCurrentAttachments(stack))
 		{
 			if(attachment.modeOverride != null)
 				return attachment.modeOverride;
 		}
-		return mode;
+		
+		//Else set the fire mode from the gun
+        if (stack.hasTagCompound() && stack.getTagCompound().hasKey("GunMode")) {
+            int gm = stack.getTagCompound().getByte("GunMode");
+            if (gm < EnumFireMode.values().length) {
+                for (EnumFireMode enumFireMode : submode) {
+                    if (gm == enumFireMode.ordinal()) {
+                        return EnumFireMode.values()[gm];
+                    }
+                }
+            }
+        }
+        
+        setFireMode(stack, mode.ordinal());
+        return mode;
 	}
 	
+	/**
+     * Set the secondary or primary fire mode
+     */
+    public void setSecondaryFire(ItemStack stack, boolean mode) {
+        if (!stack.hasTagCompound())
+            stack.setTagCompound(new NBTTagCompound());
+
+        stack.getTagCompound().setBoolean("secondaryFire", mode);
+    }
+	
+    /**
+     * Get whether the gun is in secondary or primary fire mode
+     */
+    public boolean getSecondaryFire(ItemStack stack) {
+        if (!stack.hasTagCompound())
+            stack.setTagCompound(new NBTTagCompound());
+
+        if (!stack.getTagCompound().hasKey("secondaryFire")) {
+            stack.getTagCompound().setBoolean("secondaryFire", false);
+            return stack.getTagCompound().getBoolean("secondaryFire");
+        }
+
+        return stack.getTagCompound().getBoolean("secondaryFire");
+    }
+
+    /**
+     * Get the max size of ammo items depending on what mode the gun is in
+     */
+    public int getNumAmmoItemsInGun(ItemStack stack) {
+        if (getGrip(stack) != null && getSecondaryFire(stack))
+            return getGrip(stack).numSecAmmoItems;
+        else
+            return numPrimaryAmmoItems;
+    }
+    
 	public float GetShootDelay(ItemStack stack)
 	{
 		for(AttachmentType attachment : getCurrentAttachments(stack))
@@ -857,10 +1907,13 @@ public class GunType extends PaintableType implements IScope
 		return guns.get(hash);
 	}
 	
-	@Override
-	protected void preRead(TypeFile file)
-	{
-	}
+	public Paintjob getPaintjob(String s) {
+        for (Paintjob paintjob : paintjobs) {
+            if (paintjob.iconName.equals(s))
+                return paintjob;
+        }
+        return defaultPaintjob;
+    }
 	
 	@Override
 	@SideOnly(Side.CLIENT)

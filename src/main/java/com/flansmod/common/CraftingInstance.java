@@ -1,7 +1,7 @@
 package com.flansmod.common;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -30,10 +30,10 @@ public class CraftingInstance
 	
 	public CraftingInstance(IInventory i, ArrayList<ItemStack> in, ItemStack out)
 	{
-		this(i, in, Arrays.asList(out));
+		this(i, in, Collections.singletonList(out));
 	}
 	
-	public boolean canCraft()
+	public boolean canCraft(EntityPlayer player)
 	{
 		craftingSuccessful = true;
 		for(ItemStack check : requiredStacks)
@@ -52,23 +52,24 @@ public class CraftingInstance
 				craftingSuccessful = false;
 			}
 		}
-		return craftingSuccessful;
+		return craftingSuccessful || player.capabilities.isCreativeMode;
 	}
 	
 	public void craft(EntityPlayer player)
 	{
 		if(!craftingSuccessful)
 			return;
-		
-		for(ItemStack remove : requiredStacks)
-		{
-			int amountLeft = remove.getCount();
-			for(int j = 0; j < inventory.getSizeInventory(); j++)
+		if (!player.capabilities.isCreativeMode) {
+			for(ItemStack remove : requiredStacks)
 			{
-				ItemStack stack = inventory.getStackInSlot(j);
-				if(amountLeft > 0 && stack != null && !stack.isEmpty() && stack.getItem() == remove.getItem() && stack.getItemDamage() == remove.getItemDamage())
+				int amountLeft = remove.getCount();
+				for(int j = 0; j < inventory.getSizeInventory(); j++)
 				{
-					amountLeft -= inventory.decrStackSize(j, amountLeft).getCount();
+					ItemStack stack = inventory.getStackInSlot(j);
+					if(amountLeft > 0 && stack != null && !stack.isEmpty() && stack.getItem() == remove.getItem() && stack.getItemDamage() == remove.getItemDamage())
+					{
+						amountLeft -= inventory.decrStackSize(j, amountLeft).getCount();
+					}
 				}
 			}
 		}

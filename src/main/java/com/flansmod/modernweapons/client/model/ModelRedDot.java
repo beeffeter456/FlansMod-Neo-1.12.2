@@ -45,6 +45,7 @@ public class ModelRedDot extends ModelAttachment //Same as Filename
 
 		attachmentModel[5].addBox(-15F, 10.5F, -1.5F, 1, 18, 16, 0F); // Import 06
 		attachmentModel[5].setRotationPoint(46F, -28F, -6.5F);
+		attachmentModel[5].glow = true;
 
 		attachmentModel[6].addBox(-16F, 0F, -6F, 6, 1, 8, 0F); // Import 01
 		attachmentModel[6].setRotationPoint(26F, -2F, 2F);

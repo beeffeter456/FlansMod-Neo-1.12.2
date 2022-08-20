@@ -30,7 +30,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextComponentString;
-import net.minecraft.world.GameType;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
@@ -67,6 +66,7 @@ import com.flansmod.common.network.PacketTeamInfo;
 import com.flansmod.common.network.PacketTeamSelect;
 import com.flansmod.common.types.InfoType;
 
+@SuppressWarnings("unchecked")
 public class TeamsManager
 {
 	/**
@@ -154,12 +154,16 @@ public class TeamsManager
 	 */
 	public String motd = "Welcome to the Teams server";
 	
+	public static boolean allowVehicleZoom;
+    public static int bulletSnapshotMin = 0;
+    public static int bulletSnapshotDivisor = 50;
+	
 	//Disused. Delete when done
-	//public Gametype currentGametype;
-	//public TeamsMap currentMap;
-	//public Team[] teams;
-	//public List<RotationEntry> rotation;
-	//public int currentRotationEntry;
+	public GameType currentGametype;
+	public TeamsMap currentMap;
+	public Team[] teams;
+	public List<RotationEntry> rotation;
+	public int currentRotationEntry;
 	
 	public TeamsManager()
 	{
@@ -172,8 +176,8 @@ public class TeamsManager
 		maps = new HashMap<>();
 		rounds = new ArrayList<>();
 		
-		//rotation = new ArrayList<RotationEntry>();
-		//currentMap = TeamsMap.def;
+		rotation = new ArrayList<>();
+		currentMap = null;
 		
 		
 		//Testing stuff. TODO : Replace with automatic Gametype loader
@@ -188,9 +192,9 @@ public class TeamsManager
 	
 	public void reset()
 	{
-		//currentGametype = null;
+		currentGametype = null;
 		//currentMap = TeamsMap.def;
-		//teams = null;
+		teams = null;
 		
 		currentRound = null;
 		
@@ -199,7 +203,7 @@ public class TeamsManager
 		maps = new HashMap<>();
 		rounds = new ArrayList<>();
 		
-		//rotation = new ArrayList<RotationEntry>();
+		rotation = new ArrayList<>();
 	}
 	
 	public static TeamsManager getInstance()
@@ -212,7 +216,7 @@ public class TeamsManager
 		//Send a full team info update to players every 2 seconds.
 		if(time % 40 == 0)
 		{
-			FlansMod.INSTANCE.getPacketHandler().sendToAll(new PacketTeamInfo());
+			FlansMod.getPacketHandler().sendToAll(new PacketTeamInfo());
 			showTeamsMenuToAll(true);
 		}
 		
@@ -312,15 +316,27 @@ public class TeamsManager
 		PlayerHandler.roundEnded();
 	}
 	
+	public void switchToNextGameType() {
+        PlayerHandler.roundEnded();
+        currentRotationEntry = (currentRotationEntry + 1) % rotation.size();
+        RotationEntry entry = rotation.get(currentRotationEntry);
+        if (currentGametype != null && currentGametype != entry.gametype) {
+            currentGametype.roundEnd();
+        }
+        currentGametype = entry.gametype;
+        currentMap = entry.map;
+        teams = entry.teams;
+        currentGametype.roundStart();
+    }
+	
 	public boolean needAutobalance()
 	{
 		if(!autoBalance() || currentRound == null || currentRound.teams.length != 2)
 			return false;
 		int membersTeamA = currentRound.teams[0].members.size();
 		int membersTeamB = currentRound.teams[1].members.size();
-		if(Math.abs(membersTeamA - membersTeamB) > 1)
-			return true;
-		return false;
+		
+		return Math.abs(membersTeamA - membersTeamB) > 1;
 	}
 	
 	public void autobalance()
@@ -336,7 +352,7 @@ public class TeamsManager
 				//My goodness this is convoluted...
 				EntityPlayerMP playerToKick = getPlayer(currentRound.teams[1]
 					.addPlayer(currentRound.teams[0].removeWorstPlayer()));
-				this.messagePlayer(playerToKick, "You were moved to the other team by the autobalancer.");
+				messagePlayer(playerToKick, "You were moved to the other team by the autobalancer.");
 				sendClassMenuToPlayer(playerToKick);
 			}
 		}
@@ -346,7 +362,7 @@ public class TeamsManager
 			{
 				EntityPlayerMP playerToKick = getPlayer(currentRound.teams[0]
 					.addPlayer(currentRound.teams[1].removeWorstPlayer()));
-				this.messagePlayer(playerToKick, "You were moved to the other team by the autobalancer.");
+				messagePlayer(playerToKick, "You were moved to the other team by the autobalancer.");
 				sendClassMenuToPlayer(playerToKick);
 			}
 		}
@@ -354,7 +370,7 @@ public class TeamsManager
 	
 	public String randomTimeOutString()
 	{
-		switch(Gametype.rand.nextInt(4))
+		switch(GameType.rand.nextInt(4))
 		{
 			case 0:
 				return "That's time!";
@@ -393,7 +409,7 @@ public class TeamsManager
 		}
 		
 		//Wildcard option!
-		voteOptions[Gametype.rand.nextInt(voteOptions.length)] = rounds.get(Gametype.rand.nextInt(rounds.size()));
+		voteOptions[GameType.rand.nextInt(voteOptions.length)] = rounds.get(GameType.rand.nextInt(rounds.size()));
 	}
 	
 	public void start()
@@ -605,7 +621,7 @@ public class TeamsManager
 				
 				//Final case. Either the two players are not in the game (in which case, ignore) or they are both in the game.
 				//At this point, we pass over to the gametype
-				if(attackerData.team != null && data.team != null)
+				if(attackerData.team != null /*&& data.team != null*/)
 				{
 					//The roundTimeLeft check ensures that players do not fight during the cooldown period
 					if(roundTimeLeft > 0 &&
@@ -891,7 +907,7 @@ public class TeamsManager
 		setPlayersNextSpawnpoint(playerMP);
 		
 		if(forceAdventureMode)
-			player.setGameType(GameType.ADVENTURE);
+			player.setGameType(net.minecraft.world.GameType.ADVENTURE);
 		resetInventory(player);
 		currentRound.gametype.playerRespawned((EntityPlayerMP)player);
 	}
@@ -930,7 +946,7 @@ public class TeamsManager
 		player.inventory.clear();
 		player.heal(9001);
 		if(forceAdventureMode)
-			player.setGameType(GameType.ADVENTURE);
+			player.setGameType(net.minecraft.world.GameType.ADVENTURE);
 		respawnPlayer(player, true);
 	}
 	
@@ -1013,8 +1029,10 @@ public class TeamsManager
 		Team[] validTeams = currentRound.gametype.getTeamsCanSpawnAs(currentRound, player);
 		for(Team validTeam : validTeams)
 		{
-			if(selectedTeam == validTeam)
+			if(selectedTeam == validTeam) {
 				isValid = true;
+				break;
+			}
 		}
 		//Default to spectator
 		if(!isValid)
@@ -1365,7 +1383,7 @@ public class TeamsManager
 		if(currentRound != null)
 			tags.setInteger("CurrentRound", rounds.indexOf(currentRound));
 		//Save gametype settings to memory
-		for(Gametype gametype : Gametype.gametypes.values())
+		for(GameType gametype : GameType.gametypes.values())
 		{
 			gametype.saveToNBT(tags);
 		}
@@ -1542,4 +1560,16 @@ public class TeamsManager
 		FlansMod.getPacketHandler().sendToServer(new PacketTeamSelect(team == null ? "null" : team.shortName, false));
 		Minecraft.getMinecraft().displayGuiScreen(null);
 	}
+	
+	public static class RotationEntry {
+        public TeamsMap map;
+        public GameType gametype;
+        public Team[] teams;
+
+        public RotationEntry(TeamsMap m, GameType g, Team[] t) {
+            map = m;
+            gametype = g;
+            teams = t;
+        }
+    }
 }

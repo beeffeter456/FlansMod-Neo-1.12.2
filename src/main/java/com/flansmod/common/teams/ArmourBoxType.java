@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import net.minecraft.block.Block;
+import net.minecraft.client.model.ModelBase;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.registries.IForgeRegistry;
 
 import com.flansmod.common.FlansMod;
@@ -27,6 +30,11 @@ public class ArmourBoxType extends BoxType
 	public ArmourBoxType(TypeFile file)
 	{
 		super(file);
+	}
+	
+	@Override
+	public void preRead(TypeFile file)
+	{
 	}
 	
 	@Override
@@ -70,8 +78,11 @@ public class ArmourBoxType extends BoxType
 						else
 							stack = getRecipeElement(lineSplit[j * 2 + 1], Integer.valueOf(lineSplit[j * 2 + 2]), 0);
 						
-						if(stack != null && !stack.isEmpty())
+						if(stack != null && !stack.isEmpty()) {
 							entry.requiredStacks[i].add(stack);
+						} else {
+							if (FlansMod.printDebugLog) { FlansMod.log.warn("Could not add part %s to %s in armourbox %s", lineSplit[j * 2 + 1], name, shortName); }
+						}
 					}
 				}
 				
@@ -81,7 +92,7 @@ public class ArmourBoxType extends BoxType
 		}
 		catch(Exception e)
 		{
-			FlansMod.log.error("Reading gun box file failed : " + shortName);
+			FlansMod.log.error("Reading armour box file failed : " + shortName);
 			FlansMod.log.throwing(e);
 		}
 	}
@@ -125,5 +136,18 @@ public class ArmourBoxType extends BoxType
 	public static ArmourBoxType getBox(String boxShortName)
 	{
 		return boxes.get(boxShortName);
+	}
+	
+	@Override
+	public float GetRecommendedScale() 
+	{
+		return 50.0f;
+	}
+
+	@Override
+	@SideOnly(Side.CLIENT)
+	public ModelBase GetModel() 
+	{
+		return null;
 	}
 }
