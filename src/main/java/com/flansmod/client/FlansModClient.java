@@ -147,9 +147,9 @@ public class FlansModClient extends FlansMod
 	public static List<BlockPos> blockLightOverrides = new ArrayList<>();
 	public static int lightOverrideRefreshRate = 5;
 	
-	/*public static AimType aimType;
+	public static AimType aimType;
     public static FlanMouseButton fireButton;
-    public static FlanMouseButton aimButton;*/
+    public static FlanMouseButton aimButton;
     public static float fov;
 
     public static boolean hitMarker = false;
@@ -702,7 +702,7 @@ public class FlansModClient extends FlansMod
 			});
 	}
 	
-	/*public static void setAimType(AimType aimInputType) {
+	public static void setAimType(AimType aimInputType) {
         Property cw = FlansMod.configFile.get("Input Settings", "Aim Type", "toggle", "The type of aiming that you want to use 'toggle' or 'hold'");
         cw.set(aimInputType.toString());
         FlansMod.configFile.save();
@@ -721,5 +721,5 @@ public class FlansModClient extends FlansMod
         cw.set(buttonInput.toString());
         FlansMod.configFile.save();
         fireButton = buttonInput;
-    }*/
+    }
 }

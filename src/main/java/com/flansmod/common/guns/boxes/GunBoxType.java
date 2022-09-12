@@ -394,6 +394,14 @@ public class GunBoxType extends BoxType
 		{
 			childEntries.add(new GunBoxEntry(type, requiredParts));
 		}
+
+		public boolean isAmmoNullOrEmpty()
+		{
+			if(childEntries != null && !childEntries.isEmpty())
+				return false;
+			else
+				return true;
+		}
 	}
 
 	public GunBoxEntry canCraft(InfoType type)

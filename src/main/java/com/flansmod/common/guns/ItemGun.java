@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import com.flansmod.common.types.IGunboxDescriptionable;
 import org.lwjgl.input.Mouse;
 
 import com.google.common.collect.Multimap;
@@ -68,7 +69,7 @@ import com.flansmod.common.teams.EntityGunItem;
 import com.flansmod.common.types.InfoType;
 import com.flansmod.common.vector.Vector3f;
 
-public class ItemGun extends Item implements IPaintableItem
+public class ItemGun extends Item implements IPaintableItem, IGunboxDescriptionable
 {
 	public GunType type;
     public static boolean crouching = false;

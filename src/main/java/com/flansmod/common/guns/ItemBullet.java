@@ -3,6 +3,7 @@ package com.flansmod.common.guns;
 import java.util.Collections;
 import java.util.List;
 
+import com.flansmod.common.types.IGunboxDescriptionable;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
@@ -14,7 +15,7 @@ import com.flansmod.common.types.InfoType;
 /**
  * Implemented from old source.
  */
-public class ItemBullet extends ItemShootable implements IFlanItem
+public class ItemBullet extends ItemShootable implements IFlanItem, IGunboxDescriptionable
 {
 	public BulletType type;
 	

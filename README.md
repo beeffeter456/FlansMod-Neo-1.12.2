@@ -28,7 +28,10 @@ flansmod.apocalypse.common.entity (package modified due change in dependencies)
 - EntitySkullDrone (done)
 
 flansmod.client (package WIP)
-- FlansModClient (WIP: config aimtype and buttons not included)
+- AimType (done)
+- FlansCrash (done)
+- FlansModClient (done)
+- FlanMouseButton (done)
 
 flansmod.client.debug (package finished - no changes)
 
@@ -86,10 +89,13 @@ flansmod.client.tmt (package finished)
 - ModelRendererTurbo (done)
 
 flansmod.common (package WIP)
-- FlansMod (WIP)
 - CraftingInstance (done)
+- FlansMod (done)
+- RotatedAxes (done)
 
 flansmod.common.driveables (package WIP)
+- DriveableType (done)
+- EntityDriveable (WIP - fixing errors) 
 - EntityPlane (can be considered done - errors due to dependencies not updated yet)
 - EnumPlaneMode (done)
 - FlightController (done)
@@ -100,6 +106,7 @@ flansmod.common.driveables.mechas (package WIP)
 - EntityMecha (WIP)
 
 flansmod.common.eventhandlers (package WIP - almost finished)
+- GunFiredEvent (done)
 - PlayerLoginEventListener (done)
 - ServerTickEvent (WIP - errors)
 
@@ -112,6 +119,7 @@ flansmod.common.guns (package WIP)
 - Paintjob (done)
 
 flansmod.common.guns.boxes (package TODO)
+- GunBoxType(WIP - added method isAmmoNullOrEmpty)
 
 flansmod.common.guns.raytracing (package WIP - almost finished)
 - PlayerHitbox (WIP: method hitByBullet)
