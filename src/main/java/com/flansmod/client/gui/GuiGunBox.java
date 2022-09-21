@@ -1,10 +1,6 @@
 package com.flansmod.client.gui;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-
-import org.lwjgl.input.Mouse;
 
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
@@ -12,7 +8,6 @@ import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.RenderItem;
-import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
@@ -52,20 +47,6 @@ public class GuiGunBox extends GuiContainer
 	private GuiButton craftLeft, craftRight, categoryLeft, categoryRight;
 	private GuiButton[] categories = new GuiButton[numCategories];
 	
-	private String recipeTooltip = null;
-	private int mouseX, mouseY;
-	private boolean tabToAmmo = false;
-	
-	//Selection and hover checks
-	private int hoverOver = -1;
-	private int selectedItem = -1;
-	private int selectedAmmoitem = -1;
-	private int pageIndex = 0;
-	private boolean craftHighlight = false;
-	private boolean nextHighlight = false;
-	private boolean backHighlight = false;
-	private List<String> gunStats;
-	
 	public GuiGunBox(InventoryPlayer inventory, GunBoxType type)
 	{
 		super(new ContainerGunBox(inventory));
@@ -76,80 +57,6 @@ public class GuiGunBox extends GuiContainer
 		currentPage = type.pages.get(0);
 		
 		xSize = ySize = 256;
-	}
-	
-	@Override
-	protected void drawGuiContainerForegroundLayer(int x, int y)
-	{
-		GunBoxEntry[] entries = currentPage.gunList;
-
-		//Draw titles
-		fontRenderer.drawString(type.name, 7, 6, hexColor(type.gunBoxTextColor));
-		fontRenderer.drawStringWithShadow(currentPage.pageName, (29 + 33) - (fontRenderer.getStringWidth(currentPage.pageName) / 2), 26, hexColor(type.pageTextColor));
-
-		//List gun item entries
-		for(int i = 0; i < entries.length && i < 8; i++)
-		{
-			if(entries[i] != null && entries[i].type != null && entries[i].type.name != null)
-			{
-				String label = entries[i].type.name;
-
-				//Truncate if name is greater than the boundary
-				if(fontRenderer.getStringWidth(label) > 97)
-					label = label.substring(0, Math.min(label.length(), 15)) + "...";
-
-				fontRenderer.drawString(label, 19, 46 + (i * 12), hexColor(type.itemListTextColor));
-			}
-		}
-
-		//If a weapon has been selected from the list
-		if(selectedItem != -1)
-		{
-			GunBoxEntry entry = entries[selectedItem];
-			//Draw gun and ammo items
-			drawSlotInventory(new ItemStack(entry.type.getItem()), 127, 26);
-			if(!entry.isAmmoNullOrEmpty())
-			{
-				for(int i = 0; i < entry.ammoEntryList.size(); i++)
-					drawSlotInventory(new ItemStack(entry.ammoEntryList.get(i).type.getItem()), 155 + (i * 22), 26);
-			}
-
-			if(!tabToAmmo)
-			{
-				fontRenderer.drawString(entry.type.name, 127, 52, hexColor(type.itemTextColor));
-				drawRecipe(entry.requiredParts);
-			}
-			else if(!entry.isAmmoNullOrEmpty())
-			{
-				fontRenderer.drawString(entry.ammoEntryList.get(selectedAmmoitem).type.name, 127, 52, hexColor(type.itemTextColor));
-				drawRecipe(entry.ammoEntryList.get(selectedAmmoitem).requiredParts);
-			}
-
-			//Draw bootleg craft button text
-			if(craftHighlight)
-				fontRenderer.drawStringWithShadow("Craft", (126 + 32) - (fontRenderer.getStringWidth("Craft") / 2), 117, hexColor(type.buttonTextHoverColor));
-			else
-				fontRenderer.drawStringWithShadow("Craft", (126 + 32) - (fontRenderer.getStringWidth("Craft") / 2), 117, hexColor(type.buttonTextColor));
-
-		}
-
-		//Draw bootleg page button text
-		if(nextHighlight)
-			fontRenderer.drawStringWithShadow(">", (97 + 10) - (fontRenderer.getStringWidth(">") / 2), 26, hexColor(type.buttonTextHoverColor));
-		else
-			fontRenderer.drawStringWithShadow(">", (97 + 10) - (fontRenderer.getStringWidth(">") / 2), 26, hexColor(type.buttonTextColor));
-
-		if(backHighlight)
-			fontRenderer.drawStringWithShadow("<", (7 + 10) - (fontRenderer.getStringWidth("<") / 2), 26, hexColor(type.buttonTextHoverColor));
-		else
-			fontRenderer.drawStringWithShadow("<", (7 + 10) - (fontRenderer.getStringWidth("<") / 2), 26, hexColor(type.buttonTextColor));
-
-		//Draw tooltips
-		if(recipeTooltip != null)
-			drawHoveringText(Collections.singletonList(recipeTooltip), mouseX - guiLeft, mouseY - guiTop, fontRenderer);
-		//Draw Stats
-		if(gunStats != null)
-			drawHoveringText(gunStats, mouseX - guiLeft, mouseY - guiTop, fontRenderer);
 	}
 	
 	@Override
@@ -272,11 +179,6 @@ public class GuiGunBox extends GuiContainer
 		int originY = guiOriginY = (height - ySize) / 2;
 		
 		drawModalRectWithCustomSizedTexture(originX, originY, 0, 0, xSize, ySize, textureX, textureY);
-		
-		if(hoverOver != -1)
-		{
-			drawModalRectWithCustomSizedTexture(originX + 8, originY + 43 + (hoverOver * 12), 383, 5, 108, 12);
-		}
 		
 		if(currentPage != null)
 		{
@@ -486,27 +388,9 @@ public class GuiGunBox extends GuiContainer
 		if(itemstack == null || itemstack.isEmpty())
 			return;
 		RenderHelper.enableGUIStandardItemLighting();
+		
 		itemRenderer.renderItemIntoGUI(itemstack, i, j);
 		itemRenderer.renderItemOverlayIntoGUI(fontRenderer, itemstack, i, j, null);
-	}
-	
-	private void drawRecipe(List<ItemStack> parts)
-	{
-		int i = 0;
-		for(ItemStack stack : parts)
-		{
-			if(i < 4)
-				drawSlotInventory(stack, 127 + (i * 19), 68);
-			else
-				drawSlotInventory(stack, 127 + ((i - 4) * 19), 87);
-			i++;
-		}
-	}
-	
-	//Format hex string to int
-	private int hexColor(String color)
-	{
-		return Integer.parseInt(color, 16);
 	}
 
 	@Override
@@ -517,62 +401,6 @@ public class GuiGunBox extends GuiContainer
 		int n = j - guiOriginY;
 		if(k == 0 || k == 1)
 		{
-			//If an item is selected in the list
-			if(hoverOver != -1 && hoverOver < currentPage.gunList.length)
-			{
-				selectedItem = hoverOver;
-				selectedAmmoitem = -1;
-				tabToAmmo = false;
-			}
-			
-			//Switch to weapon tab
-			if(m >= 121 && m <= 148 && n >= 20 && n <= 44)
-				tabToAmmo = false;
-
-			//Go to previous page
-			if(backHighlight && type.gunPages.size() > 1)
-			{
-				if(pageIndex == 0)
-					pageIndex = type.gunPages.size() - 1;
-				else
-					pageIndex--;
-				resetAndSwapPages();
-			}
-			
-			//Go to next page
-			if(nextHighlight && type.gunPages.size() > 1)
-			{
-				if(pageIndex == type.gunPages.size() - 1)
-					pageIndex = 0;
-				else
-					pageIndex++;
-				resetAndSwapPages();
-			}
-			
-			//Switch through the ammo item tabs
-			if(selectedItem != -1 && !currentPage.gunList[selectedItem].isAmmoNullOrEmpty())
-			{
-				for(int i = 0; i < currentPage.gunList[selectedItem].ammoEntryList.size(); i++)
-				{
-					if(m >= 152 + (i * 22) && m <= 173 + (i * 22) && n >= 23 && n <= 44)
-					{
-						tabToAmmo = true;
-						selectedAmmoitem = i;
-					}
-				}
-			}
-			
-			//Buy item
-			if(craftHighlight)
-			{
-				//If gun is selected
-				if(selectedItem != -1 && !tabToAmmo)
-					type.block.buyGun(currentPage.gunList[selectedItem].type, inventory, type);
-
-				if(tabToAmmo && selectedAmmoitem != -1)
-					type.block.buyGun(currentPage.gunList[selectedItem].ammoEntryList.get(selectedAmmoitem).type, inventory, type);
-			}
-			
 			if(currentPage != null)
 			{
 				for(int e = 0; e < 5; e++)
@@ -600,13 +428,11 @@ public class GuiGunBox extends GuiContainer
 
 	
 	@Override
-	protected void keyTyped(char c, int i) throws IOException
+	protected void keyTyped(char c, int i)
 	{
 		if(i == 1 || i == mc.gameSettings.keyBindInventory.getKeyCode())
 		{
 			mc.player.closeScreen();
-		} else {
-			super.keyTyped(c, i);
 		}
 	}
 
@@ -614,99 +440,5 @@ public class GuiGunBox extends GuiContainer
 	public boolean doesGuiPauseGame()
 	{
 		return false;
-	}
-	
-	private void resetAndSwapPages()
-	{
-		selectedItem = -1;
-		selectedAmmoitem = -1;
-		tabToAmmo = false;
-		currentPage = type.gunPages.get(pageIndex);
-	}
-	
-	@Override
-	public void handleMouseInput()
-	{
-		super.handleMouseInput();
-
-		mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth;
-		mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
-
-		int mouseXInGUI = mouseX - guiLeft;
-		int mouseYInGUI = mouseY - guiTop;
-
-		//Hover over gun lists
-		hoverOver = -1;
-		int sectionX = 8;
-		for(int i = 0; i < currentPage.gunList.length && i < 8; i++)
-		{
-			int sectionY = 43 + (i * 12);
-			if(mouseXInGUI >= sectionX && mouseXInGUI < sectionX + 108 && mouseYInGUI >= sectionY && mouseYInGUI < sectionY + 12)
-				hoverOver = i;
-		}
-
-		//Hover over craft button
-		craftHighlight = (mouseXInGUI >= 126 && mouseXInGUI < 189 && mouseYInGUI >= 111 && mouseYInGUI < 130);
-
-		//Hover over page buttons
-		nextHighlight = (mouseXInGUI >= 97 && mouseXInGUI < 116 && mouseYInGUI >= 20 && mouseYInGUI < 39);
-		backHighlight = (mouseXInGUI >= 7 && mouseXInGUI < 26 && mouseYInGUI >= 20 && mouseYInGUI < 39);
-
-		//Hover for recipe tooltips
-		recipeTooltip = null;
-		gunStats = null;
-		if(selectedItem != -1)
-		{
-			GunBoxEntry entry = currentPage.gunList[selectedItem];
-			int count = (!tabToAmmo) ? entry.requiredParts.size() : entry.ammoEntryList.get(selectedAmmoitem).requiredParts.size();
-
-			for(int i = 0; i < count; i++)
-			{
-				int itemX = 127 + (i * 19);
-				int itemY = 68;
-				if (i >= 4)
-				{
-					itemX = 127 + ((i-4) * 19);
-					itemY = 87;
-				}
-				if(mouseXInGUI >= itemX && mouseXInGUI < itemX + 16 && mouseYInGUI >= itemY && mouseYInGUI < itemY + 16) {
-					try {
-						recipeTooltip = (!tabToAmmo) ? entry.requiredParts.get(i).getDisplayName()
-								: entry.ammoEntryList.get(selectedAmmoitem).requiredParts.get(i).getDisplayName();
-
-					} catch (Exception e) {
-						recipeTooltip = null;
-						if (entry.type.shortName != null) {
-							FlansMod.log("Require part(s) null! Contact content pack author. " + entry.type.shortName);
-						} else {
-							FlansMod.log("Entry is null!");
-						}
-					}
-				}
-			}
-
-
-			if(mouseXInGUI >= 127 && mouseXInGUI < 127 + 16 && mouseYInGUI >= 26 && mouseYInGUI < 26 + 16)
-			{
-				if(entry.type instanceof GunType)
-				{
-					List<String> lines = new ArrayList<String>();
-					GunType gunType = (GunType) entry.type;
-					lines.add(gunType.name);
-					lines.add("\u00a79Damage" + "\u00a77: " + gunType.damage);
-					lines.add("\u00a79Recoil" + "\u00a77: " + gunType.recoilPitch);
-					lines.add("\u00a79Spread" + "\u00a77: " + gunType.bulletSpread);
-					lines.add("\u00a79Reload" + "\u00a77: " + (gunType.reloadTime / 20) + "s");
-					if(gunType.shootDelay != 0)
-					{
-						lines.add("\u00a79RPM" + "\u00a77: " + (1200 / gunType.shootDelay) + "rpm");
-					}
-					else
-						lines.add("\u00a79RPM" + "\u00a77: " + (gunType.roundsPerMin) + "rpm");
-					lines.add("\u00a79Mode(s)" + "\u00a77: " + gunType.mode);
-					gunStats = lines;
-				}
-			}
-		}
 	}
 }

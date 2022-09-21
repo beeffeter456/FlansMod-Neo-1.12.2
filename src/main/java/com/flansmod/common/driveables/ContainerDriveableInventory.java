@@ -16,12 +16,14 @@ public class ContainerDriveableInventory extends Container
 	public int screen;
 	public int maxScroll;
 	public int scroll;
+	public DriveableType type;
 	
 	public ContainerDriveableInventory(InventoryPlayer inventoryplayer, World worldy, EntityDriveable entPlane, int i)
 	{
 		inventory = inventoryplayer;
 		world = worldy;
 		plane = entPlane;
+		type = plane.getDriveableType();
 		screen = i;
 		//Find the number of items in the inventory
 		numItems = 0;
@@ -64,7 +66,7 @@ public class ContainerDriveableInventory extends Container
 					int yPos = -1000;
 					if(slotsDone < 3 + scroll && slotsDone >= scroll)
 						yPos = 25 + 19 * slotsDone;
-					addSlotToContainer(new Slot(plane.driveableData, j, 29, yPos));
+					addSlotToContainer(new SlotDriveableAmmunition(plane.driveableData, j, 29, yPos, type.filterAmmunition));
 					slotsDone++;
 				}
 				break;
@@ -86,7 +88,7 @@ public class ContainerDriveableInventory extends Container
 						yPos = 25 + 19 * (row - scroll);
 					for(int col = 0; col < ((row + scroll + 1) * 8 <= numItems ? 8 : numItems % 8); col++)
 					{
-						addSlotToContainer(new Slot(plane.driveableData, startSlot + row * 8 + col, 10 + 18 * col, yPos));
+						addSlotToContainer(new SlotDriveableAmmunition(plane.driveableData, startSlot + row * 8 + col, 10 + 18 * col, yPos, type.filterAmmunition));
 					}
 				}
 				break;
@@ -108,7 +110,7 @@ public class ContainerDriveableInventory extends Container
 			addSlotToContainer(new Slot(inventoryplayer, col, 8 + col * 18, 156));
 		}
 	}
-	
+
 	public void updateScroll(int scrololol)
 	{
 		scroll = scrololol;
@@ -197,5 +199,73 @@ public class ContainerDriveableInventory extends Container
 		}
 		
 		return stack;
+	}
+
+	// Code modified from https://www.minecraftforge.net/forum/topic/34525-18-solved-attempt-to-fix-mergeitemstack-isnt-working/
+	@Override
+	protected boolean mergeItemStack(ItemStack stack, int startIndex, int endIndex, boolean reverseDirection) {
+		boolean flag = false;
+		int i = startIndex;
+		if (reverseDirection)
+			i = endIndex - 1;
+
+		if (stack.isStackable()) {
+			while (stack.getCount() > 0 && (!reverseDirection && i < endIndex || reverseDirection && i >= startIndex)) {
+				Slot slot = (Slot) this.inventorySlots.get(i);
+				ItemStack itemstack = slot.getStack();
+				int maxLimit = Math.min(stack.getMaxStackSize(), slot.getSlotStackLimit());
+
+				if (itemstack != null && ItemStack.areItemStacksEqual(stack, itemstack)) {
+					int j = itemstack.getCount() + stack.getCount();
+					if (j <= maxLimit) {
+						stack.setCount(0);
+						itemstack.setCount(j);
+						slot.onSlotChanged();
+						flag = true;
+
+					} else if (itemstack.getCount() < maxLimit) {
+						stack.setCount(stack.getCount() - maxLimit - itemstack.getCount());
+						itemstack.setCount(maxLimit);
+						slot.onSlotChanged();
+						flag = true;
+					}
+				}
+				if (reverseDirection) {
+					--i;
+				} else
+					++i;
+			}
+		}
+		if (stack.getCount() > 0) {
+			if (reverseDirection) {
+				i = endIndex - 1;
+			}else i = startIndex;
+
+			while (!reverseDirection && i < endIndex || reverseDirection && i >= startIndex) {
+				Slot slot1 = (Slot)this.inventorySlots.get(i);
+				ItemStack itemstack1 = slot1.getStack();
+
+				if (itemstack1 == null && slot1.isItemValid(stack)) {
+					if(stack.getCount() <= slot1.getSlotStackLimit()) {
+						slot1.putStack(stack.copy());
+						slot1.onSlotChanged();
+						stack.setCount(0);
+						flag = true;
+						break;
+					} else {
+						itemstack1 = stack.copy();
+						stack.setCount(stack.getCount() - slot1.getSlotStackLimit());
+						itemstack1.setCount(slot1.getSlotStackLimit());
+						slot1.putStack(itemstack1);
+						slot1.onSlotChanged();
+						flag = true;
+					}
+				}
+				if (reverseDirection) {
+					--i;
+				} else ++i;
+			}
+		}
+		return flag;
 	}
 }

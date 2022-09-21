@@ -2,6 +2,7 @@ package com.flansmod.common.driveables;
 
 import java.util.List;
 
+import com.flansmod.common.network.*;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
@@ -34,10 +35,6 @@ import com.flansmod.common.guns.GunType;
 import com.flansmod.common.guns.ItemShootable;
 import com.flansmod.common.guns.ShootableType;
 import com.flansmod.common.guns.ShotHandler;
-import com.flansmod.common.network.PacketDriveableKey;
-import com.flansmod.common.network.PacketDriveableKeyHeld;
-import com.flansmod.common.network.PacketPlaySound;
-import com.flansmod.common.network.PacketSeatUpdates;
 import com.flansmod.common.teams.TeamsManager;
 import com.flansmod.common.tools.ItemTool;
 import com.flansmod.common.vector.Vector3f;
@@ -85,7 +82,7 @@ public class EntitySeat extends Entity implements IControllable, IEntityAddition
 	
 	public boolean playYawSound = false;
 	public boolean playPitchSound = false;
-	
+
 	
 	private double playerPosX, playerPosY, playerPosZ;
 	private float playerYaw, playerPitch;
@@ -95,6 +92,15 @@ public class EntitySeat extends Entity implements IControllable, IEntityAddition
 	private double prevPlayerPosX, prevPlayerPosY, prevPlayerPosZ;
 	private float prevPlayerYaw, prevPlayerPitch;
 	private boolean shooting;
+
+	public Entity lastRiddenByEntity;
+
+	public float targetYaw = 0;
+
+	public float targetPitch = 0;
+
+	public int timeLimitDriveableNull = 0;
+
 	
 	/**
 	 * Default constructor for spawning client side Should not be called server side EVER
@@ -107,6 +113,7 @@ public class EntitySeat extends Entity implements IControllable, IEntityAddition
 		looking = new RotatedAxes();
 		playerLooking = new RotatedAxes();
 		prevPlayerLooking = new RotatedAxes();
+		lastRiddenByEntity = null;
 	}
 	
 	/**
@@ -141,7 +148,25 @@ public class EntitySeat extends Entity implements IControllable, IEntityAddition
 			}
 			return;
 		}
-		
+
+		if (driveable.isDead()) {
+			for (EntitySeat seat : this.driveable.getSeats()) {
+				seat.setDead();
+			}
+		}
+
+		EntityDriveable entD;
+		entD = (EntityDriveable) world.getEntityByID(driveableID);
+		if (entD == null) {
+			this.timeLimitDriveableNull++;
+		} else {
+			this.timeLimitDriveableNull = 0;
+		}
+
+		if (timeLimitDriveableNull > 60 * 20) {
+			this.setDead();
+		}
+
 		// Update gun delay ticker
 		if(gunDelay > 0)
 			gunDelay--;
@@ -191,6 +216,10 @@ public class EntitySeat extends Entity implements IControllable, IEntityAddition
 			{
 				pressKey(9, (EntityPlayer)entityInThisSeat, false);
 			}
+
+			if (lastRiddenByEntity instanceof EntityPlayer && getControllingPassenger() == null && FlansModClient.proxy.isThePlayer((EntityPlayer) lastRiddenByEntity)) {
+				FlansMod.getPacketHandler().sendToServer(new PacketSeatCheck(this));
+			}
 		}
 		else
 		{
@@ -210,6 +239,8 @@ public class EntitySeat extends Entity implements IControllable, IEntityAddition
 		
 		minigunSpeed *= 0.95F;
 		minigunAngle += minigunSpeed;
+
+		lastRiddenByEntity = getControllingPassenger();
 	}
 	
 	@SideOnly(Side.CLIENT)
@@ -425,9 +456,9 @@ public class EntitySeat extends Entity implements IControllable, IEntityAddition
 		// Rotate the offset vector by the turret yaw
 		if(driveable != null && driveable.getSeat(0) != null && driveable.getSeat(0).looking != null)
 		{
-			RotatedAxes yawOnlyLooking = new RotatedAxes(driveable.getSeat(0).looking.getYaw(), 0F, 0F);
+			RotatedAxes yawOnlyLooking = new RotatedAxes(driveable.getSeat(0).looking.getYaw(), (driveable.getSeats()[0].seatInfo.part == EnumDriveablePart.barrel) ? driveable.getSeats()[0].looking.getPitch() : 0F, 0F);
 			Vector3f rotatedOffset = yawOnlyLooking.findLocalVectorGlobally(seatInfo.rotatedOffset);
-			Vector3f.add(localPosition, new Vector3f(rotatedOffset.x, 0F, rotatedOffset.z), localPosition);
+			Vector3f.add(localPosition, new Vector3f(rotatedOffset.x, (driveable.getSeats()[0].seatInfo.part == EnumDriveablePart.barrel) ? rotatedOffset.y : 0F, rotatedOffset.z), localPosition);
 		}
 		
 		// Get the position of this seat globally, but positionally relative to the driveable
@@ -634,7 +665,7 @@ public class EntitySeat extends Entity implements IControllable, IEntityAddition
 			}
 			// Now set the new angles
 			playerLooking.setAngles(newPlayerYaw, newPlayerPitch, 0F);
-			
+
 		}
 	}
 	
@@ -980,4 +1011,10 @@ public class EntitySeat extends Entity implements IControllable, IEntityAddition
 			getRidingEntity().updatePassenger(this);
 		}
 	}
+
+	public DriveablePosition getAsDriveablePosition() {
+		// This is in LOCAL space.
+		return new DriveablePosition(new Vector3f(((float)seatInfo.x) / 16F, ((float)seatInfo.y)/16F, ((float)seatInfo.y)/16F), seatInfo.part);
+	}
+
 }

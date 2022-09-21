@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.flansmod.common.teams.TeamsManager;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -74,14 +75,21 @@ public class FlansModRaytracer
 						continue;
 					}
 					if(player == playerToIgnore && !canHitSelf)
+						// The shooter of this bullet is immune to it for the first second.
 						continue;
-					int snapshotToTry = pingOfShooter / 50;
-					if(snapshotToTry >= data.snapshots.length)
+					int snapshotToTry = TeamsManager.bulletSnapshotMin;
+					float snapshotPortion = pingOfShooter / (float)TeamsManager.bulletSnapshotDivisor;
+					if (TeamsManager.bulletSnapshotDivisor > 0) {
+						snapshotToTry += snapshotPortion;
+					}
+					if (snapshotToTry >= data.snapshots.length)
 						snapshotToTry = data.snapshots.length - 1;
-					
-					PlayerSnapshot snapshot = data.snapshots[snapshotToTry];
-					if(snapshot == null)
+					PlayerSnapshot snapshot;
+					if (data.snapshots[snapshotToTry] != null) {
+						snapshot = data.snapshots[snapshotToTry];
+					} else {
 						snapshot = data.snapshots[0];
+					}
 					
 					//DEBUG
 					//snapshot = new PlayerSnapshot(player);
@@ -92,8 +100,54 @@ public class FlansModRaytracer
 					else
 					{
 						//Raytrace
-						ArrayList<BulletHit> playerHits = snapshot.raytrace(origin, motion);
-						hits.addAll(playerHits);
+						//ArrayList<BulletHit> playerHits = snapshot.raytrace(origin, motion);
+						//hits.addAll(playerHits);
+						boolean snapshotBeforeExists = snapshotToTry != 0 && data.snapshots[snapshotToTry-1] != null;
+						boolean snapshotAfterExists = snapshotToTry + 1 < data.snapshots.length && data.snapshots[snapshotToTry+1] != null;
+
+						// -0.5 = before
+						// 0 = centered
+						// 0.5 = after
+						float bias = 0.25F;
+						float offset = snapshotPortion + bias;
+
+						float lb = offset - 0.5F;
+						float ub = offset + 0.5F;
+
+						ArrayList<BulletHit> onStepHits = new ArrayList<>();
+						ArrayList<BulletHit> altStepHits = new ArrayList<>();
+
+						if (offset > 0.5 && snapshotAfterExists) {
+							// Timestep t and t+1
+							onStepHits = snapshot.raytrace(origin, motion, lb, 1);
+							if (onStepHits.isEmpty()) {
+								altStepHits = data.snapshots[snapshotToTry + 1].raytrace(origin, motion, 0, lb);
+							}
+						} else if (offset < 0.5 && snapshotBeforeExists) {
+							// Timestep t and t-1
+							onStepHits = snapshot.raytrace(origin, motion, 0, ub);
+							if (onStepHits.isEmpty()) {
+								altStepHits = data.snapshots[snapshotToTry - 1].raytrace(origin, motion, ub, 1);
+							}
+						} else {
+							// Timestep t ONLY
+							onStepHits = snapshot.raytrace(origin, motion, 0, 1);
+						}
+
+						hits.addAll(onStepHits);
+						hits.addAll(altStepHits);
+
+						/*
+						StringBuilder sb = new StringBuilder();
+                        sb.append("SnapShot ").append(snapshotToTry).append(" / ").append(data.snapshots.length).append("\n");
+                        sb.append("Shooter Ping ").append(pingOfShooter).append(" T1 ").append(snapshot.time).append("\n");
+                        sb.append("Offset ").append(snapshotPortion).append(offset < 0.5 ? " Pre" : (offset > 0.5 ? " Post" : " On")).append("\n");
+                        sb.append("OnStep ").append(onStepHits.size()).append(" OffStep ").append(altStepHits.size()).append("\n");
+
+                        if (onStepHits.size() + altStepHits.size() > 0) {
+                            FlansMod.log(sb.toString());
+                        }
+                        */
 					}
 				}
 			}

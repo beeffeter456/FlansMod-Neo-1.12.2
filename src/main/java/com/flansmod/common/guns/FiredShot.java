@@ -30,6 +30,10 @@ public class FiredShot {
 	 * Optional of the entity which fired the shot. Can be the same as the Player optional
 	 */
 	private Optional<? extends Entity> shooter;
+
+	// Hitmarker information on the server side.
+	public boolean lastHitHeadshot = false;
+	public float lastHitPenAmount = 1F;
 	
 	/**
 	 * @param weapon weapon used to fire the shot
@@ -113,11 +117,11 @@ public class FiredShot {
 	public DamageSource getDamageSource(Boolean headshot)
 	{
 		if (player.isPresent()) {
-			return new EntityDamageSourceFlan(weapon.getShortName(), player.get(), player.get(), weapon.getInfoType(), headshot).setProjectile();
+			return new EntityDamageSourceFlan(weapon.getShortName(), player.get(), player.get(), weapon.getInfoType(), headshot, false).setProjectile();
 		}
 		else if(shooter.isPresent())
 		{
-			return new EntityDamageSourceFlan(weapon.getShortName(), null, null, weapon.getInfoType(), headshot).setProjectile();
+			return new EntityDamageSourceFlan(weapon.getShortName(), null, null, weapon.getInfoType(), headshot, false).setProjectile();
 		}
 		return DamageSource.GENERIC;
 	}

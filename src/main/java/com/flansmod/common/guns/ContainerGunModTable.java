@@ -24,11 +24,11 @@ public class ContainerGunModTable extends Container
 		world = w;
 		
 		//Gun slot
-		SlotGun gunSlot = new SlotGun(inventory, 0, 80, 110, null);
+		SlotGun gunSlot = new SlotGun(inventory, 0, 184, 37, null);
 		addSlotToContainer(gunSlot);
 		
 		//Attachment Slots
-		addSlotToContainer(new SlotGun(inventory, 1, 54, 110, gunSlot));
+		/*addSlotToContainer(new SlotGun(inventory, 1, 54, 110, gunSlot));
 		addSlotToContainer(new SlotGun(inventory, 2, 80, 84, gunSlot));
 		addSlotToContainer(new SlotGun(inventory, 3, 106, 110, gunSlot));
 		addSlotToContainer(new SlotGun(inventory, 4, 80, 136, gunSlot));
@@ -39,6 +39,17 @@ public class ContainerGunModTable extends Container
 			{
 				addSlotToContainer(new SlotGun(inventory, 5 + row * 2 + col, 10 + col * 18, 83 + row * 18, gunSlot));
 			}
+		}*/
+		//Attachment Slots
+		for(int k = 0; k < 8; k++)
+		{
+			addSlotToContainer(new SlotGun(inventory, k + 1, 17 + (k * 18), 89, gunSlot));
+		}
+
+		//Generic Attachment Slots
+		for(int col = 0; col < 8; col++)
+		{
+			addSlotToContainer(new SlotGun(inventory, 9 + col, 17 + (col * 18), 115 + (col * 18), gunSlot));
 		}
 		
 		//Main inventory slots
@@ -46,14 +57,14 @@ public class ContainerGunModTable extends Container
 		{
 			for(int col = 0; col < 9; col++)
 			{
-				addSlotToContainer(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 176 + row * 18));
+				addSlotToContainer(new Slot(playerInv, col + row * 9 + 9, 8 + col * 18, 154 + row * 18));
 			}
 			
 		}
 		//Quickbar slots
 		for(int col = 0; col < 9; col++)
 		{
-			addSlotToContainer(new Slot(playerInv, col, 8 + col * 18, 234));
+			addSlotToContainer(new Slot(playerInv, col, 8 + col * 18, 212));
 		}
 	}
 	
@@ -84,7 +95,7 @@ public class ContainerGunModTable extends Container
 			stack = slotStack.copy();
 			
 			// gun slot, 4 attach slots and 8 generics
-			if(slotID >= 13)
+			if(slotID >= 17)
 			{
 				if(slotStack.getItem() instanceof ItemGun && !gunSlot.getHasStack())
 				{
@@ -108,7 +119,7 @@ public class ContainerGunModTable extends Container
 			}
 			else
 			{
-				if(!mergeItemStack(slotStack, 13, inventorySlots.size(), true))
+				if(!mergeItemStack(slotStack, 17, inventorySlots.size(), true))
 				{
 					return ItemStack.EMPTY.copy();
 				}

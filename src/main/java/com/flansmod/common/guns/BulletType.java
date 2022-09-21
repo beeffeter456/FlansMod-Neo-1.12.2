@@ -53,6 +53,8 @@ public class BulletType extends ShootableType
 	
 	public boolean hasLight = false;
 	public float penetratingPower = 1F;
+	// In % of penetration to remove per tick.
+	public float penetrationDecay = 0F;
 	// Knocback modifier. less gives less kb, more gives more kb, 1 = normal kb.
 	public float knockbackModifier;
 	/**
@@ -80,7 +82,7 @@ public class BulletType extends ShootableType
 	public boolean manualGuidance = false;
 	public int lockOnFuse = 10;
 
-	public ArrayList<PotionEffect> hitEffects = new ArrayList<PotionEffect>();
+	public ArrayList<PotionEffect> hitEffects = new ArrayList<>();
 
 	/** Number of bullets to fire per shot if allowNumBulletsByBulletType = true */
 	public int numBullets = -1;
@@ -128,6 +130,8 @@ public class BulletType extends ShootableType
 	public boolean torpedo = false;
 
 	public boolean fancyDescription = true;
+
+	public boolean laserGuidance = false;
 	
 	/**
 	 * The static bullets list
@@ -138,6 +142,7 @@ public class BulletType extends ShootableType
 	{
 		super(file);
 		texture = "defaultBullet";
+		bounciness = 0f;
 		bullets.add(this);
 	}
 	
@@ -165,9 +170,11 @@ public class BulletType extends ShootableType
 			else if(split[0].equals("HitSoundRange"))
 				hitSoundRange = Float.parseFloat(split[1]);
 			else if(split[0].equals("Penetrates"))
-				penetratingPower = (Boolean.parseBoolean(split[1].toLowerCase()) ? 1F : 0.25F);
+				penetratingPower = (Boolean.parseBoolean(split[1].toLowerCase()) ? 1F : 0.7F);
 			else if(split[0].equals("Penetration") || split[0].equals("PenetratingPower"))
 				penetratingPower = Float.parseFloat(split[1]);
+			else if(split[0].equals("PenetrationDecay"))
+				penetrationDecay = Float.parseFloat(split[1]);
 			else if(split[0].equals("DragInAir"))
 			{
 				dragInAir = Float.parseFloat(split[1]);
@@ -276,6 +283,8 @@ public class BulletType extends ShootableType
 				hitEffects.add(getPotionEffect(split));
 			else if(split[0].equals("ManualGuidance"))
 				manualGuidance = Boolean.parseBoolean(split[1].toLowerCase());
+			else if(split[0].equals("LaserGuidance"))
+				laserGuidance = Boolean.parseBoolean(split[1].toLowerCase());
 			else if(split[0].equals("LockOnFuse"))
 				lockOnFuse = Integer.parseInt(split[1]);
 			else if(split[0].equals("MaxRange"))

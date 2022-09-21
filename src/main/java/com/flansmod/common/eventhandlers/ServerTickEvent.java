@@ -6,6 +6,8 @@ import com.flansmod.client.FlansModClient;
 import com.flansmod.common.guns.AttachmentType;
 import com.flansmod.common.guns.ItemGun;
 
+import net.minecraft.potion.PotionUtils;
+import net.minecraft.util.EnumHand;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -46,21 +48,21 @@ public class ServerTickEvent
             	
             	for(EntityPlayerMP player : nightVisionPlayers)
             	{
-            		if(player.getCurrentEquippedItem() != null && player.getCurrentEquippedItem().getItem() instanceof ItemGun)
+            		if(player.getHeldItem(EnumHand.MAIN_HAND) != null && player.getHeldItem(EnumHand.MAIN_HAND).getItem() instanceof ItemGun)
             		{
-            			ItemGun itemGun = (ItemGun)player.getCurrentEquippedItem().getItem();
-            			ItemStack itemstack = player.getCurrentEquippedItem();
+            			ItemGun itemGun = (ItemGun)player.getHeldItem(EnumHand.MAIN_HAND).getItem();
+            			ItemStack itemstack = player.getHeldItem(EnumHand.MAIN_HAND);
             			AttachmentType scope = itemGun.type.getScope(itemstack);
             			//Apply night vision while scoped if attachment.hasNightVision or gun.allowNightvision
                 		if(scope == null && !itemGun.type.allowNightVision || (scope != null && !scope.hasNightVision && !itemGun.type.allowNightVision))
                 		{
-                			player.removePotionEffect(Potion.nightVision.id);
+                			player.removePotionEffect(Potion.getPotionById(16));
                 			playersToRemove.add(player);
                 		}	
             		}
             		else
             		{
-            			player.removePotionEffect(Potion.nightVision.id);
+            			player.removePotionEffect(Potion.getPotionById(16));
             			playersToRemove.add(player);
             		}
             	}

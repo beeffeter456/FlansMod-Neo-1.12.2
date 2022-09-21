@@ -79,6 +79,12 @@ public class GunAnimations
      * Melee animations
      */
 	public int meleeAnimationProgress = 0, meleeAnimationLength = 0;
+
+	/**
+	 * Switch animations
+	 */
+	public float switchAnimationProgress = 0, switchAnimationLength = 0;
+	public static int lastInventorySlot = -1;
 	
 	public float recoil = 0.0f, antiRecoil = 0.0f, recoilAngle = 0.0f;
 	public Vector3f recoilOffset = new Vector3f(), recoilVelocity = new Vector3f();
@@ -214,6 +220,14 @@ public class GunAnimations
 			//If we are done, reset
 			if(meleeAnimationProgress > meleeAnimationLength)
 				meleeAnimationProgress = meleeAnimationLength = 0;
+		}
+
+		if (switchAnimationProgress > 0) {
+			switchAnimationProgress++;
+			//If we are done, reset
+			if (switchAnimationProgress == switchAnimationLength) {
+				switchAnimationLength = switchAnimationLength = 0;
+			}
 		}
 		
 		float scale = 0.5f;

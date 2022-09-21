@@ -7,6 +7,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 
 import com.flansmod.common.FlansMod;
 import com.flansmod.common.guns.ItemGun;
+import net.minecraft.util.EnumHand;
 
 public class PacketImpactPoint extends PacketBase
 {
@@ -52,10 +53,10 @@ public class PacketImpactPoint extends PacketBase
 	{
 		ItemGun itemGun;
 		//if(playerEntity.getDisplayName().equals(pname))
-		if(playerEntity.getCurrentEquippedItem() != null)
-		if(playerEntity.getCurrentEquippedItem().getItem() instanceof ItemGun)
+		if(playerEntity.getHeldItem(EnumHand.MAIN_HAND) != null)
+		if(playerEntity.getHeldItem(EnumHand.MAIN_HAND).getItem() instanceof ItemGun)
 		{
-			itemGun = (ItemGun)playerEntity.getCurrentEquippedItem().getItem();
+			itemGun = (ItemGun)playerEntity.getHeldItem(EnumHand.MAIN_HAND).getItem();
 			itemGun.impactX = x;
 			itemGun.impactY = y;
 			itemGun.impactZ = z;
@@ -79,10 +80,10 @@ public class PacketImpactPoint extends PacketBase
 			if(obj instanceof EntityPlayer && ((Entity)obj).getEntityId() == entityId)
 			{
 				entP = (EntityPlayer)obj;
-				if(entP.getCurrentEquippedItem() != null)
-					if(entP.getCurrentEquippedItem().getItem() instanceof ItemGun)
+				if(entP.getHeldItem(EnumHand.MAIN_HAND) != null)
+					if(entP.getHeldItem(EnumHand.MAIN_HAND).getItem() instanceof ItemGun)
 					{
-						itemGun = (ItemGun)entP.getCurrentEquippedItem().getItem();
+						itemGun = (ItemGun)entP.getHeldItem(EnumHand.MAIN_HAND).getItem();
 						itemGun.impactX = x;
 						itemGun.impactY = y;
 						itemGun.impactZ = z;

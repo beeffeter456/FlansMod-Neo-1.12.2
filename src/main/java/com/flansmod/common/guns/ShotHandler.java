@@ -161,7 +161,7 @@ public class ShotHandler
 	 */
 	public static Float OnHit(World world, Vector3f hit, Vector3f shootingDirection, FiredShot shot, BulletHit bulletHit, Float penetratingPower)
 	{
-		Float damage = shot.getFireableGun().getDamage();
+		float damage = shot.getFireableGun().getDamage();
 		
 		BulletType bulletType = shot.getBulletType();
 		if(bulletHit instanceof DriveableHit)

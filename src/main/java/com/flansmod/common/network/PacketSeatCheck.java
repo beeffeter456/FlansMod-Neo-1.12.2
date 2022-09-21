@@ -1,21 +1,14 @@
 package com.flansmod.common.network;
 
-import java.util.Iterator;
-
+import com.flansmod.common.FlansMod;
+import com.flansmod.common.driveables.EntitySeat;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.network.rcon.RConConsoleSource;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.ChatComponentTranslation;
-import net.minecraft.util.EnumChatFormatting;
-
-import com.flansmod.common.FlansMod;
-import com.flansmod.common.driveables.EntitySeat;
-
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -53,10 +46,10 @@ public class PacketSeatCheck extends PacketBase
 		
 		if(checkCount <= 0)
 		{
-			ChatComponentText cct1 = new ChatComponentText("[FlansMod] "+playerEntity.getDisplayName()+" was recovering from a fall. id=" + entityId);
-			cct1.getChatStyle().setColor(EnumChatFormatting.YELLOW);
-			ChatComponentText cct2 = new ChatComponentText("[FlansMod]================================================");
-			cct2.getChatStyle().setColor(EnumChatFormatting.RED);
+			TextComponentString cct1 = new TextComponentString("[FlansMod] "+playerEntity.getDisplayName()+" was recovering from a fall. id=" + entityId);
+			cct1.getStyle().setColor(TextFormatting.YELLOW);
+			TextComponentString cct2 = new TextComponentString("[FlansMod]================================================");
+			cct2.getStyle().setColor(TextFormatting.RED);
 			
 /*
 			Iterator iterator = MinecraftServer.getServer().getConfigurationManager().playerEntityList.iterator();
@@ -72,9 +65,9 @@ public class PacketSeatCheck extends PacketBase
 		}
 		else
 		{
-			if(playerEntity.ridingEntity instanceof EntitySeat)
+			if(playerEntity.getRidingEntity() instanceof EntitySeat)
 			{
-				entityId = playerEntity.ridingEntity.getEntityId();
+				entityId = playerEntity.getRidingEntity().getEntityId();
 			}
 			else
 			{
@@ -86,7 +79,7 @@ public class PacketSeatCheck extends PacketBase
 
 	private void log(String s, EntityPlayer player)
 	{
-		Entity re = player.ridingEntity;
+		Entity re = player.getRidingEntity();
 		FlansMod.log(s +" :"+player.getDisplayName()+
 				" : rideEntity="+(re!=null? re.getClass().getName(): re)+
 				" : seatEntityId="+entityId+
@@ -99,7 +92,7 @@ public class PacketSeatCheck extends PacketBase
 	{
 		//log("handleClientSide", clientPlayer);
 		
-		if(clientPlayer.ridingEntity==null && entityId != -1)
+		if(clientPlayer.getRidingEntity()==null && entityId != -1)
 		{
 			if(checkCount > 1)
 			{
@@ -108,14 +101,14 @@ public class PacketSeatCheck extends PacketBase
 			else
 			{
 				checkCount--;
-				Entity entity = clientPlayer.worldObj.getEntityByID(entityId);
+				Entity entity = clientPlayer.world.getEntityByID(entityId);
 				if(entity instanceof EntitySeat)
 				{
 					//FlansMod.log("mount seat :"+clientPlayer.getDisplayName()+
 							//" : seatEntityId="+entityId+
 							//" : check="+checkCount);
 
-					clientPlayer.mountEntity(entity);
+					clientPlayer.startRiding(entity);
 				}
 			}
 			FlansMod.getPacketHandler().sendToServer(this);

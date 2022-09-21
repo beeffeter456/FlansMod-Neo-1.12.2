@@ -504,6 +504,8 @@ public class GunType extends PaintableType implements IScope
     public float adsSpreadModifier = -1F;
     // Modifier for (usually decreasing) spread when gun is ADS. -1 uses default values from flansmod.cfg. For shotguns.
     public float adsSpreadModifierShotgun = -1F;
+
+	public float switchDelay = 0;
 	
 	public GunType(TypeFile file)
 	{
@@ -862,6 +864,7 @@ public class GunType extends PaintableType implements IScope
 			moveSpeedModifier = Read(split, "Slowness", moveSpeedModifier);
 			knockbackModifier = Read(split, "KnockbackReduction", knockbackModifier);
 			knockbackModifier = Read(split, "KnockbackModifier", knockbackModifier);
+			switchDelay = Read(split, "SwitchDelay", switchDelay);
 			
 			//Attachment settings
 			allowAllAttachments = Read(split, "AllowAllAttachments", allowAllAttachments);

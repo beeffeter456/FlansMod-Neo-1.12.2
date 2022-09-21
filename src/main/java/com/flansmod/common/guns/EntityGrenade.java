@@ -3,6 +3,7 @@ package com.flansmod.common.guns;
 import java.util.List;
 import java.util.Optional;
 
+import com.flansmod.common.network.PacketFlashBang;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.particle.Particle;
@@ -14,6 +15,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EntityDamageSource;
@@ -92,12 +94,22 @@ public class EntityGrenade extends EntityShootable implements IEntityAdditionalS
 	 * For deployable bags
 	 */
 	public int numUsesRemaining = 0;
+
+	public boolean isThisStick = false;
+	public Entity stickedEntity;
+
+	public int motionTime = 0;
 	
 	public EntityGrenade(World w)
 	{
 		super(w);
 	}
-	
+
+	@Override
+	public ShootableType getType() {
+		return type;
+	}
+
 	/**
 	 * General constructor. Example usecase: grenades spawned via console command
 	 * 
@@ -184,6 +196,9 @@ public class EntityGrenade extends EntityShootable implements IEntityAdditionalS
 			setDead();
 			return;
 		}
+
+		if(motionTime > 0)
+			motionTime--;
 		
 		//Visuals
 		if(world.isRemote)
@@ -300,7 +315,7 @@ public class EntityGrenade extends EntityShootable implements IEntityAdditionalS
 			//Raytrace the motion of this grenade
 			RayTraceResult hit = world.rayTraceBlocks(posVec.toVec3(), nextPosVec.toVec3());
 			//If we hit block
-			if(hit != null && hit.typeOfHit == RayTraceResult.Type.BLOCK)
+			if(hit != null && hit.typeOfHit == RayTraceResult.Type.BLOCK && world.getBlockState(hit.getBlockPos()).getMaterial().blocksMovement())
 			{
 				//Get block material
 				Material mat = world.getBlockState(hit.getBlockPos()).getMaterial();
@@ -316,6 +331,7 @@ public class EntityGrenade extends EntityShootable implements IEntityAdditionalS
 					{
 						WorldServer worldServer = (WorldServer)world;
 						BlockUtil.destroyBlock(worldServer, hit.getBlockPos(), player.orElse(null), false);
+						FlansMod.proxy.playBlockBreakSound(hit.getBlockPos().getX(), hit.getBlockPos().getY(), hit.getBlockPos().getZ(), world.getBlockState(hit.getBlockPos()).getBlock(), this.dimension);
 					}
 				}
 				
@@ -447,6 +463,33 @@ public class EntityGrenade extends EntityShootable implements IEntityAdditionalS
 				setPosition(entity.posX, entity.posY, entity.posZ);
 			}
 		}
+
+		if(type.stickToEntity)
+		{
+			List list = world.getEntitiesWithinAABBExcludingEntity(this, getEntityBoundingBox());
+			float yaw = axes.getYaw();
+			//Entity entity = null;
+
+			if(stickedEntity == null && !stuck)
+			{
+				for(Object obj : list)
+				{
+					if(obj instanceof Entity && obj != thrower && !(obj instanceof EntityGrenade))
+					{
+						//axes.setAngles(180F, 90F, 0F); axes.rotateLocalYaw(yaw);
+						stickedEntity = (Entity)obj;
+						break;
+					}
+				}
+			}
+
+			if(stickedEntity != null)
+			{
+				this.setPosition(stickedEntity.posX, stickedEntity.posY, stickedEntity.posZ);
+				if(stickedEntity.isDead)
+					this.setDead();
+			}
+		}
 		
 		//If throwing this grenade at an entity should hurt them, this bit checks for entities in the way and does so
 		//(Don't attack entities when stuck to stuff)
@@ -500,7 +543,7 @@ public class EntityGrenade extends EntityShootable implements IEntityAdditionalS
 		}
 		
 		//Make fire
-		if(type.fireRadius > 0.1F)
+		if(!world.isRemote && type.fireRadius > 0.1F)
 		{
 			for(float i = -type.fireRadius; i < type.fireRadius; i++)
 			{
@@ -551,8 +594,31 @@ public class EntityGrenade extends EntityShootable implements IEntityAdditionalS
 			smoking = true;
 			smokeTime = type.smokeTime;
 		}
-		else
+		else if(!world.isRemote)
 		{
+			setDead();
+		}
+
+		if(type.flashBang && !this.world.isRemote)
+		{
+			List list = world.getEntitiesWithinAABB(EntityLivingBase.class, getEntityBoundingBox().expand(type.smokeRadius, type.smokeRadius, type.smokeRadius));
+			EntityPlayer entityP;
+			for(Object obj : list)
+			{
+				EntityLivingBase entity = ((EntityLivingBase)obj);
+				if(entity.getDistance(this) < type.flashRange && type.flashDamageEnable)
+				{
+					if(type.flashEffects)
+						entity.addPotionEffect(new PotionEffect(Potion.getPotionById(type.flashEffectsID), type.flashEffectsDuration, type.flashEffectsLevel));
+					entity.attackEntityFrom(this.getGrenadeDamage(), type.flashDamage);
+					//entityP.worldObj.playSoundAtEntity((EntityPlayer)entity, "flansmod:FlashSound",1.0F,1.0F);
+				}
+			}
+			FlansMod.getPacketHandler().sendToAllAround(new PacketFlak(posX, posY, posZ, 50, type.smokeParticleType), posX, posY, posZ, 30, dimension);
+
+			if(type.flashSoundEnable)
+				PacketPlaySound.sendSoundPacket(posX, posY, posZ, type.flashSoundRange, dimension, type.flashSound, true);
+			FlansMod.getPacketHandler().sendToAllAround(new PacketFlashBang(type.flashTime), posX, posY, posZ, type.flashRange, dimension);
 			setDead();
 		}
 	}
@@ -582,6 +648,12 @@ public class EntityGrenade extends EntityShootable implements IEntityAdditionalS
 	protected void readEntityFromNBT(NBTTagCompound tags)
 	{
 		type = GrenadeType.getGrenade(tags.getString("Type"));
+		if(type == null)
+		{
+			FlansMod.log("EntityGrenade.readEntityFromNBT() Error: GrenadeType is null ("+this+")");
+			setDead();
+			return;
+		}
 		player = Optional.ofNullable(world.getPlayerEntityByName(tags.getString("Player")));
 		rotationYaw = tags.getFloat("RotationYaw");
 		rotationPitch = tags.getFloat("RotationPitch");
@@ -592,7 +664,10 @@ public class EntityGrenade extends EntityShootable implements IEntityAdditionalS
 	protected void writeEntityToNBT(NBTTagCompound tags)
 	{
 		if(type == null)
+		{
+			FlansMod.log("EntityGrenade.readEntityFromNBT() Error: GrenadeType is null ("+this+")");
 			setDead();
+		}
 		else
 		{
 			tags.setString("Type", type.shortName);
@@ -667,10 +742,10 @@ public class EntityGrenade extends EntityShootable implements IEntityAdditionalS
 			if(type.numClips > 0 && player.getHeldItemMainhand() != null && player.getHeldItemMainhand().getItem() instanceof ItemGun)
 			{
 				GunType gun = ((ItemGun)player.getHeldItemMainhand().getItem()).GetType();
-				if(gun.ammo.size() > 0)
+				if(gun.ammo.size() > 0 && gun.allowRearm)
 				{
 					ShootableType bulletToGive = gun.ammo.get(0);
-					int numToGive = Math.min(bulletToGive.maxStackSize, type.numClips * gun.numAmmoItemsInGun);
+					int numToGive = Math.min(bulletToGive.maxStackSize, type.numClips * gun.getNumAmmoItemsInGun(player.getHeldItemMainhand()));
 					if(player.inventory.addItemStackToInventory(new ItemStack(bulletToGive.item, numToGive)))
 					{
 						used = true;

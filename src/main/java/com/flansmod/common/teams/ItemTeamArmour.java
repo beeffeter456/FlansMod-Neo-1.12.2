@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import com.flansmod.common.guns.EntityDamageSourceFlan;
 import com.google.common.collect.Multimap;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.util.ITooltipFlag;
@@ -86,7 +87,7 @@ public class ItemTeamArmour extends ItemArmor implements IFlanItem, ISpecialArmo
 	@Override
 	public ArmorProperties getProperties(EntityLivingBase player, ItemStack armor, DamageSource source, double damage, int slot)
 	{
-		if (source instanceof EntityDamageSourceFlans && !((EntityDamageSourceFlans) source).melee) {
+		if (source instanceof EntityDamageSourceFlan && !((EntityDamageSourceFlan) source).isMelee()) {
             return new ArmorProperties(1, type.bulletDefence, Integer.MAX_VALUE);
         } else {
             return new ArmorProperties(1, type.defence, Integer.MAX_VALUE);

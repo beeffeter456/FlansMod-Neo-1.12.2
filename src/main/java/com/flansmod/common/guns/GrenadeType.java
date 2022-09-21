@@ -57,6 +57,35 @@ public class GrenadeType extends ShootableType
 	 * If true, then the grenade will stick to the player that threw it. Used to make delayed self destruct weapons
 	 */
 	public boolean stickToThrower = false;
+
+	public boolean stickToEntity = false;
+	public boolean stickToDriveable = false;
+	public boolean stickToEntityAfter = false;
+	public boolean allowStickSound = false;
+	public int stickSoundRange = 10;
+	public String stickSound;
+
+	public boolean flashBang = false;
+	public int flashTime = 200;
+	public int flashRange = 8;
+
+	public boolean flashSoundEnable = false;
+	public int flashSoundRange = 16;
+	public String flashSound;
+
+	public boolean flashDamageEnable = false;
+	public float flashDamage;
+
+	public boolean flashEffects = false;
+	public int flashEffectsID;
+	public int flashEffectsDuration;
+	public int flashEffectsLevel;
+
+	public boolean motionSensor = false;
+	public float motionSensorRange = 5.0F;
+	public float motionSoundRange = 20.0F;
+	public String motionSound;
+	public int motionTime = 20;
 	
 	//Conditions for detonation
 	/**
@@ -150,6 +179,12 @@ public class GrenadeType extends ShootableType
 		super(file);
 		grenades.add(this);
 	}
+
+	@Override
+	protected void preRead(TypeFile file)
+	{
+		super.preRead(file);
+	}
 	
 	@Override
 	public void postRead(TypeFile file)
@@ -207,6 +242,27 @@ public class GrenadeType extends ShootableType
 			
 			else if(split[0].equals("StickToThrower"))
 				stickToThrower = Boolean.parseBoolean(split[1]);
+
+			else if(split[0].equals("StickToEntity"))
+				stickToEntity = Boolean.parseBoolean(split[1]);
+
+			else if(split[0].equals("StickToDriveable"))
+				stickToDriveable = Boolean.parseBoolean(split[1]);
+
+			else if(split[0].equals("StickToEntityAfter"))
+				stickToEntityAfter = Boolean.parseBoolean(split[1]);
+
+			else if(split[0].equals("AllowStickSound"))
+				allowStickSound = Boolean.parseBoolean(split[1]);
+
+			else if(split[0].equals("StickSoundRange"))
+				stickSoundRange = Integer.parseInt(split[1]);
+
+			else if(split[0].equals("StickSound"))
+			{
+				stickSound = split[1];
+				FlansMod.proxy.loadSound(contentPack, "sound", split[1]);
+			}
 			
 			else if(split[0].equals("ExplosionDamageVsLiving"))
 				explosionDamageVsLiving = Float.parseFloat(split[1]);
@@ -230,6 +286,47 @@ public class GrenadeType extends ShootableType
 				spinWhenThrown = Boolean.parseBoolean(split[1].toLowerCase());
 			else if(split[0].equals("Remote"))
 				remote = Boolean.parseBoolean(split[1].toLowerCase());
+			else if(split[0].equals("FlashBang"))
+				flashBang = Boolean.parseBoolean(split[1]);
+			else if(split[0].equals("FlashTime"))
+				flashTime = Integer.parseInt(split[1]);
+			else if(split[0].equals("FlashRange"))
+				flashRange = Integer.parseInt(split[1]);
+			else if(split[0].equals("FlashSoundEnable"))
+				flashSoundEnable = Boolean.parseBoolean(split[1]);
+			else if(split[0].equals("FlashSoundRange"))
+				flashSoundRange = Integer.parseInt(split[1]);
+			else if(split[0].equals("FlashSound"))
+			{
+				flashSound = split[1];
+				FlansMod.proxy.loadSound(contentPack, "sound", split[1]);
+			}
+			else if(split[0].equals("FlashDamageEnable"))
+				flashDamageEnable = Boolean.parseBoolean(split[1]);
+			else if(split[0].equals("FlashDamage"))
+				flashDamage = Float.parseFloat(split[1]);
+			else if(split[0].equals("FlashEffects"))
+				flashEffects = Boolean.parseBoolean(split[1]);
+			else if(split[0].equals("FlashEffectsID"))
+				flashEffectsID = Integer.parseInt(split[1]);
+			else if(split[0].equals("FlashEffectsDuration"))
+				flashEffectsDuration = Integer.parseInt(split[1]);
+			else if(split[0].equals("FlashEffectsLevel"))
+				flashEffectsLevel = Integer.parseInt(split[1]);
+
+			else if(split[0].equals("MotionSensor"))
+				motionSensor = Boolean.parseBoolean(split[1]);
+			else if(split[0].equals("MotionSensorRange"))
+				motionSensorRange = Float.parseFloat(split[1]);
+			else if(split[0].equals("MotionSoundRange"))
+				motionSoundRange = Float.parseFloat(split[1]);
+			else if(split[0].equals("MotionSound"))
+			{
+				motionSound = split[1];
+				FlansMod.proxy.loadSound(contentPack, "sound", split[1]);
+			}
+			else if(split[0].equals("MotionTime"))
+				motionTime = Integer.parseInt(split[1]);
 				
 				//Deployable Bag Stuff
 			else if(split[0].equals("DeployableBag"))

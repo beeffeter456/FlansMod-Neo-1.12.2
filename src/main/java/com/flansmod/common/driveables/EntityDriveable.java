@@ -10,6 +10,7 @@ import com.flansmod.common.driveables.collisions.CollisionShapeBox;
 import com.flansmod.common.driveables.collisions.CollisionTest;
 import com.flansmod.common.driveables.mechas.EntityMecha;
 import com.flansmod.common.eventhandlers.GunFiredEvent;
+import com.flansmod.common.guns.*;
 import com.flansmod.common.network.*;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.block.Block;
@@ -57,18 +58,6 @@ import com.flansmod.client.debug.EntityDebugVector;
 import com.flansmod.client.handlers.KeyInputHandler;
 import com.flansmod.common.driveables.DriveableType.ParticleEmitter;
 import com.flansmod.common.driveables.mechas.ContainerMechaInventory;
-import com.flansmod.common.guns.BulletType;
-import com.flansmod.common.guns.EnumFireMode;
-import com.flansmod.common.guns.EnumSpreadPattern;
-import com.flansmod.common.guns.FireableGun;
-import com.flansmod.common.guns.FiredShot;
-import com.flansmod.common.guns.GunType;
-import com.flansmod.common.guns.InventoryHelper;
-import com.flansmod.common.guns.ItemBullet;
-import com.flansmod.common.guns.ItemShootable;
-import com.flansmod.common.guns.ShootBulletHandler;
-import com.flansmod.common.guns.ShootableType;
-import com.flansmod.common.guns.ShotHandler;
 import com.flansmod.common.guns.raytracing.FlansModRaytracer.BulletHit;
 import com.flansmod.common.guns.raytracing.FlansModRaytracer.DriveableHit;
 import com.flansmod.common.parts.EnumPartCategory;
@@ -1124,8 +1113,7 @@ public abstract class EntityDriveable extends Entity implements IControllable, I
 		float damageMultiplier = secondary ? type.damageMultiplierSecondary : type.damageMultiplierPrimary;
 		
 		FireableGun fireableGun = new FireableGun(bulletItem.type,
-			bulletItem.type.damageVsLiving * damageMultiplier,
-			bulletItem.type.damageVsDriveable * damageMultiplier,
+			damageMultiplier,
 			bulletItem.type.bulletSpread,
 			speed,
 			EnumSpreadPattern.circle);
@@ -2101,7 +2089,7 @@ public abstract class EntityDriveable extends Entity implements IControllable, I
 			}
 		}
 		if(TeamsManager.getInstance().currentRound!=null){
-			if(source instanceof EntityDamageSourceFlans){
+			if(source instanceof EntityDamageSourceFlan){
 				EntityPlayerMP driver = null;
 				for(EntitySeat seat : this.seats){
 					if(seat.getControllingPassenger()!=null && seat.getControllingPassenger() instanceof EntityPlayerMP){
@@ -2109,8 +2097,8 @@ public abstract class EntityDriveable extends Entity implements IControllable, I
 					}
 				}
 				if(driver!=null) {
-					EntityDamageSourceFlans dsf = (EntityDamageSourceFlans) source;
-					EntityPlayerMP attacker = (EntityPlayerMP) dsf.shooter;
+					EntityDamageSourceFlan dsf = (EntityDamageSourceFlan) source;
+					EntityPlayerMP attacker = (EntityPlayerMP) dsf.getCausedPlayer();
 					PlayerData attackerData = PlayerHandler.getPlayerData(attacker);
 					PlayerData driverData = PlayerHandler.getPlayerData(driver);
 					if(attackerData.team.shortName.equals(driverData.team.shortName)){
@@ -2496,7 +2484,7 @@ public abstract class EntityDriveable extends Entity implements IControllable, I
 		DriveableType type = getDriveableType();
 		EntityLivingBase owner = (EntityLivingBase) seats[0].getControllingPassenger();
 		if (owner instanceof EntityPlayer)
-			return (new EntityDamageSourceFlans(getDriveableType().shortName, this, (EntityPlayer) owner, type, headshot, false)).setProjectile();
+			return (new EntityDamageSourceFlan(getDriveableType().shortName, this, (EntityPlayer) owner, type, headshot, false)).setProjectile();
 		else return (new EntityDamageSourceIndirect(type.shortName, this, owner)).setProjectile();
 	}
 
@@ -2891,7 +2879,7 @@ public abstract class EntityDriveable extends Entity implements IControllable, I
 		DriveablePart part = getDriveableData().parts.get(hit.part);
 
 		if (bulletType != null)
-			penetratingPower = part.hitByBullet(bulletType, damage);
+			penetratingPower = part.hitByBullet(bulletType, damage, hit, penetratingPower);
 		else
 			penetratingPower -= 5F;
 		

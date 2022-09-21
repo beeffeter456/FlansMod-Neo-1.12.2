@@ -6,8 +6,10 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import com.flansmod.common.teams.TeamsManager;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockLiquid;
+import net.minecraft.block.BlockSponge;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
@@ -80,7 +82,7 @@ public class ItemVehicle extends ItemMapBase implements IPaintableItem
 			NBTTagCompound tags = CompressedStreamTools.readCompressed(fileinputstream).getCompoundTag("data");
 			for(EnumDriveablePart part : EnumDriveablePart.values())
 			{
-				tags.setInteger(part.getShortName() + "_Health", type.health.get(part) == null ? 0 : type.health.get(part).health);
+				tags.setFloat(part.getShortName() + "_Health", type.health.get(part) == null ? 0 : (int) type.health.get(part).health);
 				tags.setBoolean(part.getShortName() + "_Fire", false);
 			}
 			fileinputstream.close();
@@ -97,21 +99,32 @@ public class ItemVehicle extends ItemMapBase implements IPaintableItem
 	@Override
 	public void addInformation(ItemStack stack, World world, List<String> lines, ITooltipFlag b)
 	{
+		String paintName = type.getPaintjob(stack.getItemDamage()).displayName;
+		if(!paintName.equals("default") && !paintName.isEmpty())
+			lines.add("\u00a7b\u00a7o" + paintName);
+
+		if(!type.packName.isEmpty())
+		{
+			lines.add("\u00a7o" + type.packName);
+		}
 		if(type.description != null)
 		{
 			Collections.addAll(lines, type.description.split("_"));
 		}
 		NBTTagCompound tags = getTagCompound(stack, world);
-		String engineName = tags.getString("Engine");
-		PartType part = PartType.getPart(engineName);
-		if(part != null)
-			lines.add(part.name);
+		PartType engine = PartType.getPart(tags.getString("Engine"));
+		if(engine != null)
+			lines.add("\u00a79Engine" + "\u00a77: " + engine.name);
 	}
 	
 	@Override
 	public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer entityplayer, EnumHand hand)
 	{
 		ItemStack itemstack = entityplayer.getHeldItem(hand);
+		if (!(TeamsManager.survivalCanPlaceVehicles || entityplayer.capabilities.isCreativeMode)) {
+			// player isn't allowed to place vehicles.
+			return new ActionResult<>(EnumActionResult.PASS, itemstack);
+		}
 		
 		//Raytracing
 		float cosYaw = MathHelper.cos(-entityplayer.rotationYaw * 0.01745329F - 3.141593F);
@@ -132,11 +145,16 @@ public class ItemVehicle extends ItemMapBase implements IPaintableItem
 		{
 			BlockPos pos = RayTraceResult.getBlockPos();
 			Block block = world.getBlockState(pos).getBlock();
-			if(type.placeableOnLand || block instanceof BlockLiquid)
+			if((type.placeableOnLand || block instanceof BlockLiquid) || (type.placeableOnSponge && block instanceof BlockSponge))
 			{
 				if(!world.isRemote)
 				{
-					world.spawnEntity(new EntityVehicle(world, (double)pos.getX() + 0.5F, (double)pos.getY() + 2.5F, (double)pos.getZ() + 0.5F, entityplayer, type, getData(itemstack, world)));
+					Entity e = new EntityVehicle(world, (double)pos.getX() + 0.5F, (double)pos.getY() + 2.5F, (double)pos.getZ() + 0.5F, entityplayer, type, getData(itemstack, world));
+					world.spawnEntity(e);
+					if (!world.isRemote)
+					{
+						FlansMod.log.info("Player %s placed vehicle %s (%d) at (%d, %d, %d)", entityplayer.getDisplayName(), type.shortName, e.getEntityId(), pos.getX(), pos.getY(), pos.getZ());
+					}
 				}
 				if(!entityplayer.capabilities.isCreativeMode)
 				{
@@ -179,7 +197,7 @@ public class ItemVehicle extends ItemMapBase implements IPaintableItem
 			tags.setString("Engine", PartType.defaultEngines.get(EnumType.vehicle).shortName);
 		for(EnumDriveablePart part : EnumDriveablePart.values())
 		{
-			tags.setInteger(part.getShortName() + "_Health", type.health.get(part) == null ? 0 : type.health.get(part).health);
+			tags.setFloat(part.getShortName() + "_Health", type.health.get(part) == null ? 0 : (int) type.health.get(part).health);
 			tags.setBoolean(part.getShortName() + "_Fire", false);
 		}
 		planeStack.setTagCompound(tags);

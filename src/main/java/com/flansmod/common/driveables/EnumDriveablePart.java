@@ -15,7 +15,9 @@ public enum EnumDriveablePart
 	rightWing(new EnumDriveablePart[]{topWing, rightWingWheel}, "rightWing", "Right Wing"),
 	nose(new EnumDriveablePart[]{}, "nose", "Nose"),
 	coreWheel(new EnumDriveablePart[]{}, "coreWheel", "Wheel (Core)"),
-	
+	airframe(new EnumDriveablePart[] { },"airframe", "Airframe Integrity"),
+
+
 	//Helicopter parts
 	skids(new EnumDriveablePart[]{}, "skids", "Skids"),
 	blades(new EnumDriveablePart[]{}, "blades", "Blades"),
@@ -32,7 +34,15 @@ public enum EnumDriveablePart
 	rightTrack(new EnumDriveablePart[]{}, "rightTrack", "Right Track"),
 	trailer(new EnumDriveablePart[]{}, "trailer", "Trailer"),
 	harvester(new EnumDriveablePart[]{}, "harvester", "Harvester"),    //This is the drill bit, combine blades or excavator for utility vehicles
-	
+	//New parts
+	frontalArmor(new EnumDriveablePart[] { }, "frontalArmor", "Frontal Armor"),
+	leftsideArmor(new EnumDriveablePart[] { }, "leftsideArmor", "Left Side Armor"),
+	rightsideArmor(new EnumDriveablePart[] { }, "rightsideArmor", "Right Side Armor"),
+	additionalArmor(new EnumDriveablePart[] { }, "additionalArmor", "Additional Armor"),
+	ERA(new EnumDriveablePart[] { }, "ERA", "ERA"),
+	APS(new EnumDriveablePart[] { }, "APS", "APS"),
+	ADS(new EnumDriveablePart[] { }, "ADS", "ADS"),
+
 	//Mecha parts
 	leftArm(new EnumDriveablePart[]{}, "leftArm", "Left Arm"),
 	rightArm(new EnumDriveablePart[]{}, "rightArm", "Right Arm"),
@@ -41,7 +51,7 @@ public enum EnumDriveablePart
 	barrel(new EnumDriveablePart[]{}, "barrel", "Barrel"),
 	
 	//Shared part
-	core(new EnumDriveablePart[]{bay, leftWing, rightWing, nose, turret, coreWheel, leftArm, rightArm, head, hips, blades, skids, backWheel, frontWheel, backLeftWheel, frontLeftWheel, backRightWheel, frontRightWheel, leftTrack, rightTrack, trailer, harvester}, "core", "Core");
+	core(new EnumDriveablePart[]{bay, leftWing, rightWing, nose, turret, coreWheel, leftArm, rightArm, head, hips, blades, skids, backWheel, frontWheel, backLeftWheel, frontLeftWheel, backRightWheel, frontRightWheel, leftTrack, rightTrack, trailer, harvester, airframe}, "core", "Core");
 	
 	private String shortName;
 	private String name;

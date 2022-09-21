@@ -6,7 +6,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.text.TextComponentString;
 
 public class PacketHashSend extends PacketBase {
     String hash;
@@ -31,9 +31,9 @@ public class PacketHashSend extends PacketBase {
 
     @Override
     public void handleServerSide(EntityPlayerMP player) {
-        FlansMod.log("Received pack hash from %s (%s)", player.getCommandSenderName(), hash);
+        FlansMod.log("Received pack hash from %s (%s)", player.getName(), hash);
         if (!hash.equals(Sync.cachedHash) && FlansMod.kickNonMatchingHashes) {
-            player.playerNetServerHandler.kickPlayerFromServer("[Sync] Client-server mismatch.");
+            player.connection.disconnect(new TextComponentString("[Sync] Client-server mismatch."));
         }
     }
 
@@ -43,7 +43,7 @@ public class PacketHashSend extends PacketBase {
             FlansMod.log.info("Received packet %s", hash);
         }
         if (!hash.equals(Sync.cachedHash) && FlansMod.kickNonMatchingHashes) {
-            clientPlayer.addChatComponentMessage(new ChatComponentText("[Sync] Client-Server mismatch detected."));
+            clientPlayer.sendMessage(new TextComponentString("[Sync] Client-Server mismatch detected."));
             FlansMod.log.info("Kicked from server, invalid hash. Make sure your packs are the same as the server's.");
             FlansMod.log.info("S: " + hash);
             FlansMod.log.info("C: " + Sync.cachedHash);

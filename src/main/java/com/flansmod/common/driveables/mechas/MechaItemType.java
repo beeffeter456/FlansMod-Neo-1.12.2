@@ -62,7 +62,8 @@ public class MechaItemType extends InfoType
 	 * or what certain values should take
 	 */
 	public boolean stopMechaFallDamage = false, forceBlockFallDamage = false, vacuumItems = false, refineIron = false, autoCoal = false, autoRepair = false, rocketPack = false, diamondDetect = false, infiniteAmmo = false, forceDark = false, wasteCompact = false, flameBurst = false;
-	
+
+	public float autoRepairAmount = 1F;
 	/**
 	 * The drop rate of these items are multiplied by this float. They stack between items too.
 	 * Once dropRate has been calculated, each block then gives floor(dropRate) items with a
@@ -146,6 +147,8 @@ public class MechaItemType extends InfoType
 				lightLevel = Integer.parseInt(split[1]);
 			if(split[0].equals("Nanorepair"))
 				autoRepair = Boolean.parseBoolean(split[1].toLowerCase());
+			if (split[0].equals("NanorepairAmount"))
+				autoRepairAmount = Float.parseFloat(split[1]);
 			if(split[0].equals("RedstoneMultiplier"))
 				fortuneRedstone = Float.parseFloat(split[1]);
 			if(split[0].equals("RocketPack"))

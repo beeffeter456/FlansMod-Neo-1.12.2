@@ -3,6 +3,7 @@ package com.flansmod.common.driveables;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.flansmod.common.vector.Vector3f;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
@@ -34,7 +35,12 @@ public class VehicleType extends DriveableType
 	 * Tank movement system. Uses track collision box for thrust, rather than the wheels
 	 */
 	public boolean tank = false;
-	
+
+	/**
+	 * Amount to decrease throttle by each tick.
+	 */
+	public float throttleDecay = 0.0035F;
+
 	/**
 	 * Aesthetic door variable
 	 */
@@ -42,6 +48,39 @@ public class VehicleType extends DriveableType
 	
 	public int trackLinkFix = 5;
 	public boolean flipLinkFix = false;
+
+	/**
+	 * Mass of the vehicle, for use in realistic acceleration calculation
+	 */
+	public float mass = 1000F;
+
+	public boolean useRealisticAcceleration = false;
+
+	// Braking modifier.
+	public float brakingModifier = 1;
+
+	public float maxFallSpeed = 0.85F;
+	public float gravity = 0.175F;
+
+	//Door animations
+	public Vector3f doorPos1 = new Vector3f(0, 0, 0);
+	public Vector3f doorPos2 = new Vector3f(0, 0, 0);
+	public Vector3f doorRot1 = new Vector3f(0, 0, 0);
+	public Vector3f doorRot2 = new Vector3f(0, 0, 0);
+	public Vector3f doorRate = new Vector3f(0, 0, 0);
+	public Vector3f doorRotRate = new Vector3f(0, 0, 0);
+	public Vector3f door2Pos1 = new Vector3f(0, 0, 0);
+	public Vector3f door2Pos2 = new Vector3f(0, 0, 0);
+	public Vector3f door2Rot1 = new Vector3f(0, 0, 0);
+	public Vector3f door2Rot2 = new Vector3f(0, 0, 0);
+	public Vector3f door2Rate = new Vector3f(0, 0, 0);
+	public Vector3f door2RotRate = new Vector3f(0, 0, 0);
+	public boolean shootWithOpenDoor = false;
+
+	public String driftSound = "";
+	public int driftSoundLength;
+
+	public ArrayList<SmokePoint> smokers = new ArrayList<SmokePoint>();
 	
 	public static ArrayList<VehicleType> types = new ArrayList<>();
 	private static HashMap<String, ParseFunc<VehicleType>> parsers = new HashMap<>();
@@ -54,6 +93,15 @@ public class VehicleType extends DriveableType
 		parsers.put("TankMode", (split, d) -> d.tank = Boolean.parseBoolean(split[1]));
 		parsers.put("HasDoor", (split, d) -> d.hasDoor = Boolean.parseBoolean(split[1]));
 		parsers.put("RotateWheels", (split, d) -> d.rotateWheels = Boolean.parseBoolean(split[1]));
+		parsers.put("ThrottleDecay", (split, d) -> d.throttleDecay = Float.parseFloat(split[1]));
+		parsers.put("Mass", (split, d) -> d.mass = Float.parseFloat(split[1]));
+		parsers.put("UseRealisticAcceleration", (split, d) -> d.useRealisticAcceleration = Boolean.parseBoolean(split[1]));
+		parsers.put("Gravity", (split, d) -> d.gravity = Float.parseFloat(split[1]));
+		parsers.put("MaxFallSpeed", (split, d) -> d.maxFallSpeed = Float.parseFloat(split[1]));
+		parsers.put("BrakingModifier", (split, d) -> d.brakingModifier = Float.parseFloat(split[1]));
+		parsers.put("ShootWithOpenDoor", (split, d) -> d.shootWithOpenDoor = Boolean.parseBoolean(split[1]));
+		parsers.put("FixTrackLink", (split, d) -> d.trackLinkFix = Integer.parseInt(split[1]));
+		parsers.put("FlipLinkFix", (split, d) -> d.flipLinkFix = Boolean.parseBoolean(split[1]));
 			
 		parsers.put("TurnLeftSpeed", (split, d) -> d.turnLeftModifier = Float.parseFloat(split[1]));
 		parsers.put("TurnRightSpeed", (split, d) -> d.turnRightModifier = Float.parseFloat(split[1]));
@@ -69,6 +117,43 @@ public class VehicleType extends DriveableType
 		{
 			d.shootSoundPrimary = split[1];
 			FlansMod.proxy.loadSound(d.contentPack, "driveables", split[1]);
+		});
+
+		//Animations
+		parsers.put("DoorPosition1", (split, d) -> d.doorPos1 = new Vector3f(split[1], d.shortName));
+		parsers.put("DoorPosition2", (split, d) -> d.doorPos2 = new Vector3f(split[1], d.shortName));
+		parsers.put("DoorRotation1", (split, d) -> d.doorRot1 = new Vector3f(split[1], d.shortName));
+		parsers.put("DoorRotation2", (split, d) -> d.doorRot2 = new Vector3f(split[1], d.shortName));
+		parsers.put("DoorRate", (split, d) -> d.doorRate = new Vector3f(split[1], d.shortName));
+		parsers.put("DoorRotRate", (split, d) -> d.doorRotRate = new Vector3f(split[1], d.shortName));
+
+		parsers.put("Door2Position1", (split, d) -> d.door2Pos1 = new Vector3f(split[1], d.shortName));
+		parsers.put("Door2Position2", (split, d) -> d.door2Pos2 = new Vector3f(split[1], d.shortName));
+		parsers.put("Door2Rotation1", (split, d) -> d.door2Rot1 = new Vector3f(split[1], d.shortName));
+		parsers.put("Door2Rotation2", (split, d) -> d.door2Rot2 = new Vector3f(split[1], d.shortName));
+		parsers.put("Door2Rate", (split, d) -> d.door2Rate = new Vector3f(split[1], d.shortName));
+		parsers.put("Door2RotRate", (split, d) -> d.door2RotRate = new Vector3f(split[1], d.shortName));
+
+		parsers.put("DriftSoundLength", (split, d) -> d.driftSoundLength = Integer.parseInt(split[1]));
+		parsers.put("DriftSound", (split, d) -> {
+				d.driftSound = split[1];
+				FlansMod.proxy.loadSound(d.contentPack, "driveables", split[1]);
+		});
+		parsers.put("AddSmokePoint", (split, d) -> {
+			SmokePoint smoke = new SmokePoint();
+			smoke.position = new Vector3f(split[1], d.shortName);
+			smoke.direction = new Vector3f(split[2], d.shortName);
+			smoke.detTime = Integer.parseInt(split[3]);
+			smoke.part = split[4];
+			d.smokers.add(smoke);
+		});
+		parsers.put("AddSmokeDispenser", (split, d) -> {
+			SmokePoint smoke = new SmokePoint();
+			smoke.position = new Vector3f(split[1], d.shortName);
+			smoke.direction = new Vector3f(split[2], d.shortName);
+			smoke.detTime = Integer.parseInt(split[3]);
+			smoke.part = split[4];
+			d.smokers.add(smoke);
 		});
 	}
 	
@@ -131,7 +216,15 @@ public class VehicleType extends DriveableType
 		}
 		return null;
 	}
-	
+
+	public static class SmokePoint {
+		public Vector3f position;
+		public Vector3f direction;
+		public int detTime;
+		public String part;
+	}
+
+
 	/**
 	 * To be overriden by subtypes for model reloading
 	 */

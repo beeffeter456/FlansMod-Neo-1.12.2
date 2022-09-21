@@ -3,8 +3,8 @@ package com.flansmod.common.network;
 import com.flansmod.common.RotatedAxes;
 import com.flansmod.common.guns.AttachmentType;
 import com.flansmod.common.guns.GunType;
+import com.flansmod.utils.PlayerItemPositionUtils;
 import com.flansmod.common.vector.Vector3f;
-//import com.flansmod.utils.PlayerItemPositionUtils;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -105,11 +105,11 @@ public class PacketMuzzleFlash extends PacketBase
 
                 Vector3f.add(handOffset, g.muzzleFlashParticlesHandOffset, handOffset);
 
-                //Vector3f pos = PlayerItemPositionUtils.GetPlayerHandPosition(entityPlayer, shoulderOffset, handOffset, !isThisPlayer);
+                Vector3f pos = PlayerItemPositionUtils.GetPlayerHandPosition(entityPlayer, shoulderOffset, handOffset, !isThisPlayer);
 
                 Vector3f v = (Vector3f) axes.getXAxis().translate((float)Math.random() * 2 - 1, (float)Math.random() * 2 - 1, (float)Math.random() * 2 - 1).scale(0.05F);
 
-                //FlansMod.proxy.spawnParticle(type, pos.x, pos.y, pos.z, v.x, v.y, v.z, scale);
+                FlansMod.proxy.spawnParticle(type, pos.x, pos.y, pos.z, v.x, v.y, v.z, scale);
             }
         }
     }

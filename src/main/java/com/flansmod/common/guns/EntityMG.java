@@ -2,6 +2,7 @@ package com.flansmod.common.guns;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.lwjgl.input.Mouse;
@@ -89,6 +90,13 @@ public class EntityMG extends Entity implements IEntityAdditionalSpawnData
 	public void onUpdate()
 	{
 		super.onUpdate();
+
+		if(type==null)
+		{
+			FlansMod.log.error("EntityMG.onUpdate() Error: GunType is null ("+this+")");
+			setDead();
+			return;
+		}
 		
 		prevPosX = posX = blockX + 0.5f;
 		prevPosY = posY = blockY;
@@ -235,6 +243,10 @@ public class EntityMG extends Entity implements IEntityAdditionalSpawnData
 		{
 			soundDelay = type.shootSoundLength;
 			PacketPlaySound.sendSoundPacket(posX, posY, posZ, FlansMod.soundRange, dimension, type.shootSound, type.distortSound);
+			if (type.distantShootSound != null) {
+				FlansMod.packetHandler.sendToDonut(new PacketPlaySound(posX, posY, posZ, type.distantShootSound),
+						posX, posY, posZ, type.gunSoundRange, type.distantSoundRange, dimension);
+			}
 		}
 	}
 	
@@ -269,7 +281,7 @@ public class EntityMG extends Entity implements IEntityAdditionalSpawnData
 	{
 		// Player right clicked on gun
 		// Mount gun
-		if(gunner != null && gunner != player)
+		if(gunner != null && (gunner instanceof EntityPlayer) && gunner != player)
 		{
 			return true;
 		}
@@ -347,31 +359,48 @@ public class EntityMG extends Entity implements IEntityAdditionalSpawnData
 	@Override
 	public void setDead()
 	{
-		// Drop gun
-		if(!world.isRemote)
+		try
 		{
-			if(TeamsManager.weaponDrops == 2)
+			// Drop gun
+			if(!world.isRemote)
 			{
-				EntityGunItem gunEntity = new EntityGunItem(world, posX, posY, posZ, new ItemStack(type.getItem()), Arrays.asList(ammo));
-				world.spawnEntity(gunEntity);
+				if(TeamsManager.weaponDrops == 2)
+				{
+					EntityGunItem gunEntity = new EntityGunItem(world, posX, posY, posZ, new ItemStack(type.getItem()), Collections.singletonList(ammo));
+					world.spawnEntity(gunEntity);
+				}
+				else if(TeamsManager.weaponDrops == 1)
+				{
+					dropItem(type.getItem(), 1);
+					// Drop ammo box
+					if(!ammo.isEmpty())
+						entityDropItem(ammo, 0.5F);
+				}
 			}
-			else if(TeamsManager.weaponDrops == 1)
+			if(gunner != null && PlayerHandler.getPlayerData(gunner) != null)
+				PlayerHandler.getPlayerData(gunner).mountingGun = null;
+		}
+		catch(Exception e)
+		{
+//			FlansMod.log("EntityMG.setDead() Error ("+this+")");
+			if(FlansMod.printStackTrace)
 			{
-				dropItem(type.getItem(), 1);
-				// Drop ammo box
-				if(!ammo.isEmpty())
-					entityDropItem(ammo, 0.5F);
+				e.printStackTrace();
 			}
 		}
-		if(gunner != null && PlayerHandler.getPlayerData(gunner) != null)
-			PlayerHandler.getPlayerData(gunner).mountingGun = null;
-		
 		super.setDead();
 	}
 	
 	@Override
 	protected void writeEntityToNBT(NBTTagCompound nbttagcompound)
 	{
+		if(type==null)
+		{
+			FlansMod.log.error("EntityMG.writeEntityToNBT() Error: GunType is null ("+this+")");
+			setDead();
+			return;
+		}
+
 		nbttagcompound.setString("Type", type.shortName);
 		nbttagcompound.setTag("Ammo", ammo.writeToNBT(new NBTTagCompound()));
 		nbttagcompound.setInteger("BlockX", blockX);
@@ -384,6 +413,13 @@ public class EntityMG extends Entity implements IEntityAdditionalSpawnData
 	protected void readEntityFromNBT(NBTTagCompound nbttagcompound)
 	{
 		type = GunType.getGun(nbttagcompound.getString("Type"));
+		if(type==null)
+		{
+			FlansMod.log.error("EntityMG.readEntityFromNBT() Error: GunType is null ("+this+")");
+			setDead();
+			return;
+		}
+
 		blockX = nbttagcompound.getInteger("BlockX");
 		blockY = nbttagcompound.getInteger("BlockY");
 		blockZ = nbttagcompound.getInteger("BlockZ");

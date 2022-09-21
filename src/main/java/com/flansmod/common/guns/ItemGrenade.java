@@ -3,6 +3,7 @@ package com.flansmod.common.guns;
 import java.util.Collections;
 import java.util.List;
 
+import com.flansmod.common.vector.Vector3f;
 import com.google.common.collect.Multimap;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.EntityLivingBase;
@@ -15,6 +16,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 
@@ -122,5 +124,25 @@ public class ItemGrenade extends ItemShootable implements IFlanItem
 	{
 		EntityGrenade grenade = getGrenade(world, thrower);
 		world.spawnEntity(grenade);
+	}
+
+	@Override
+	public EntityShootable getEntity(World worldObj, Vec3d origin, float yaw, float pitch, double motionX, double motionY, double motionZ, EntityLivingBase shooter, float gunDamage, int itemDamage, InfoType shotFrom) {
+		return null;
+	}
+
+	@Override
+	public EntityShootable getEntity(World worldObj, Vector3f origin, Vector3f direction, EntityLivingBase shooter, float spread, float damage, float speed, int itemDamage, InfoType shotFrom) {
+		return null;
+	}
+
+	@Override
+	public EntityShootable getEntity(World worldObj, Vec3d origin, float yaw, float pitch, EntityLivingBase shooter, float spread, float damage, float speed, int itemDamage, InfoType shotFrom) {
+		return null;
+	}
+
+	@Override
+	public EntityShootable getEntity(World worldObj, EntityLivingBase player, float bulletSpread, float damage, float bulletSpeed, boolean b, int itemDamage, InfoType shotFrom) {
+		return null;
 	}
 }

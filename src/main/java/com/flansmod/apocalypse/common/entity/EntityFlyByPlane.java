@@ -17,7 +17,7 @@ public class EntityFlyByPlane extends EntityPlane
 	
 	public EntityFlyByPlane(World world, double x, double y, double z, PlaneType type, DriveableData data)
 	{
-		super(world, x, y, z, type, data);
+		super(world, x, y, z, type, data, null);
 	}
 	
 	public void onUpdate()

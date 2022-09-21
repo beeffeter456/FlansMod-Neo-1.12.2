@@ -26,12 +26,19 @@ public class EntityWheel extends Entity implements IEntityAdditionalSpawnData
 	 * The ID of the vehicle this wheel is part of, for client-server syncing
 	 */
 	private int vehicleID;
+
+	public boolean onDeck = false;
+
+	private int invulnerableUnmountCount;
+
+	public int timeLimitDriveableNull = 0;
 	
 	public EntityWheel(World world)
 	{
 		super(world);
 		setSize(1F, 1F);
 		stepHeight = 1.0F;
+		invulnerableUnmountCount = 0;
 	}
 	
 	public EntityWheel(World world, EntityDriveable entity, int i)
@@ -62,7 +69,7 @@ public class EntityWheel extends Entity implements IEntityAdditionalSpawnData
 		if(vehicle == null || k <= 0)
 			return;
 		int i = MathHelper.ceil(k - 3F);
-		if(i > 0)
+		if(i > 0 && invulnerableUnmountCount==0)
 			vehicle.attackPart(vehicle.getDriveableType().wheelPositions[ID].part, DamageSource.FALL, i);
 	}
 	
@@ -104,6 +111,15 @@ public class EntityWheel extends Entity implements IEntityAdditionalSpawnData
 	@Override
 	public void onUpdate()
 	{
+		if(this.getRidingEntity() != null)
+		{
+			invulnerableUnmountCount = 20 * 4;
+		}
+		else if(invulnerableUnmountCount > 0)
+		{
+			invulnerableUnmountCount--;
+		}
+
 		if(vehicle == null || isDead)
 		{
 			if(getRidingEntity() instanceof EntityDriveable)
@@ -113,6 +129,19 @@ public class EntityWheel extends Entity implements IEntityAdditionalSpawnData
 			}
 			return;
 		}
+
+		EntityDriveable entD;
+		entD = (EntityDriveable)world.getEntityByID(vehicleID);
+		if(entD == null){
+			this.timeLimitDriveableNull++;
+		}else{
+			this.timeLimitDriveableNull = 0;
+		}
+
+		if(timeLimitDriveableNull > 60*20){
+			this.setDead();
+		}
+
 		
 		if(!addedToChunk)
 		{

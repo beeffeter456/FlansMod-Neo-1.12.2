@@ -12,6 +12,8 @@ import com.flansmod.common.driveables.VehicleType;
 import com.flansmod.common.vector.Vector3f;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.model.IModel;
+import net.minecraftforge.client.model.obj.OBJLoader;
 
 //Extensible ModelVehicle class for rendering vehicle models
 public class ModelVehicle extends ModelDriveable
@@ -459,21 +461,30 @@ public class ModelVehicle extends ModelDriveable
 		GlStateManager.pushMatrix();
 		GlStateManager.scale(turretScale.x, turretScale.y, turretScale.z);
 		GlStateManager.translate(turretTrans.x, turretTrans.y, turretTrans.z);
-		IModelCustom model;
+		IModel model;
 		ResourceLocation turretobj;
 		
 		//Render main turret barrel
 		{
 			if (fancyTurret) {
-				turretobj = new ResourceLocation(FlansMod.MODID, "models/" + turretName);
-				model = AdvancedModelLoader.loadModel(turretobj);
-				GlStateManager.pushMatrix();
-				float scale = 1.0F;
-				//GlStateManager.scale(scale,scale,scale);
-				//GlStateManager.rotate(0, 0, 1, 0);
-				//GlStateManager.translate(0, -0.55F, 0);
-				model.renderAll();
-				GlStateManager.popMatrix();
+				//TODO: fancy obj turret rendering
+				/*try
+				{
+					turretobj = new ResourceLocation(FlansMod.MODID, "models/" + turretName);
+					model = OBJLoader.INSTANCE.loadModel(turretobj);
+					GlStateManager.pushMatrix();
+					float scale = 1.0F;
+					//GlStateManager.scale(scale,scale,scale);
+					//GlStateManager.rotate(0, 0, 1, 0);
+					//GlStateManager.translate(0, -0.55F, 0);
+					//model.renderAll();
+					GlStateManager.popMatrix();
+				}
+				catch (Exception e)
+				{
+					FlansMod.log.error("Failed to load model for fancy turret: " + turretName);
+					FlansMod.log.throwing(e);
+				}*/
 			}
 			float yaw = vehicle.getSeat(0).looking.getYaw();
 			float pitch = vehicle.getSeat(0).looking.getPitch();

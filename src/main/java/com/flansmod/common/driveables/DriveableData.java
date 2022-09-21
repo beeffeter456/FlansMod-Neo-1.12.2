@@ -43,6 +43,8 @@ public class DriveableData implements IInventory
 	 * Each driveable part has a small class that holds its current status
 	 */
 	public HashMap<EnumDriveablePart, DriveablePart> parts;
+
+	public boolean inventoryChanged = false;
 	/**
 	 * Paintjob index
 	 */
@@ -226,6 +228,9 @@ public class DriveableData implements IInventory
 	@Override
 	public void setInventorySlotContents(int i, ItemStack stack)
 	{
+		if (stack != null)
+			inventoryChanged = true;
+
 		//Find the correct inventory
 		ItemStack[] inv = ammo;
 		if(i >= ammo.length)

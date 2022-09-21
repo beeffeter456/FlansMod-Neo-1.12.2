@@ -164,7 +164,7 @@ public class PacketPlaneAnimator extends PacketBase
 	public void handleServerSide(EntityPlayerMP playerEntity) 
 	{
 		EntityPlane plane = null;
-		for(Object obj : playerEntity.worldObj.loadedEntityList)
+		for(Object obj : playerEntity.world.loadedEntityList)
 		{
 			if(obj instanceof EntityPlane && ((Entity)obj).getEntityId() == entityId)
 			{
@@ -202,7 +202,7 @@ public class PacketPlaneAnimator extends PacketBase
 			if(obj instanceof EntityPlane && ((Entity)obj).getEntityId() == entityId)
 			{
 				plane = (EntityPlane)obj;
-				if(plane.seats[0] != null && plane.seats[0].riddenByEntity == clientPlayer)
+				if(plane.getSeats()[0] != null && plane.getSeats()[0].getControllingPassenger() == clientPlayer)
 					return;
 				break;
 			}

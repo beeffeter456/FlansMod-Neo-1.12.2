@@ -51,15 +51,23 @@ public class GuiDriveableRepair extends GuiScreen
 	{
 		super();
 		driver = player;
-		if (!((EntitySeat) player.getRidingEntity()).foundDriveable) {Minecraft.getMinecraft().player.closeScreen();}
-		driving = ((EntitySeat)player.getRidingEntity()).driveable;
-		for(DriveablePart part : driving.getDriveableData().parts.values())
+		if (player.getRidingEntity() != null && player.getRidingEntity() instanceof EntitySeat)
 		{
-			//Check to see if the part is actually damageable
-			if(part.maxHealth > 0)
+			driving = ((EntitySeat) player.getRidingEntity()).driveable;
+
+			if (driving == null)
 			{
-				//Add it to the list of parts to draw
-				partsToDraw.add(part);
+				Minecraft.getMinecraft().player.closeScreen();
+			}
+
+			for(DriveablePart part : driving.getDriveableData().parts.values())
+			{
+				//Check to see if the part is actually damageable
+				if(part.maxHealth > 0)
+				{
+					//Add it to the list of parts to draw
+					partsToDraw.add(part);
+				}
 			}
 		}
 	}

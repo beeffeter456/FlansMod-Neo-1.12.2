@@ -2,17 +2,13 @@ package com.flansmod.common.driveables.mechas;
 
 import java.util.ArrayList;
 
+import com.flansmod.common.driveables.*;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 
 import com.flansmod.client.model.ModelMecha;
 import com.flansmod.common.FlansMod;
-import com.flansmod.common.driveables.DriveableData;
-import com.flansmod.common.driveables.DriveablePart;
-import com.flansmod.common.driveables.DriveableType;
-import com.flansmod.common.driveables.EntityDriveable;
-import com.flansmod.common.driveables.EnumDriveablePart;
 import com.flansmod.common.parts.PartType;
 import com.flansmod.common.types.TypeFile;
 import com.flansmod.common.vector.Vector3f;
@@ -109,6 +105,27 @@ public class MechaType extends DriveableType
 	public float rightHandModifierY = 0;
 	public float rightHandModifierZ = 0;
 
+	public class LegNode
+	{
+		public int rotation;
+		public float lowerBound;
+		public float upperBound;
+		public int speed;
+		public int legPart;
+	}
+
+	public ArrayList<LegNode> legNodes = new ArrayList<LegNode>();
+
+	public float legAnimSpeed = 0;
+
+	public String stompSound = "";
+	public int stompSoundLength = 0;
+	public float stompRangeLower = 0F;
+	public float stompRangeUpper = 0F;
+
+	public boolean restrictInventoryInput = false;
+	public boolean allowMechaToolsInRestrictedInv = true;
+
 	public static ArrayList<MechaType> types = new ArrayList<>();
 
 	public MechaType(TypeFile file)
@@ -141,6 +158,18 @@ public class MechaType extends DriveableType
 			}
 			if(split[0].equals("RotateSpeed"))
 				rotateSpeed = Float.parseFloat(split[1]);
+
+			else if(split[0].equals("StompSound"))
+			{
+				stompSound = split[1];
+				FlansMod.proxy.loadSound(contentPack, "driveables", split[1]);
+			}
+			else if(split[0].equals("StompSoundLength"))
+				stompSoundLength = Integer.parseInt(split[1]);
+			else if(split[0].equals("StompRangeLower"))
+				stompRangeLower = Float.parseFloat(split[1]);
+			else if(split[0].equals("StompRangeUpper"))
+				stompRangeUpper = Float.parseFloat(split[1]);
 			
 			if(split[0].equals("LeftArmOrigin"))
 				leftArmOrigin = new Vector3f(Float.parseFloat(split[1]) / 16F, Float.parseFloat(split[2]) / 16F, Float.parseFloat(split[3]) / 16F);
@@ -203,6 +232,22 @@ public class MechaType extends DriveableType
 				rightHandModifierY = Float.parseFloat(split[2]) / 16F;
 				rightHandModifierZ = Float.parseFloat(split[3]) / 16F;
 			}
+
+			else if(split[0].equals("LegNode")){
+				LegNode node = new LegNode();
+				node.rotation = Integer.parseInt(split[1]);
+				node.lowerBound = Float.parseFloat(split[2]);
+				node.upperBound = Float.parseFloat(split[3]);
+				node.speed = Integer.parseInt(split[4]);
+				node.legPart = Integer.parseInt(split[5]);
+				legNodes.add(node);
+			}
+			else if(split[0].equals("LegAnimSpeed"))
+				legAnimSpeed = Float.parseFloat(split[1]);
+			else if(split[0].equals("RestrictInventoryInput"))
+				restrictInventoryInput = Boolean.parseBoolean(split[1]);
+			else if(split[0].equals("AllowMechaToolsInRestrictedInv"))
+				allowMechaToolsInRestrictedInv = Boolean.parseBoolean(split[1]);
 		}
 		catch(Exception ignored)
 		{
@@ -233,6 +278,16 @@ public class MechaType extends DriveableType
 		model = FlansMod.proxy.loadModel(modelString, shortName, ModelMecha.class);
 	}
 
+	private DriveablePosition getShootPoint(String[] split)
+	{
+		//No need to look for a specific gun.
+		if(split.length == 5)
+		{
+			return new DriveablePosition(split);
+		}
+		return new DriveablePosition(new Vector3f(), EnumDriveablePart.core);
+	}
+
 	public static MechaType getMecha(String find)
 	{
 		for(MechaType type : types)
@@ -246,6 +301,6 @@ public class MechaType extends DriveableType
 	@Override
 	public EntityDriveable createDriveable(World world, double x, double y, double z, DriveableData data)
 	{
-		return new EntityMecha(world, x, y, z, this, data, new NBTTagCompound());
+		return new EntityMecha(world, x, y, z, this, data, new NBTTagCompound(), null);
 	}
 }

@@ -3,6 +3,7 @@ package com.flansmod.common.driveables.mechas;
 import java.util.Collections;
 import java.util.List;
 
+import com.flansmod.common.teams.TeamsManager;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
@@ -45,6 +46,10 @@ public class ItemMecha extends Item implements IPaintableItem
 	@Override
 	public void addInformation(ItemStack stack, World world, List<String> lines, ITooltipFlag b)
 	{
+		if(!type.packName.isEmpty())
+		{
+			lines.add(type.packName);
+		}
 		if(type.description != null)
 		{
 			Collections.addAll(lines, type.description.split("_"));
@@ -82,7 +87,10 @@ public class ItemMecha extends Item implements IPaintableItem
 	public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer entityplayer, EnumHand hand)
 	{
 		ItemStack itemstack = entityplayer.getHeldItem(hand);
-		
+		if (!(TeamsManager.survivalCanPlaceVehicles || entityplayer.capabilities.isCreativeMode)) {
+			// player isn't allowed to place vehicles.
+			return new ActionResult<>(EnumActionResult.PASS, itemstack);
+		}
 		//Raytracing
 		float cosYaw = MathHelper.cos(-entityplayer.rotationYaw * 0.01745329F - 3.141593F);
 		float sinYaw = MathHelper.sin(-entityplayer.rotationYaw * 0.01745329F - 3.141593F);
@@ -103,7 +111,9 @@ public class ItemMecha extends Item implements IPaintableItem
 			BlockPos pos = RayTraceResult.getBlockPos();
 			if(!world.isRemote)
 			{
-				world.spawnEntity(new EntityMecha(world, (double)pos.getX() + 0.5F, (double)pos.getY() + 1.5F + type.yOffset, (double)pos.getZ() + 0.5F, entityplayer, type, getData(itemstack, world), getTagCompound(itemstack, world)));
+				EntityMecha mecha = new EntityMecha(world, (double)pos.getX() + 0.5F, (double)pos.getY() + 1.5F + type.yOffset, (double)pos.getZ() + 0.5F, entityplayer, type, getData(itemstack, world), getTagCompound(itemstack, world));
+				FlansMod.log.info("Player %s placed mecha %s (%d) at (%d, %d, %d)", entityplayer.getDisplayName(), type.shortName, mecha.getEntityId(), pos.getX(), pos.getY(), pos.getZ());
+				world.spawnEntity(mecha);
 			}
 			if(!entityplayer.capabilities.isCreativeMode)
 			{
@@ -132,7 +142,7 @@ public class ItemMecha extends Item implements IPaintableItem
 			tags.setString("Engine", PartType.defaultEngines.get(EnumType.mecha).shortName);
 		for(EnumDriveablePart part : EnumDriveablePart.values())
 		{
-			tags.setInteger(part.getShortName() + "_Health", type.health.get(part) == null ? 0 : type.health.get(part).health);
+			tags.setFloat(part.getShortName() + "_Health", type.health.get(part) == null ? 0 : (int) type.health.get(part).health);
 			tags.setBoolean(part.getShortName() + "_Fire", false);
 		}
 		mechaStack.setTagCompound(tags);

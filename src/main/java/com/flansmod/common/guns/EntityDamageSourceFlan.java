@@ -2,22 +2,28 @@ package com.flansmod.common.guns;
 
 import javax.annotation.Nullable;
 
+import com.flansmod.common.FlansMod;
 import com.flansmod.common.PlayerHandler;
+import com.flansmod.common.network.PacketKillMessage;
+import com.flansmod.common.teams.Team;
 import com.flansmod.common.types.InfoType;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EntityDamageSourceIndirect;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextFormatting;
 
 public class EntityDamageSourceFlan extends EntityDamageSourceIndirect{
 	
 	private InfoType weapon;
 	private EntityPlayer shooter;
 	private boolean headshot;
+	private boolean melee;
 	/**
 	 * @param s        Name of the damage source (Usually the shortName of the gun)
 	 * @param entity   The Entity causing the damage (e.g. Grenade). Can be the same as 'player'
@@ -26,7 +32,7 @@ public class EntityDamageSourceFlan extends EntityDamageSourceIndirect{
 	 */	
 	public EntityDamageSourceFlan(String s, Entity entity, EntityPlayer player, InfoType wep)
 	{
-		this(s, entity, player, wep, false);
+		this(s, entity, player, wep, false, false);
 	}
 	
 	/**
@@ -36,12 +42,13 @@ public class EntityDamageSourceFlan extends EntityDamageSourceIndirect{
 	 * @param wep      The InfoType of weapon used
 	 * @param headshot True if this was a headshot, false if not
 	 */
-	public EntityDamageSourceFlan(String s, Entity entity, EntityPlayer player, InfoType wep, boolean headshot)
+	public EntityDamageSourceFlan(String s, Entity entity, EntityPlayer player, InfoType wep, boolean headshot, boolean melee)
 	{
 		super(s, entity, player);
 		weapon = wep;
 		shooter = player;
 		this.headshot = headshot;
+		this.melee = melee;
 	}
 	
 	@Override
@@ -56,7 +63,29 @@ public class EntityDamageSourceFlan extends EntityDamageSourceIndirect{
 			else return new TextComponentString(living.getName() + " was shot by " + shooter.getName());
 		}
 
-		return new TextComponentString("#flansmod");
+		EntityPlayer player = (EntityPlayer) living;
+		Team killedTeam = PlayerHandler.getPlayerData(player).team;
+		Team killerTeam = PlayerHandler.getPlayerData(shooter).team;
+
+		float dist = player.getDistance(shooter);
+		if (FlansMod.enableKillMessages)
+		{
+			FlansMod.getPacketHandler().sendToDimension(
+					new PacketKillMessage(headshot, weapon, shooter.getHeldItem(EnumHand.MAIN_HAND).getItemDamage(),
+							((killedTeam == null ? "f" : killedTeam.textColour) + player.getName()),
+							((killerTeam == null ? "f" : killerTeam.textColour) + shooter.getName()), dist
+					), living.dimension);
+		}
+		String killMessage =
+				TextFormatting.DARK_GRAY + "[" + TextFormatting.RED + "Flansmod" + TextFormatting.DARK_GRAY + "] " +
+						TextFormatting.ITALIC + TextFormatting.DARK_RED + player.getName() + TextFormatting.RESET +
+						TextFormatting.GRAY + " Was killed by " + TextFormatting.ITALIC + TextFormatting.DARK_GREEN +
+						shooter.getName() +
+						(FlansMod.showDistanceInKillMessage ? "" + TextFormatting.RESET + TextFormatting.GRAY +
+								" from " + TextFormatting.ITALIC + TextFormatting.DARK_AQUA +
+								String.format("%.1f", dist) + "m" + TextFormatting.RESET + TextFormatting.GRAY +
+								" away" : "");
+		return new TextComponentString(FlansMod.enableKillMessages ? killMessage : "");
 	}
 	
 	/**
@@ -81,6 +110,15 @@ public class EntityDamageSourceFlan extends EntityDamageSourceIndirect{
 	public boolean isHeadshot()
 	{
 		return headshot;
+	}
+
+	public boolean isMelee()
+	{
+		return melee;
+	}
+
+	public Entity getDamageSourceEntity() {
+		return this.damageSourceEntity;
 	}
 	
 	@Override

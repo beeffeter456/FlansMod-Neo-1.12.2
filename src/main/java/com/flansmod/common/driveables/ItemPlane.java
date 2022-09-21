@@ -3,10 +3,13 @@ package com.flansmod.common.driveables;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
+import com.flansmod.common.teams.TeamsManager;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockLiquid;
+import net.minecraft.block.BlockSponge;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
@@ -57,7 +60,7 @@ public class ItemPlane extends Item implements IPaintableItem
 	{
 		if(stack.getTagCompound() == null)
 		{
-			if(!world.isRemote && stack.getItemDamage() != 0)
+			if(!world.isRemote)
 				stack.setTagCompound(getOldTagCompound(stack, world));
 			if(stack.getTagCompound() == null)
 			{
@@ -81,7 +84,7 @@ public class ItemPlane extends Item implements IPaintableItem
 				NBTTagCompound tags = CompressedStreamTools.readCompressed(fileinputstream).getCompoundTag("data");
 				for(EnumDriveablePart part : EnumDriveablePart.values())
 				{
-					tags.setInteger(part.getShortName() + "_Health", type.health.get(part) == null ? 0 : type.health.get(part).health);
+					tags.setFloat(part.getShortName() + "_Health", type.health.get(part) == null ? 0 : (int) type.health.get(part).health);
 					tags.setBoolean(part.getShortName() + "_Fire", false);
 				}
 				fileinputstream.close();
@@ -100,17 +103,32 @@ public class ItemPlane extends Item implements IPaintableItem
 	@Override
 	public void addInformation(ItemStack stack, World world, List<String> lines, ITooltipFlag b)
 	{
+		String paintName = type.getPaintjob(stack.getItemDamage()).displayName;
+		if (!paintName.equals("default") && !paintName.isEmpty())
+			lines.add("\u00a7b\u00a7o" + paintName);
+
+		if (!type.packName.isEmpty()) {
+			lines.add("\u00a7o" + type.packName);
+		}
+		if (type.description != null) {
+			Collections.addAll(lines, type.description.split("_"));
+		}
+
+		lines.add("");
 		NBTTagCompound tags = getTagCompound(stack, world);
-		String engineName = tags.getString("Engine");
-		PartType part = PartType.getPart(engineName);
-		if(part != null)
-			lines.add(part.name);
+		PartType engine = PartType.getPart(tags.getString("Engine"));
+		if (engine != null)
+			lines.add("\u00a79Engine" + "\u00a77: " + engine.name);
 	}
 	
 	@Override
 	public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer entityplayer, EnumHand hand)
 	{
 		ItemStack itemstack = entityplayer.getHeldItem(hand);
+		if (!(TeamsManager.survivalCanPlaceVehicles || entityplayer.capabilities.isCreativeMode)) {
+			// player isn't allowed to place vehicles.
+			return new ActionResult<>(EnumActionResult.PASS, itemstack);
+		}
 		
 		//Raytracing
 		float cosYaw = MathHelper.cos(-entityplayer.rotationYaw * 0.01745329F - 3.141593F);
@@ -131,13 +149,20 @@ public class ItemPlane extends Item implements IPaintableItem
 		{
 			BlockPos pos = RayTraceResult.getBlockPos();
 			Block block = world.getBlockState(pos).getBlock();
-			if(type.placeableOnLand || block instanceof BlockLiquid)
+			if (type.placeableOnLand || block instanceof BlockLiquid || (type.placeableOnSponge && block instanceof BlockSponge))
 			{
 				if(!world.isRemote)
 				{
 					DriveableData data = getPlaneData(itemstack, world);
 					if(data != null)
-						world.spawnEntity(new EntityPlane(world, (double)pos.getX() + 0.5F, (double)pos.getY() + 2.5F, (double)pos.getZ() + 0.5F, entityplayer, type, data));
+					{
+						EntityPlane plane = new EntityPlane(world, (double)pos.getX() + 0.5F, (double)pos.getY() + 2.5F, (double)pos.getZ() + 0.5F, entityplayer, type, data);
+						world.spawnEntity(plane);
+						if (!world.isRemote)
+						{
+							FlansMod.log.info("Player %s placed plane %s (%d) at (%d, %d, %d)", entityplayer.getDisplayName(), type.shortName, plane.getEntityId(), pos.getX(), pos.getY(), pos.getZ());
+						}
+					}
 				}
 				if(!entityplayer.capabilities.isCreativeMode)
 				{
@@ -155,7 +180,7 @@ public class ItemPlane extends Item implements IPaintableItem
 		DriveableData data = getPlaneData(stack, world);
 		if(data != null)
 		{
-			Entity entity = new EntityPlane(world, x, y, z, type, data);
+			Entity entity = new EntityPlane(world, x, y, z, type, data, null);
 			if(!world.isRemote)
 			{
 				world.spawnEntity(entity);
@@ -186,7 +211,7 @@ public class ItemPlane extends Item implements IPaintableItem
 			tags.setString("Engine", PartType.defaultEngines.get(EnumType.plane).shortName);
 		for(EnumDriveablePart part : EnumDriveablePart.values())
 		{
-			tags.setInteger(part.getShortName() + "_Health", type.health.get(part) == null ? 0 : type.health.get(part).health);
+			tags.setFloat(part.getShortName() + "_Health", type.health.get(part) == null ? 0 : (int) type.health.get(part).health);
 			tags.setBoolean(part.getShortName() + "_Fire", false);
 		}
 		planeStack.setTagCompound(tags);

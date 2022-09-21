@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.UUID;
 
 import com.flansmod.common.types.IGunboxDescriptionable;
+import net.minecraft.client.settings.GameSettings;
+import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.util.text.TextFormatting;
 import org.lwjgl.input.Mouse;
 
 import com.google.common.collect.Multimap;
@@ -133,6 +136,7 @@ public class ItemGun extends Item implements IPaintableItem, IGunboxDescriptiona
 		this.type = type;
 		type.item = this;
 		setMaxDamage(0);
+		setHasSubtypes(true);
 		setRegistryName(type.shortName);
 		setCreativeTab(FlansMod.tabFlanGuns);
 	}
@@ -225,52 +229,77 @@ public class ItemGun extends Item implements IPaintableItem, IGunboxDescriptiona
 			entity.entityDropItem(dropStack, 0.5F);
 		}
 	}
-	
-	// _____________________________________________________________________________
-	//
-	// Minecraft base item overrides
-	// _____________________________________________________________________________
-		
+
+	/**
+	 * Deployable guns only
+	 */
 	@Override
-	public void addInformation(ItemStack stack, World world, List<String> lines, ITooltipFlag b)
+	public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer entityplayer, EnumHand hand)
 	{
-		if(stack.hasTagCompound() && stack.getTagCompound().hasKey("LegendaryCrafter"))
+		ItemStack itemstack = entityplayer.getHeldItem(hand);
+
+		if(type.deployable)
 		{
-			String crafter = stack.getTagCompound().getString("LegendaryCrafter");
-			lines.add("Legendary Skin Crafted by " + crafter);
-		}
-		
-		if(type.description != null)
-		{
-			Collections.addAll(lines, type.description.split("_"));
-		}
-		if(type.showDamage)
-			lines.add("\u00a79Damage" + "\u00a77: " + type.getDamage(stack));
-		if(type.showRecoil)
-			lines.add("\u00a79Recoil" + "\u00a77: " + type.getRecoil(stack));
-		if(type.showSpread)
-			lines.add("\u00a79Accuracy" + "\u00a77: " + type.getSpread(stack));
-		if(type.showReloadTime)
-			lines.add("\u00a79Reload Time" + "\u00a77: " + type.getReloadTime(stack) / 20 + "s");
-		for(AttachmentType attachment : type.getCurrentAttachments(stack))
-		{
-			if(type.showAttachments)
+			//Raytracing
+			float cosYaw = MathHelper.cos(-entityplayer.rotationYaw * 0.01745329F - 3.141593F);
+			float sinYaw = MathHelper.sin(-entityplayer.rotationYaw * 0.01745329F - 3.141593F);
+			float cosPitch = -MathHelper.cos(-entityplayer.rotationPitch * 0.01745329F);
+			float sinPitch = MathHelper.sin(-entityplayer.rotationPitch * 0.01745329F);
+			double length = 5D;
+			Vec3d posVec = new Vec3d(entityplayer.posX, entityplayer.posY + 1.62D - entityplayer.getYOffset(), entityplayer.posZ);
+			Vec3d lookVec = posVec.add(sinYaw * cosPitch * length, sinPitch * length, cosYaw * cosPitch * length);
+			RayTraceResult look = world.rayTraceBlocks(posVec, lookVec, true);
+
+			//Result check
+			if(look != null && look.typeOfHit == Type.BLOCK)
 			{
-				String line = attachment.name;
-				lines.add(line);
+				if(look.sideHit == EnumFacing.UP)
+				{
+					int playerDir = MathHelper.floor(((entityplayer.rotationYaw * 4F) / 360F) + 0.5D) & 3;
+					int i = look.getBlockPos().getX();
+					int j = look.getBlockPos().getY();
+					int k = look.getBlockPos().getZ();
+					if(!world.isRemote)
+					{
+						if(world.getBlockState(new BlockPos(i, j, k)).getBlock() == Blocks.SNOW)
+						{
+							j--;
+						}
+						if(isSolid(world, i, j, k) &&
+								(world.getBlockState(new BlockPos(i, j + 1, k)).getBlock() == Blocks.AIR || world.getBlockState(new BlockPos(i, j + 1, k)).getBlock() == Blocks.SNOW)
+								&&
+								(world.getBlockState(new BlockPos(i + (playerDir == 1 ? 1 : 0) - (playerDir == 3 ? 1 : 0), j + 1, k - (playerDir == 0 ? 1 : 0) + (playerDir == 2 ? 1 : 0))).getBlock() == Blocks.AIR)
+								&&
+								(world.getBlockState(new BlockPos(i + (playerDir == 1 ? 1 : 0) - (playerDir == 3 ? 1 : 0), j, k - (playerDir == 0 ? 1 : 0) + (playerDir == 2 ? 1 : 0))).getBlock() == Blocks.AIR
+										|| world.getBlockState(new BlockPos(i + (playerDir == 1 ? 1 : 0) - (playerDir == 3 ? 1 : 0), j, k - (playerDir == 0 ? 1 : 0) + (playerDir == 2 ? 1 : 0))).getBlock() == Blocks.SNOW))
+						{
+							for(EntityMG mg : EntityMG.mgs)
+							{
+								if(mg.blockX == i && mg.blockY == j + 1 && mg.blockZ == k && !mg.isDead)
+									return new ActionResult<>(EnumActionResult.SUCCESS, itemstack);
+							}
+							EntityMG mg = new EntityMG(world, i, j + 1, k, playerDir, type);
+
+							if(getBulletItemStack(itemstack, 0) != null)
+							{
+								mg.ammo = getBulletItemStack(itemstack, 0);
+							}
+							world.spawnEntity(mg);
+
+							if(!entityplayer.capabilities.isCreativeMode)
+								itemstack.setCount(0);
+						}
+					}
+				}
 			}
 		}
-		for(int i = 0; i < type.numAmmoItemsInGun; i++)
+		//Stop the gun bobbing up and down when holding shoot and looking at a block
+		if(world.isRemote)
 		{
-			ItemStack bulletStack = getBulletItemStack(stack, i);
-			if(bulletStack != null && bulletStack.getItem() instanceof ItemBullet)
-			{
-				BulletType bulletType = ((ItemBullet)bulletStack.getItem()).type;
-				//String line = bulletType.name + (bulletStack.getMaxDamage() == 1 ? "" : " " + (bulletStack.getMaxDamage() - bulletStack.getItemDamage()) + "/" + bulletStack.getMaxDamage());
-				String line = bulletType.name + " " + (bulletStack.getMaxDamage() - bulletStack.getItemDamage()) + "/" + bulletStack.getMaxDamage();
-				lines.add(line);
-			}
+			for(int i = 0; i < 3; i++)
+				Minecraft.getMinecraft().entityRenderer.itemRenderer.updateEquippedItem();
 		}
+		return new ActionResult<>(EnumActionResult.PASS, itemstack);
 	}
 		
 	// _____________________________________________________________________________
@@ -323,6 +352,31 @@ public class ItemGun extends Item implements IPaintableItem, IGunboxDescriptiona
 		EntityPlayer player = (EntityPlayer) entity;
 		PlayerData data = PlayerHandler.getPlayerData(player);
 		//Slow down minigun
+
+		//Switch Delay
+		if (mc.player == entity
+				&& Minecraft.getMinecraft().player.inventory.currentItem
+				!= GunAnimations.lastInventorySlot) {
+			GunAnimations.lastInventorySlot = mc.player.inventory.currentItem;
+			ItemStack stack = mc.player.getHeldItem(EnumHand.MAIN_HAND);
+			GunAnimations animations = FlansModClient.getGunAnimations((EntityLivingBase) entity, EnumHand.MAIN_HAND);
+			if (stack != null && stack.getItem() instanceof ItemGun) {
+				float animationLength = ((ItemGun) stack.getItem()).type.switchDelay;
+				if (animationLength == 0) {
+					animations.switchAnimationLength = animations.switchAnimationProgress = 0;
+				} else {
+					animations.switchAnimationProgress = 1;
+					animations.switchAnimationLength = animationLength;
+					PlayerHandler
+							.getPlayerData(mc.player, Side.CLIENT).shootTimeRight = Math
+							.max(PlayerHandler
+											.getPlayerData(mc.player, Side.CLIENT).shootTimeRight,
+									animationLength);
+				}
+
+			}
+		}
+
 		data.minigunSpeed *= 0.9f;
 		Boolean hold = GetMouseHeld(hand);
 		Boolean held = GetLastMouseHeld(hand);
@@ -444,78 +498,6 @@ public class ItemGun extends Item implements IPaintableItem, IGunboxDescriptiona
 		}
 	}
 	
-	/**
-	 * Deployable guns only
-	 */
-	@Override
-	public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer entityplayer, EnumHand hand)
-	{
-		ItemStack itemstack = entityplayer.getHeldItem(hand);
-		
-		if(type.deployable)
-		{
-			//Raytracing
-			float cosYaw = MathHelper.cos(-entityplayer.rotationYaw * 0.01745329F - 3.141593F);
-			float sinYaw = MathHelper.sin(-entityplayer.rotationYaw * 0.01745329F - 3.141593F);
-			float cosPitch = -MathHelper.cos(-entityplayer.rotationPitch * 0.01745329F);
-			float sinPitch = MathHelper.sin(-entityplayer.rotationPitch * 0.01745329F);
-			double length = 5D;
-			Vec3d posVec = new Vec3d(entityplayer.posX, entityplayer.posY + 1.62D - entityplayer.getYOffset(), entityplayer.posZ);
-			Vec3d lookVec = posVec.add(sinYaw * cosPitch * length, sinPitch * length, cosYaw * cosPitch * length);
-			RayTraceResult look = world.rayTraceBlocks(posVec, lookVec, true);
-			
-			//Result check
-			if(look != null && look.typeOfHit == Type.BLOCK)
-			{
-				if(look.sideHit == EnumFacing.UP)
-				{
-					int playerDir = MathHelper.floor(((entityplayer.rotationYaw * 4F) / 360F) + 0.5D) & 3;
-					int i = look.getBlockPos().getX();
-					int j = look.getBlockPos().getY();
-					int k = look.getBlockPos().getZ();
-					if(!world.isRemote)
-					{
-						if(world.getBlockState(new BlockPos(i, j, k)).getBlock() == Blocks.SNOW)
-						{
-							j--;
-						}
-						if(isSolid(world, i, j, k) &&
-								(world.getBlockState(new BlockPos(i, j + 1, k)).getBlock() == Blocks.AIR || world.getBlockState(new BlockPos(i, j + 1, k)).getBlock() == Blocks.SNOW)
-								&&
-								(world.getBlockState(new BlockPos(i + (playerDir == 1 ? 1 : 0) - (playerDir == 3 ? 1 : 0), j + 1, k - (playerDir == 0 ? 1 : 0) + (playerDir == 2 ? 1 : 0))).getBlock() == Blocks.AIR)
-								&&
-								(world.getBlockState(new BlockPos(i + (playerDir == 1 ? 1 : 0) - (playerDir == 3 ? 1 : 0), j, k - (playerDir == 0 ? 1 : 0) + (playerDir == 2 ? 1 : 0))).getBlock() == Blocks.AIR
-										|| world.getBlockState(new BlockPos(i + (playerDir == 1 ? 1 : 0) - (playerDir == 3 ? 1 : 0), j, k - (playerDir == 0 ? 1 : 0) + (playerDir == 2 ? 1 : 0))).getBlock() == Blocks.SNOW))
-						{
-							for(EntityMG mg : EntityMG.mgs)
-							{
-								if(mg.blockX == i && mg.blockY == j + 1 && mg.blockZ == k && !mg.isDead)
-									return new ActionResult<>(EnumActionResult.SUCCESS, itemstack);
-							}
-							EntityMG mg = new EntityMG(world, i, j + 1, k, playerDir, type);
-							
-							if(getBulletItemStack(itemstack, 0) != null)
-							{
-								mg.ammo = getBulletItemStack(itemstack, 0);
-							}
-							world.spawnEntity(mg);
-							
-							if(!entityplayer.capabilities.isCreativeMode)
-								itemstack.setCount(0);
-						}
-					}
-				}
-			}
-		}
-		//Stop the gun bobbing up and down when holding shoot and looking at a block
-		if(world.isRemote)
-		{
-			for(int i = 0; i < 3; i++)
-				Minecraft.getMinecraft().entityRenderer.itemRenderer.updateEquippedItem();
-		}
-		return new ActionResult<>(EnumActionResult.PASS, itemstack);
-	}
-	
 	
 	/**
 	 * Used to determine if for example an player is holding a two handed gun but the other hand (the one without a gun) is holding something else
@@ -573,7 +555,7 @@ public class ItemGun extends Item implements IPaintableItem, IGunboxDescriptiona
 			
 			if (world.isRemote && shootTime <= 0)
 				//Send the server the instruction to shoot
-				FlansMod.getPacketHandler().sendToServer(new PacketGunFire(hand));
+				FlansMod.getPacketHandler().sendToServer(new PacketGunFire(hand, player.rotationYaw, player.rotationPitch));
 			
 			// For each 
 			while(shootTime <= 0.0f)
@@ -1149,6 +1131,98 @@ public class ItemGun extends Item implements IPaintableItem, IGunboxDescriptiona
 		}
 		return null;
 	}
+
+	// _____________________________________________________________________________
+	//
+	// Minecraft base item overrides
+	// _____________________________________________________________________________
+
+	@Override
+	public void addInformation(ItemStack stack, World world, List<String> lines, ITooltipFlag b)
+	{
+		if(stack.hasTagCompound() && stack.getTagCompound().hasKey("LegendaryCrafter"))
+		{
+			String crafter = stack.getTagCompound().getString("LegendaryCrafter");
+			lines.add("Legendary Skin Crafted by " + crafter);
+		}
+
+		KeyBinding shift = Minecraft.getMinecraft().gameSettings.keyBindSneak;
+		String paintName = type.getPaintjob(stack.getItemDamage()).displayName;
+		if (!paintName.equals("default") && !paintName.isEmpty())
+			lines.add("\u00a7b\u00a7o" + paintName);
+
+		if (!type.packName.isEmpty()) {
+			lines.add("\u00a7o" + type.packName);
+		}
+		if (type.description != null) {
+			Collections.addAll(lines, type.description.split("_"));
+		}
+
+		if (FlansMod.showItemDescriptions) {
+			// Reveal all the gun stats when holding down the sneak key
+			if (!GameSettings.isKeyDown(shift)) {
+				// Show loaded ammo
+				for (int i = 0; i < type.getNumAmmoItemsInGun(stack); i++) {
+					ItemStack bulletStack = getBulletItemStack(stack, i);
+					if (bulletStack != null && bulletStack.getItem() instanceof ItemBullet) {
+						BulletType bulletType = ((ItemBullet) bulletStack.getItem()).type;
+						String line = bulletType.name + " " + (bulletStack.getMaxDamage() - bulletStack.getItemDamage())
+								+ "/" + bulletStack.getMaxDamage();
+						lines.add(line);
+					}
+				}
+
+				lines.add("Hold \u00a7b\u00a7o" + GameSettings.getKeyDisplayString(shift.getKeyCode())
+						+ "\u00a7r\u00a77 for details");
+			} else {
+				lines.add("");
+
+				if (!originGunbox.equals("")) {
+					lines.add("\u00a79Box" + "\u00a77: " + originGunbox);
+				}
+
+				AttachmentType barrel = type.getBarrel(stack);
+				if (barrel != null && barrel.silencer)
+					lines.add("\u00a7e[Suppressed]");
+
+				if (type.getSecondaryFire(stack))
+					lines.add("\u00a7e[Underbarrel]");
+
+				lines.add("\u00a79Damage" + "\u00a77: " + roundFloat(type.getDamage(stack), 2));
+				lines.add("\u00a79Recoil" + "\u00a77: " + roundFloat(type.getRecoilDisplay(stack), 2));
+				String sprintingControl = String.format("%s%s", TextFormatting.RED,
+						roundFloat(1 - type.getRecoilControl(stack, true, false), 2));
+				String sneakingControl = String.format("%s%s", TextFormatting.GREEN,
+						roundFloat(1 - type.getRecoilControl(stack, false, true), 2));
+				String normalControl = String.format("%s%s", TextFormatting.AQUA,
+						roundFloat(1 - type.getRecoilControl(stack, false, false), 2));
+				lines.add("\u00a79Recoil Control" + "\u00a77: "
+						+ String.format("%s %s %s", sprintingControl, normalControl, sneakingControl));
+				lines.add("\u00a79Accuracy" + "\u00a77: " + roundFloat(type.getSpread(stack, false, false), 2));
+				lines.add("\u00a79Reload Time" + "\u00a77: " + roundFloat(type.getReloadTime(stack) / 20, 2) + "s");
+				lines.add("\u00a79Bullet Speed" + "\u00a77: " + roundFloat(type.getBulletSpeed(stack), 2));
+				// TODO Convert to stack values so this works with attachments
+				if (type.shootDelay != 0) {
+					lines.add("\u00a79FireRate" + "\u00a77: " + 1200 / type.shootDelay + "\u00a77rpm ");
+				} else
+					lines.add("\u00a79FireRate" + "\u00a77: " + type.roundsPerMin + "\u00a77rpm ");
+				lines.add("\u00a79Mode" + "\u00a77: \u00a7f" + type.getFireMode(stack).toString().toLowerCase());
+
+				lines.add("");
+				lines.add("\u00a7eAttachments");
+				boolean empty = true;
+				for (AttachmentType attachment : type.getCurrentAttachments(stack)) {
+					String line = attachment.name;
+					lines.add(line);
+					if (line != null)
+						empty = false;
+				}
+
+				if (empty)
+					lines.add("None");
+			}
+		}
+	}
 	
 	
 	@Override
@@ -1272,32 +1346,6 @@ public class ItemGun extends Item implements IPaintableItem, IGunboxDescriptiona
 	
 	
 	
-	protected static final UUID KNOCKBACK_RESIST_MODIFIER = UUID.fromString("77777777-645C-4F38-A497-9C13A33DB5CF");
-	protected static final UUID MOVEMENT_SPEED_MODIFIER = UUID.fromString("99999999-4180-4865-B01B-BCCE9785ACA3");
-	
-	@Override
-	public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged)
-	{
-		return slotChanged;
-	}
-	
-	// For when we have custom paintjob names
-	@Override
-	public String getTranslationKey(ItemStack stack)
-	{
-	    return getTranslationKey();
-	    
-	    //stack.getTagCompound().getString("Paint");
-	}
-	
-	@Override
-	public boolean canItemEditBlocks()
-	{
-		return false;
-	}
-	
-	
-	
 	@Override
 	public int getMaxItemUseDuration(ItemStack par1ItemStack)
 	{
@@ -1309,7 +1357,11 @@ public class ItemGun extends Item implements IPaintableItem, IGunboxDescriptiona
 	{
 		return type != null ? type.itemUseAction : EnumAction.BOW;
 	}
-	
+
+	protected static final UUID KNOCKBACK_RESIST_MODIFIER = UUID.fromString("77777777-645C-4F38-A497-9C13A33DB5CF");
+	protected static final UUID MOVEMENT_SPEED_MODIFIER = UUID.fromString("99999999-4180-4865-B01B-BCCE9785ACA3");
+
+
 	@Override
 	public Multimap<String, AttributeModifier> getAttributeModifiers(EntityEquipmentSlot slot, ItemStack stack)
 	{
@@ -1332,4 +1384,25 @@ public class ItemGun extends Item implements IPaintableItem, IGunboxDescriptiona
 
         return (float) (int) ((result - (int) result) >= 0.5f ? result + 1 : result) / pow;
     }
+
+	@Override
+	public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged)
+	{
+		return slotChanged;
+	}
+
+	// For when we have custom paintjob names
+	@Override
+	public String getTranslationKey(ItemStack stack)
+	{
+		return getTranslationKey();
+
+		//stack.getTagCompound().getString("Paint");
+	}
+
+	@Override
+	public boolean canItemEditBlocks()
+	{
+		return false;
+	}
 }

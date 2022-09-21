@@ -30,7 +30,7 @@ public class EntityAIMecha extends EntityMecha
 	
 	public EntityAIMecha(World world, double x, double y, double z, MechaType type, DriveableData data, NBTTagCompound tags)
 	{
-		super(world, x, y, z, type, data, tags);
+		super(world, x, y, z, type, data, tags, null);
 	}
 	
 	public void onUpdate()

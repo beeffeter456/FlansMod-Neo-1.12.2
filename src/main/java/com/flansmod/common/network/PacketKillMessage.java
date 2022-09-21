@@ -66,7 +66,7 @@ public class PacketKillMessage extends PacketBase
 	@Override
 	public void handleClientSide(EntityPlayer clientPlayer)
 	{
-		ClientRenderHooks.addKillMessage(headshot, killedBy, itemDamage, killerName, killedName);
+		ClientRenderHooks.addKillMessage(headshot, killedBy, killerName, killedName);
 	}
 	
 }

@@ -1,6 +1,7 @@
 package com.flansmod.common.eventhandlers;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.EnumHand;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.fml.common.Mod.EventHandler;
@@ -18,8 +19,7 @@ public class PlayerDeathEventListener
 	{
 		MinecraftForge.EVENT_BUS.register(this);
 	}
-	
-	@EventHandler
+
 	@SubscribeEvent
 	public void PlayerDied(LivingDeathEvent event)
 	{
@@ -32,11 +32,14 @@ public class PlayerDeathEventListener
 			EntityPlayer died = (EntityPlayer) event.getEntity();
 			
 			Team killedTeam = PlayerHandler.getPlayerData(died).team;
-			if(source.getCausedPlayer() != null)
+
+			EntityPlayer killer = source.getCausedPlayer();
+
+			if(killer != null)
 			{
 				Team killerTeam = PlayerHandler.getPlayerData(source.getCausedPlayer()).team;
 				
-				FlansMod.getPacketHandler().sendToDimension(new PacketKillMessage(source.isHeadshot(), source.getWeapon(), (killedTeam == null ? "f" : killedTeam.textColour) + died.getName(), (killerTeam == null ? "f" : killerTeam.textColour) + source.getCausedPlayer().getName()), died.dimension);
+				FlansMod.getPacketHandler().sendToDimension(new PacketKillMessage(source.isHeadshot(), source.getWeapon(), killer.getHeldItem(EnumHand.MAIN_HAND).getItemDamage(), (killedTeam == null ? "f" : killedTeam.textColour) + died.getName(), (killerTeam == null ? "f" : killerTeam.textColour) + killer.getName(), died.getDistance(killer)), died.dimension);
 			}
 		}
 	}

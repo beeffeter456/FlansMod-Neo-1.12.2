@@ -2122,15 +2122,15 @@ public class ModelRendererTurbo extends ModelRenderer
 	 */
 	public void render(float worldScale, boolean oldRotateOrder)
 	{
-		GlStateManager.pushMatrix();
-		if(glow){
+		GL11.glPushMatrix();
+		if (glow) {
 			glowOn();
 		}
-		GlStateManager.alphaFunc(GL11.GL_GREATER, 0.001F);
-		GlStateManager.glEnableClientState(GL11.GL_BLEND);
-		int srcBlend = GlStateManager.glGetInteger(GL11.GL_BLEND_SRC);
-		int dstBlend = GlStateManager.glGetInteger(GL11.GL_BLEND_DST);
-		GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+		GL11.glAlphaFunc(GL11.GL_GREATER, 0.001F);
+		GL11.glEnable(GL11.GL_BLEND);
+		int srcBlend = GL11.glGetInteger(GL11.GL_BLEND_SRC);
+		int dstBlend = GL11.glGetInteger(GL11.GL_BLEND_DST);
+		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		
 		if(field_1402_i)
 		{
@@ -2202,12 +2202,12 @@ public class ModelRendererTurbo extends ModelRenderer
 				
 			}
 		}
-		if(glow) {
+		if (glow) {
 			glowOff();
 		}
-		GlStateManager.blendFunc(srcBlend, dstBlend);
-		GlStateManager.glDisableClientState(GL11.GL_BLEND);
-		GlStateManager.popMatrix();
+		GL11.glBlendFunc(srcBlend, dstBlend);
+		GL11.glDisable(GL11.GL_BLEND);
+		GL11.glPopMatrix();
 	}
 	
 	@Override

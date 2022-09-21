@@ -48,6 +48,10 @@ public class AAGunType extends InfoType
 	 * If true, then all barrels share the same ammo slot
 	 */
 	public boolean shareAmmo = false;
+
+	public boolean canShootHomingMissile = false;
+	public int countExplodeAfterShoot = -1;
+	public boolean isDropThis = true;
 	
 	public static List<AAGunType> infoTypes = new ArrayList<>();
 	
@@ -131,6 +135,12 @@ public class AAGunType extends InfoType
 				gunnerY = Integer.parseInt(split[2]);
 				gunnerZ = Integer.parseInt(split[3]);
 			}
+			else if(split[0].equals("CanShootHomingMissile"))
+				canShootHomingMissile = Boolean.parseBoolean(split[1]);
+			else if (split[0].equals("CountExplodeAfterShoot"))
+				countExplodeAfterShoot = Integer.parseInt(split[1]);
+			else if(split[0].equals("IsDropThis"))
+				isDropThis = Boolean.parseBoolean(split[1]);
 		}
 		catch(Exception e)
 		{
@@ -194,5 +204,11 @@ public class AAGunType extends InfoType
 	public ModelBase GetModel()
 	{
 		return model;
+	}
+
+	@Override
+	public float GetRecommendedScale()
+	{
+		return 50.0f;
 	}
 }

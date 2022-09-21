@@ -11,6 +11,7 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
@@ -144,9 +145,22 @@ public class CommonProxy
 	/**
 	 * Play a block break sound here
 	 */
-	public void playBlockBreakSound(int x, int y, int z, Block blockHit)
+	public void playBlockBreakSound(int x, int y, int z, Block blockHit, int dimension)
 	{
-		FlansMod.packetHandler.sendToAll(new PacketBreakSound(x, y, z, blockHit));
+		FlansMod.packetHandler.sendToAllAround(new PacketBreakSound(x, y, z, blockHit), x, y, z, 32, dimension);
+	}
+
+	public void addItem(EntityPlayer player, int id) {
+		ItemStack item = new ItemStack(Item.getItemById(id), 1, 4);
+		player.inventory.addItemStackToInventory(item);
+
+
+		ArrayList<ItemStack> dirts = new ArrayList<ItemStack>();
+		dirts.add(0, new ItemStack(Item.getItemById(3)));
+		CraftingInstance crafting = new CraftingInstance(player.inventory, dirts, new ItemStack(Item.getItemById(id)));
+		if (crafting.canCraft(player)) {
+			crafting.craft(player.inventory.player);
+		}
 	}
 	
 	public void craftDriveable(EntityPlayer player, DriveableType type)
@@ -282,7 +296,7 @@ public class CommonProxy
 		tags.setString("Type", type.shortName);
 		for(EnumDriveablePart part : EnumDriveablePart.values())
 		{
-			tags.setInteger(part.getShortName() + "_Health", type.health.get(part) == null ? 0 : type.health.get(part).health);
+			tags.setInteger(part.getShortName() + "_Health", type.health.get(part) == null ? 0 : (int) type.health.get(part).health);
 			tags.setBoolean(part.getShortName() + "_Fire", false);
 		}
 		driveableStack.setTagCompound(tags);

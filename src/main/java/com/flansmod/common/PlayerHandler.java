@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.flansmod.common.teams.PlayerStats;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
@@ -32,6 +34,9 @@ public class PlayerHandler
 	public static Map<String, PlayerData> clientSideData = new HashMap<>();
 	public static ArrayList<String> clientsToRemoveAfterThisRound = new ArrayList<>();
 	public static Field floatingTickCount = null;
+	private boolean statsSynced=false;
+	public static Map<String, PlayerStats> serverSidePlayerStats = new HashMap<String, PlayerStats>();
+	public static Map<String, PlayerStats> clientSidePlayerStats = new HashMap<String, PlayerStats>();
 	
 	public PlayerHandler()
 	{
@@ -80,6 +85,15 @@ public class PlayerHandler
 			for(Object player : world.playerEntities)
 			{
 				getPlayerData((EntityPlayer)player).tick((EntityPlayer)player);
+			}
+		}
+		if(TeamsManager.getInstance().currentRound!=null) {
+			if (!statsSynced) {
+				if (PlayerStats.getAllPlayersStats() == null) statsSynced = true;
+				for (PlayerStats stats : PlayerStats.getAllPlayersStats()) {
+					serverSidePlayerStats.put(stats.nickname, stats);
+					statsSynced = true;
+				}
 			}
 		}
 	}
@@ -143,6 +157,8 @@ public class PlayerHandler
 			if(!serverSideData.containsKey(username))
 				serverSideData.put(username, data);
 			clientsToRemoveAfterThisRound.remove(username);
+			if (!serverSidePlayerStats.containsKey(username))
+				serverSidePlayerStats.put(username, new PlayerStats(player.world, (EntityPlayerMP)player));
 		}
 		else if(event instanceof PlayerLoggedOutEvent)
 		{
@@ -162,6 +178,8 @@ public class PlayerHandler
 			String username = player.getName();
 			if(!serverSideData.containsKey(username))
 				serverSideData.put(username, new PlayerData(username));
+			if (!serverSidePlayerStats.containsKey(username))
+				serverSidePlayerStats.put(username, new PlayerStats(player.world, (EntityPlayerMP)player));
 		}
 	}
 	
@@ -179,5 +197,23 @@ public class PlayerHandler
 			}
 			serverSideData.remove(username);
 		}
+	}
+
+	public static PlayerStats getPlayerStats(EntityPlayerMP player) {
+		if (player == null)
+			return null;
+		return getPlayerStats(player, player.world.isRemote ? Side.CLIENT : Side.SERVER);
+	}
+
+	public static PlayerStats getPlayerStats(EntityPlayerMP player, Side side) {
+		String username = player.getName();
+		if (side.isClient()) {
+			if (!clientSidePlayerStats.containsKey(username))
+				clientSidePlayerStats.put(username, new PlayerStats(player.world, player));
+		} else {
+			if (!serverSidePlayerStats.containsKey(username))
+				serverSidePlayerStats.put(username, new PlayerStats(player.world, player));
+		}
+		return side.isClient() ? clientSidePlayerStats.get(username) : serverSidePlayerStats.get(username);
 	}
 }

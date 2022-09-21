@@ -1,13 +1,11 @@
 package com.flansmod.common.network;
 
+import com.flansmod.common.FlansMod;
+import com.flansmod.common.FlansModExplosion;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-
-import com.flansmod.common.FlansMod;
-import com.flansmod.common.guns.FlansModExplosion;
-
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -55,7 +53,7 @@ public class PacketExplosion extends PacketBase
 	@SideOnly(Side.CLIENT)
 	public void handleClientSide(EntityPlayer clientPlayer) 
 	{
-		FlansModExplosion.clientExplosion(clientPlayer.worldObj,
+		FlansModExplosion.clientExplosion(clientPlayer.world,
 				explosionSize, explosionX, explosionY, explosionZ);
 	}
 }

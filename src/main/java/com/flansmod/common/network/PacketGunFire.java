@@ -20,7 +20,6 @@ public class PacketGunFire extends PacketBase
     public float pitch;
 	
 	public PacketGunFire() {
-		
 	}
 	
 	public PacketGunFire(EnumHand hand, float yaw, float pitch)

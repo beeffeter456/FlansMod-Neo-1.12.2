@@ -492,7 +492,7 @@ public class FlightController {
 			doomsday++;
 			if (plane.axes.getPitch() < 35.0F)
 				plane.axes.rotateLocalPitch(-0.05F * doomsday);
-			plane.attackPart(EnumDriveablePart.core, DamageSource.generic, 1.0F);
+			plane.attackPart(EnumDriveablePart.core, DamageSource.GENERIC, 1.0F);
 		}
 		if (!plane.isPartIntact(EnumDriveablePart.tail)) {
 			plane.motionY += -gravity;
@@ -502,9 +502,9 @@ public class FlightController {
 			if (doomsday < 1500.0F)
 				doomsday++;
 			if (doomsday >= 1500.0F)
-				plane.attackPart(EnumDriveablePart.core, DamageSource.generic, 1.0F);
+				plane.attackPart(EnumDriveablePart.core, DamageSource.GENERIC, 1.0F);
 			plane.axes.rotateLocalPitch(type.lookUpModifier * doomsday / doomsday / 2.0F);
-			plane.attackPart(EnumDriveablePart.core, DamageSource.generic, 1.0F);
+			plane.attackPart(EnumDriveablePart.core, DamageSource.GENERIC, 1.0F);
 		}
 		if (!plane.isPartIntact(EnumDriveablePart.leftWing)) {
 			plane.motionY += -gravity;
@@ -512,9 +512,9 @@ public class FlightController {
 			if (doomsday < 1500.0F)
 				doomsday++;
 			if (doomsday >= 1500.0F)
-				plane.attackPart(EnumDriveablePart.core, DamageSource.generic, 1.0F);
+				plane.attackPart(EnumDriveablePart.core, DamageSource.GENERIC, 1.0F);
 			plane.axes.rotateLocalRoll(type.rollRightModifier * doomsday / doomsday / 1.0F);
-			plane.attackPart(EnumDriveablePart.core, DamageSource.generic, 1.0F);
+			plane.attackPart(EnumDriveablePart.core, DamageSource.GENERIC, 1.0F);
 		}
 		if (!plane.isPartIntact(EnumDriveablePart.rightWing)) {
 			plane.motionY += gravity;
@@ -522,9 +522,9 @@ public class FlightController {
 			if (doomsday < 1500.0F)
 				doomsday++;
 			if (doomsday >= 1500.0F)
-				plane.attackPart(EnumDriveablePart.core, DamageSource.generic, 1.0F);
+				plane.attackPart(EnumDriveablePart.core, DamageSource.GENERIC, 1.0F);
 			plane.axes.rotateLocalRoll(-type.rollLeftModifier * doomsday / doomsday / 15.0F);
-			plane.attackPart(EnumDriveablePart.core, DamageSource.generic, 1.0F);
+			plane.attackPart(EnumDriveablePart.core, DamageSource.GENERIC, 1.0F);
 		}
 		if (doomsday >= 100.0F)
 			FlansMod.getPacketHandler().sendToAllAround((PacketBase)new PacketParticle("largeexplode", plane.posX, plane.posY + 1.0D, plane.posZ, 0.0D, 0.0D, 0.0D), plane.posX, plane.posY, plane.posZ, 150.0F, plane.dimension);

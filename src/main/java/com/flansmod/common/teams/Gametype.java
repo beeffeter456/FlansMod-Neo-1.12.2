@@ -4,6 +4,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
+import com.flansmod.common.driveables.EntityDriveable;
+import com.flansmod.common.driveables.EntityPlane;
+import com.flansmod.common.driveables.EntityVehicle;
+import com.flansmod.common.driveables.EnumPlaneMode;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -224,4 +228,42 @@ public abstract class GameType
 	{
 		return true;
 	}
+
+	public void vehicleDestroyed(EntityDriveable driveable2, EntityPlayerMP attacker){
+		if (driveable2!=null) {
+			if (attacker != null) {
+				EntityDriveable driveable = driveable2;
+//                if(driveable.riddenByEntity!=null &&
+//                        driveable.riddenByEntity instanceof EntityPlayer &&
+//                        !getPlayerData((EntityPlayerMP) driveable.riddenByEntity).team.equals(getPlayerData(attacker).team)) {
+				if(true){ //this if() need for next changes
+					getPlayerInfo(attacker).vehiclesDestroyed++;
+					if (driveable instanceof EntityPlane) {
+						EntityPlane plane = (EntityPlane) driveable;
+						if (plane.mode == EnumPlaneMode.PLANE || plane.mode == EnumPlaneMode.VTOL) {
+							getPlayerInfo(attacker).addExp(100);
+							getPlayerInfo(attacker).savePlayerStats();
+						} else if (plane.mode == EnumPlaneMode.HELI) {
+							getPlayerInfo(attacker).addExp(75);
+							getPlayerInfo(attacker).savePlayerStats();
+						}
+					} else if (driveable instanceof EntityVehicle) {
+						EntityVehicle vehicle = (EntityVehicle) driveable;
+						if (vehicle.getVehicleType().tank) {
+							getPlayerInfo(attacker).addExp(75);
+							getPlayerInfo(attacker).savePlayerStats();
+						} else {
+							getPlayerInfo(attacker).addExp(50);
+							getPlayerInfo(attacker).savePlayerStats();
+						}
+					}
+				}
+			}
+		}
+	}
+
+	public static PlayerStats getPlayerInfo(EntityPlayerMP player) {
+		return PlayerHandler.getPlayerStats(player);
+	}
+
 }

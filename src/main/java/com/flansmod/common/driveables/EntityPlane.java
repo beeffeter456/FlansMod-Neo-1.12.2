@@ -2,6 +2,7 @@ package com.flansmod.common.driveables;
 
 import com.flansmod.client.model.animation.AnimationController;
 import com.flansmod.common.RotatedAxes;
+import com.flansmod.common.eventhandlers.DriveableDeathByHandEvent;
 import com.flansmod.common.network.*;
 import net.minecraft.entity.MoverType;
 import net.minecraft.entity.player.EntityPlayer;
@@ -97,9 +98,9 @@ public class EntityPlane extends EntityDriveable
 		super(world);
 	}
 	
-	public EntityPlane(World world, double x, double y, double z, PlaneType type, DriveableData data)
+	public EntityPlane(World world, double x, double y, double z, PlaneType type, DriveableData data, EntityPlayer p)
 	{
-		super(world, type, data);
+		super(world, type, data, p);
 		setPosition(x, y, z);
 		prevPosX = x;
 		prevPosY = y;
@@ -110,7 +111,7 @@ public class EntityPlane extends EntityDriveable
 	public EntityPlane(World world, double x, double y, double z, EntityPlayer placer, PlaneType type,
 					   DriveableData data)
 	{
-		this(world, x, y + 90 / 16F, z, type, data);
+		this(world, x, y + 90 / 16F, z, type, data, placer);
 		rotateYaw(placer.rotationYaw + 90F);
 		rotatePitch(type.restingPitch);
 	}
@@ -291,6 +292,15 @@ public class EntityPlane extends EntityDriveable
 				ySpeed -= 1F;
 				return true;
 			}
+			case 6: //Exit : Get out
+			{
+				if (getSeats()[0].getControllingPassenger() != null) {
+					getSeats()[0].getControllingPassenger().setInvisible(false);
+					getSeats()[0].getControllingPassenger().dismountRidingEntity();
+				}
+
+				return true;
+			}
 			case 7: //Inventory : Check to see if this plane allows in-flight inventory editing or if the plane is on the ground
 			{
 				if(world.isRemote && (type.invInflight || (Math.abs(throttle) < 0.1F && onGround)))
@@ -399,6 +409,7 @@ public class EntityPlane extends EntityDriveable
 				return super.pressKey(key, player, isOnEvent);
 			}
 		}
+		return false;
 	}
 	
 	@Override
@@ -859,7 +870,7 @@ public class EntityPlane extends EntityDriveable
 				//Pull wheels towards car
 				/*Vector3f targetWheelPos = axes.findLocalVectorGlobally(
 						getPlaneType().wheelPositions[wheel.getExpectedWheelID()].position);*/
-				Vector3f wPos = getPlaneType().wheelPositions[wheel.ID].position;
+				Vector3f wPos = getPlaneType().wheelPositions[wheel.getExpectedWheelID()].position;
 				if (type.valkyrie && varWing) wPos = new Vector3f(wPos.x, wPos.y + 90 / 16F, wPos.z);
 				Vector3f targetWheelPos = axes.findLocalVectorGlobally(wPos);
 
@@ -1027,14 +1038,14 @@ public class EntityPlane extends EntityDriveable
 		
 		if(damagesource.damageType.equals("player") && damagesource.getTrueSource().onGround
 				&& (getSeat(0) == null || getSeat(0).getControllingPassenger() == null)
-				&& ((damagesource.getImmediateSource() instanceof EntityPlayer && ((EntityPlayer)damagesource.getImmediateSource()).capabilities.isCreativeMode) || TeamsManager.survivalCanBreakVehicles)))
+				&& ((damagesource.getImmediateSource() instanceof EntityPlayer && ((EntityPlayer)damagesource.getImmediateSource()).capabilities.isCreativeMode) || TeamsManager.survivalCanBreakVehicles))
 		{
 			ItemStack planeStack = new ItemStack(type.item, 1, driveableData.paintjobID);
 			NBTTagCompound tags = new NBTTagCompound();
 			planeStack.setTagCompound(tags);
 			driveableData.writeToNBT(tags);
 
-			DriveableDeathByHandEvent driveableDeathByHandEvent = new DriveableDeathByHandEvent(this, (EntityPlayer)damagesource.getEntity(), planeStack);
+			DriveableDeathByHandEvent driveableDeathByHandEvent = new DriveableDeathByHandEvent(this, (EntityPlayer)damagesource.getTrueSource(), planeStack);
 			MinecraftForge.EVENT_BUS.post(driveableDeathByHandEvent);
 
 			if(!driveableDeathByHandEvent.isCanceled()) {

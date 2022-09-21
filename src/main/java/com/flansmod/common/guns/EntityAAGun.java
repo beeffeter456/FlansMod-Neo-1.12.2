@@ -1,5 +1,7 @@
 package com.flansmod.common.guns;
 
+import com.flansmod.common.driveables.EntityPlane;
+import com.flansmod.common.driveables.EntityVehicle;
 import org.lwjgl.input.Mouse;
 
 import io.netty.buffer.ByteBuf;
@@ -64,6 +66,9 @@ public class EntityAAGun extends Entity implements IEntityAdditionalSpawnData
 	public int currentBarrel; // For cycling through firing each barrel
 	public boolean mouseHeld;
 	public boolean wasShooting;
+
+	public int shootcnt = 1;
+	public int shootTimeCount = 0;
 	
 	//Sentry stuff
 	/**
@@ -195,8 +200,9 @@ public class EntityAAGun extends Entity implements IEntityAdditionalSpawnData
 			{
 				return getPassengers().get(0).attackEntityFrom(damagesource, i);
 			}
-			else if(TeamsManager.canBreakGuns)
+			else if(TeamsManager.canBreakGuns && ((damagesource.getTrueSource() instanceof EntityPlayer && ((EntityPlayer)damagesource.getTrueSource()).capabilities.isCreativeMode) || TeamsManager.survivalCanBreakVehicles))
 			{
+				if (!world.isRemote && damagesource.getTrueSource() instanceof EntityPlayer) { FlansMod.log("Player %s broke AA Gun %s (%d) at (%f, %f, %f)", ((EntityPlayerMP)damagesource.getTrueSource()).getDisplayName(), type.shortName, getEntityId(), posX, posY, posZ); }
 				setDead();
 			}
 		}
@@ -234,6 +240,13 @@ public class EntityAAGun extends Entity implements IEntityAdditionalSpawnData
 	public void onUpdate()
 	{
 		super.onUpdate();
+
+		if(type==null)
+		{
+			FlansMod.log("EntityAAGun.onUpdate() Error: AAGunType is null ("+this+")");
+			setDead();
+			return;
+		}
 		
 		prevGunYaw = gunYaw;
 		prevGunPitch = gunPitch;
@@ -282,7 +295,7 @@ public class EntityAAGun extends Entity implements IEntityAdditionalSpawnData
 				
 				if(distanceToTarget > type.targetRange)
 					target = null;
-				else
+				else if(!type.canShootHomingMissile)
 				{
 					float newYaw = 180F + (float)Math.atan2(dZ, dX) * 180F / 3.14159F;
 					float newPitch = -(float)Math.atan2(dY, Math.sqrt(dX * dX + dZ * dZ)) * 180F / 3.14159F;
@@ -291,6 +304,13 @@ public class EntityAAGun extends Entity implements IEntityAdditionalSpawnData
 					
 					gunYaw += (newYaw - gunYaw) * turnSpeed;
 					gunPitch += (newPitch - gunPitch) * turnSpeed;
+				}
+				else
+				{
+					float newYaw = 180F + (float)Math.atan2(dZ, dX) * 180F / 3.14159F;
+					float newPitch = -(float)Math.atan2(dY, Math.sqrt(dX * dX + dZ * dZ)) * 180F / 3.14159F;
+					gunYaw = newYaw;
+					gunPitch = newPitch;
 				}
 			}
 		}
@@ -365,6 +385,9 @@ public class EntityAAGun extends Entity implements IEntityAdditionalSpawnData
 				}
 			}
 		}
+
+		if(shootcnt > 0 && shootcnt < 10)
+			shootcnt++;
 		
 		if(!world.isRemote && reloadTimer <= 0 && shootDelay <= 0)
 		{
@@ -421,7 +444,7 @@ public class EntityAAGun extends Entity implements IEntityAdditionalSpawnData
 	
 	public boolean isSentry()
 	{
-		return type.targetMobs || type.targetPlayers;
+		return type.targetMobs || type.targetPlayers || type.targetPlanes || type.targetVehicles || type.targetMechas;
 	}
 	
 	public Entity getValidTarget()
@@ -433,8 +456,8 @@ public class EntityAAGun extends Entity implements IEntityAdditionalSpawnData
 		for(Object obj : world.getEntitiesWithinAABBExcludingEntity(this, getEntityBoundingBox().expand(type.targetRange, type.targetRange, type.targetRange)))
 		{
 			Entity candidateEntity = (Entity)obj;
-			
-			if((type.targetMobs && candidateEntity instanceof EntityMob) || (type.targetPlayers && candidateEntity instanceof EntityPlayer))
+
+			if((type.targetMobs && candidateEntity instanceof EntityMob) || (type.targetPlayers && candidateEntity instanceof EntityPlayer) || (type.targetPlanes && candidateEntity instanceof EntityPlane) || (type.targetVehicles && candidateEntity instanceof EntityVehicle))
 			{
 				//Check that this entity is actually in range and visible
 				if(candidateEntity.getDistanceSq(this) < type.targetRange * type.targetRange)
@@ -483,7 +506,8 @@ public class EntityAAGun extends Entity implements IEntityAdditionalSpawnData
 		// Drop gun
 		if(world.isRemote)
 			return;
-		dropItem(type.getItem(), 1);
+		if(type.isDropThis)
+			dropItem(type.getItem(), 1);
 		// Drop ammo boxes
 		for(ItemStack stack : ammo)
 		{
@@ -513,6 +537,13 @@ public class EntityAAGun extends Entity implements IEntityAdditionalSpawnData
 	@Override
 	protected void writeEntityToNBT(NBTTagCompound nbttagcompound)
 	{
+		if(type==null)
+		{
+			FlansMod.log("EntityAAGun.writeEntityToNBT() Error: AAGunType is null ("+this+")");
+			setDead();
+			return;
+		}
+
 		nbttagcompound.setString("Type", type.shortName);
 		nbttagcompound.setInteger("Health", health);
 		nbttagcompound.setFloat("RotationYaw", rotationYaw);
@@ -533,6 +564,12 @@ public class EntityAAGun extends Entity implements IEntityAdditionalSpawnData
 	protected void readEntityFromNBT(NBTTagCompound nbttagcompound)
 	{
 		type = AAGunType.getAAGun(nbttagcompound.getString("Type"));
+		if(type==null)
+		{
+			FlansMod.log("EntityAAGun.readEntityFromNBT() Error: AAGunType is null ("+this+")");
+			setDead();
+			return;
+		}
 		initType();
 		health = nbttagcompound.getInteger("Health");
 		rotationYaw = nbttagcompound.getFloat("RotationYaw");

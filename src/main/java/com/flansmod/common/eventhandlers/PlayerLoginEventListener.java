@@ -16,7 +16,6 @@ public class PlayerLoginEventListener {
 		MinecraftForge.EVENT_BUS.register(this);
 	}
 
-	@EventHandler
 	@SubscribeEvent
 	public void OnPlayerLogin(PlayerLoggedInEvent event) {
 		FlansMod.packetHandler.sendTo(new PacketModConfig(), (EntityPlayerMP) event.player);

@@ -188,17 +188,17 @@ public class PlayerHitbox
 			case BODY: case HEAD: case LEFTARM: case RIGHTARM:
 		{*/
 		
-		float headPenRes = (player.getCurrentArmor(3) == null || !(player.getCurrentArmor(3).getItem()
-                instanceof ItemTeamArmour)) ? 1F : ((ItemTeamArmour) player.getCurrentArmor(3).getItem())
+		float headPenRes = (player.inventory.armorInventory.get(3) == null || !(player.inventory.armorInventory.get(3).getItem()
+                instanceof ItemTeamArmour)) ? 1F : ((ItemTeamArmour) player.inventory.armorInventory.get(3).getItem())
                 .type.penetrationResistance;
-        float chestPenRes = (player.getCurrentArmor(2) == null || !(player.getCurrentArmor(2).getItem()
-                instanceof ItemTeamArmour)) ? 0.5F : ((ItemTeamArmour) player.getCurrentArmor(2).getItem())
+        float chestPenRes = (player.inventory.armorInventory.get(2) == null || !(player.inventory.armorInventory.get(2).getItem()
+                instanceof ItemTeamArmour)) ? 0.5F : ((ItemTeamArmour) player.inventory.armorInventory.get(2).getItem())
                 .type.penetrationResistance;
-        float legsPenRes = (player.getCurrentArmor(1) == null || !(player.getCurrentArmor(1).getItem()
-                instanceof ItemTeamArmour)) ? 0.35F : ((ItemTeamArmour) player.getCurrentArmor(1).getItem())
+        float legsPenRes = (player.inventory.armorInventory.get(1) == null || !(player.inventory.armorInventory.get(1).getItem()
+                instanceof ItemTeamArmour)) ? 0.35F : ((ItemTeamArmour) player.inventory.armorInventory.get(1).getItem())
                 .type.penetrationResistance;
-        float feetPenRes = (player.getCurrentArmor(0) == null || !(player.getCurrentArmor(0).getItem()
-                instanceof ItemTeamArmour)) ? 0.15F : ((ItemTeamArmour) player.getCurrentArmor(0).getItem())
+        float feetPenRes = (player.inventory.armorInventory.get(0) == null || !(player.inventory.armorInventory.get(0).getItem()
+                instanceof ItemTeamArmour)) ? 0.15F : ((ItemTeamArmour) player.inventory.armorInventory.get(0).getItem())
                 .type.penetrationResistance;
 
         float totalPenetrationResistance = 0;
@@ -213,14 +213,14 @@ public class PlayerHitbox
         if (penetratingPower <= 0.7F * totalPenetrationResistance && FlansMod.useNewPenetrationSystem) {
             damageModifier = (float) Math.pow((double) (penetratingPower / (0.7F * totalPenetrationResistance)), 2.5);
         } else if (!FlansMod.useNewPenetrationSystem) {
-            damageModifier = bullet.type.penetratingPower < 0.1F ? penetratingPower / bullet.type.penetratingPower : 1;
+            damageModifier = bulletType.penetratingPower < 0.1F ? penetratingPower / bulletType.penetratingPower : 1;
         }
 
-        bullet.lastHitPenAmount = Math.max(bullet.lastHitPenAmount, damageModifier);
+		shot.lastHitPenAmount = Math.max(shot.lastHitPenAmount, damageModifier);
 
         if (type == EnumHitboxType.HEAD) {
             damageModifier *= 2F;
-            bullet.lastHitHeadshot = true;
+			shot.lastHitHeadshot = true;
         }
 
         switch (type) {

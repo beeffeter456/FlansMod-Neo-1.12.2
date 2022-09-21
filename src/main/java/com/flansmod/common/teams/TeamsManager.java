@@ -82,7 +82,8 @@ public class TeamsManager
 	// Player changeable stuff
 	public static boolean voting = false, explosions = true, driveablesBreakBlocks = true,
 		bombsEnabled = true, shellsEnabled = true, missilesEnabled = true, bulletsEnabled = true, forceAdventureMode = true, canBreakGuns = true, canBreakGlass = true,
-		armourDrops = true, vehiclesNeedFuel = true, overrideHunger = true;
+		armourDrops = true, vehiclesNeedFuel = true, overrideHunger = true,
+		survivalCanBreakVehicles = true, survivalCanPlaceVehicles = true;
 	
 	public static int weaponDrops = 1; //0 = no drops, 1 = drops, 2 = smart drops
 	//Life of certain entity types. 0 is eternal.
@@ -1335,6 +1336,18 @@ public class TeamsManager
 		forceAdventureMode = tags.getBoolean("ForceAdventure");
 		canBreakGuns = tags.getBoolean("CanBreakGuns");
 		canBreakGlass = tags.getBoolean("CanBreakGlass");
+		if (tags.hasKey("SurvivalCanBreakVehicles")) {
+			survivalCanBreakVehicles = tags.getBoolean("SurvivalCanBreakVehicles");
+			// default is false if key aint there
+		} else {
+			survivalCanBreakVehicles = true;
+		}
+
+		if (tags.hasKey("SurvivalCanPlaceVehicles")) {
+			survivalCanPlaceVehicles = tags.getBoolean("SurvivalCanPlaceVehicles");
+		} else {
+			survivalCanPlaceVehicles = true;
+		}
 		armourDrops = tags.getBoolean("ArmourDrops");
 		weaponDrops = tags.getInteger("WeaponDrops");
 		vehiclesNeedFuel = tags.getBoolean("NeedFuel");
@@ -1400,6 +1413,8 @@ public class TeamsManager
 		tags.setBoolean("ForceAdventure", forceAdventureMode);
 		tags.setBoolean("CanBreakGuns", canBreakGuns);
 		tags.setBoolean("CanBreakGlass", canBreakGlass);
+		tags.setBoolean("SurvivalCanBreakVehicles", survivalCanBreakVehicles);
+		tags.setBoolean("SurvivalCanPlaceVehicles", survivalCanPlaceVehicles);
 		tags.setBoolean("ArmourDrops", armourDrops);
 		tags.setInteger("WeaponDrops", weaponDrops);
 		tags.setBoolean("NeedFuel", vehiclesNeedFuel);

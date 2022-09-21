@@ -366,7 +366,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
         if (FMLCommonHandler.instance().getSide().isClient()) {
             players = Minecraft.getMinecraft().world.playerEntities;
         } else {
-            players = MinecraftServer.getServer().getConfigurationManager().playerEntityList;
+            players = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers();
         }
 
         float minRangeSq = minRange * minRange;
@@ -390,7 +390,7 @@ public class PacketHandler extends MessageToMessageCodec<FMLProxyPacket, PacketB
         if (FMLCommonHandler.instance().getSide().isClient()) {
             players = Minecraft.getMinecraft().world.playerEntities;
         } else {
-            players = MinecraftServer.getServer().getConfigurationManager().playerEntityList;
+            players = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers();
         }
 
         float rangeSq = range * range;
