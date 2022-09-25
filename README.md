@@ -6,11 +6,9 @@ Project is still WIP so errors and bugs may be present.
 
 Please don't redistribute any code without permission.
 
-## Methodology
+## How to use 1.7.10 content packs
 
-Using WinMerge, the sources of Flan's Mod Ultimate Stability Edition and Flan's Mod 4.10.0 (1.7.10) are compared for differences.
-
-Then the same changes are translated to 1.12.2 (when possible) and implemented on top of Flan's Mod 1.12.2 source code
+To use a content pack designed for Flan's Mod 1.7.10 or Flan's Mod Ultimate 1.7.10 like Warfare 44, decompress the JAR/ZIP file of the pack in the "Flan" folder
 
 ## Progress:
 
