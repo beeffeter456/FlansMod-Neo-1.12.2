@@ -9,6 +9,7 @@ Please don't redistribute any code without permission.
 ## How to use 1.7.10 content packs
 
 To use a content pack designed for Flan's Mod 1.7.10 or Flan's Mod Ultimate 1.7.10 like Warfare 44, decompress the JAR/ZIP file of the pack in the "Flan" folder
+You should then be able to see the assets folder of the pack with the following path: /.minecraft/Flan/[Content Pack's Name]/assets
 
 ## Progress:
 
