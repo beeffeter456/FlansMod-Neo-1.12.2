@@ -3,6 +3,7 @@ package com.flansmod.common.teams;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.flansmod.common.util.Parser;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -178,11 +179,11 @@ public class PlayerClass extends InfoType implements IPlayerClass
 				}
 				if(split.length > 2)
 				{
-					amount = Integer.parseInt(split[2]);
+					amount = Parser.parseInt(split[2]);
 				}
 				if(split.length > 3)
 				{
-					damage = Integer.parseInt(split[3]);
+					damage = Parser.parseInt(split[3]);
 				}
 				ItemStack stack = new ItemStack(matchingItem, amount, damage);
 				if(itemNames.length > 1 && matchingItem instanceof ItemGun)
@@ -280,11 +281,11 @@ public class PlayerClass extends InfoType implements IPlayerClass
 				}
 				if(split.length > 2)
 				{
-					amount = Integer.parseInt(split[2]);
+					amount = Parser.parseInt(split[2]);
 				}
 				if(split.length > 3)
 				{
-					damage = Integer.parseInt(split[3]);
+					damage = Parser.parseInt(split[3]);
 				}
 				ItemStack stack = new ItemStack(matchingItem, amount, damage);
 				if(itemNames.length > 1 && matchingItem instanceof ItemGun)

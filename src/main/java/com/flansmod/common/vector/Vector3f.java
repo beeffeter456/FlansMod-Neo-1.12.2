@@ -34,6 +34,7 @@ package com.flansmod.common.vector;
 import java.io.Serializable;
 import java.nio.FloatBuffer;
 
+import com.flansmod.common.util.Parser;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.util.math.Vec3d;
 
@@ -69,9 +70,9 @@ public class Vector3f extends Vector implements Serializable, ReadableVector3f, 
 		String[] split = noBrackets.split(",");
 		if(split.length == 3)
 		{
-			x = Float.parseFloat(split[0]);
-			y = Float.parseFloat(split[1]);
-			z = Float.parseFloat(split[2]);
+			x = Parser.parseFloat(split[0]);
+			y = Parser.parseFloat(split[1]);
+			z = Parser.parseFloat(split[2]);
 		}
 		else
 		{

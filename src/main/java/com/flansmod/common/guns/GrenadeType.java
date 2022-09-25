@@ -2,6 +2,7 @@ package com.flansmod.common.guns;
 
 import java.util.ArrayList;
 
+import com.flansmod.common.util.Parser;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.potion.PotionEffect;
 
@@ -199,11 +200,11 @@ public class GrenadeType extends ShootableType
 		try
 		{
 			if(split[0].equals("MeleeDamage"))
-				meleeDamage = Integer.parseInt(split[1]);
+				meleeDamage = Parser.parseInt(split[1]);
 				
 				//Grenade Throwing
 			else if(split[0].equals("ThrowDelay"))
-				throwDelay = Integer.parseInt(split[1]);
+				throwDelay = Parser.parseInt(split[1]);
 			else if(split[0].equals("ThrowSound"))
 			{
 				throwSound = split[1];
@@ -216,7 +217,7 @@ public class GrenadeType extends ShootableType
 				
 				//Grenade Physics
 			else if(split[0].equals("Bounciness"))
-				bounciness = Float.parseFloat(split[1]);
+				bounciness = Parser.parseFloat(split[1]);
 			else if(split[0].equals("PenetratesEntities"))
 				penetratesEntities = Boolean.parseBoolean(split[1].toLowerCase());
 			else if(split[0].equals("PenetratesBlocks"))
@@ -230,15 +231,15 @@ public class GrenadeType extends ShootableType
 			else if(split[0].equals("Sticky"))
 				sticky = Boolean.parseBoolean(split[1]);
 			else if(split[0].equals("LivingProximityTrigger"))
-				livingProximityTrigger = Float.parseFloat(split[1]);
+				livingProximityTrigger = Parser.parseFloat(split[1]);
 			else if(split[0].equals("VehicleProximityTrigger"))
-				driveableProximityTrigger = Float.parseFloat(split[1]);
+				driveableProximityTrigger = Parser.parseFloat(split[1]);
 			else if(split[0].equals("DamageToTriggerer"))
-				damageToTriggerer = Float.parseFloat(split[1]);
+				damageToTriggerer = Parser.parseFloat(split[1]);
 			else if(split[0].equals("DetonateWhenShot"))
 				detonateWhenShot = Boolean.parseBoolean(split[1].toLowerCase());
 			else if(split[0].equals("PrimeDelay") || split[0].equals("TriggerDelay"))
-				primeDelay = Integer.parseInt(split[1]);
+				primeDelay = Parser.parseInt(split[1]);
 			
 			else if(split[0].equals("StickToThrower"))
 				stickToThrower = Boolean.parseBoolean(split[1]);
@@ -256,7 +257,7 @@ public class GrenadeType extends ShootableType
 				allowStickSound = Boolean.parseBoolean(split[1]);
 
 			else if(split[0].equals("StickSoundRange"))
-				stickSoundRange = Integer.parseInt(split[1]);
+				stickSoundRange = Parser.parseInt(split[1]);
 
 			else if(split[0].equals("StickSound"))
 			{
@@ -265,23 +266,23 @@ public class GrenadeType extends ShootableType
 			}
 			
 			else if(split[0].equals("ExplosionDamageVsLiving"))
-				explosionDamageVsLiving = Float.parseFloat(split[1]);
+				explosionDamageVsLiving = Parser.parseFloat(split[1]);
 			else if(split[0].equals("ExplosionDamageVsDrivable"))
-				explosionDamageVsDriveable = Float.parseFloat(split[1]);
+				explosionDamageVsDriveable = Parser.parseFloat(split[1]);
 			
 			
 			else if(split[0].equals("NumExplodeParticles"))
-				explodeParticles = Integer.parseInt(split[1]);
+				explodeParticles = Parser.parseInt(split[1]);
 			else if(split[0].equals("ExplodeParticles"))
 				explodeParticleType = split[1];
 			else if(split[0].equals("SmokeTime"))
-				smokeTime = Integer.parseInt(split[1]);
+				smokeTime = Parser.parseInt(split[1]);
 			else if(split[0].equals("SmokeParticles"))
 				smokeParticleType = split[1];
 			else if(split[0].equals("SmokeEffect"))
 				smokeEffects.add(getPotionEffect(split));
 			else if(split[0].equals("SmokeRadius"))
-				smokeRadius = Float.parseFloat(split[1]);
+				smokeRadius = Parser.parseFloat(split[1]);
 			else if(split[0].equals("SpinWhenThrown"))
 				spinWhenThrown = Boolean.parseBoolean(split[1].toLowerCase());
 			else if(split[0].equals("Remote"))
@@ -289,13 +290,13 @@ public class GrenadeType extends ShootableType
 			else if(split[0].equals("FlashBang"))
 				flashBang = Boolean.parseBoolean(split[1]);
 			else if(split[0].equals("FlashTime"))
-				flashTime = Integer.parseInt(split[1]);
+				flashTime = Parser.parseInt(split[1]);
 			else if(split[0].equals("FlashRange"))
-				flashRange = Integer.parseInt(split[1]);
+				flashRange = Parser.parseInt(split[1]);
 			else if(split[0].equals("FlashSoundEnable"))
 				flashSoundEnable = Boolean.parseBoolean(split[1]);
 			else if(split[0].equals("FlashSoundRange"))
-				flashSoundRange = Integer.parseInt(split[1]);
+				flashSoundRange = Parser.parseInt(split[1]);
 			else if(split[0].equals("FlashSound"))
 			{
 				flashSound = split[1];
@@ -304,11 +305,11 @@ public class GrenadeType extends ShootableType
 			else if(split[0].equals("FlashDamageEnable"))
 				flashDamageEnable = Boolean.parseBoolean(split[1]);
 			else if(split[0].equals("FlashDamage"))
-				flashDamage = Float.parseFloat(split[1]);
+				flashDamage = Parser.parseFloat(split[1]);
 			else if(split[0].equals("FlashEffects"))
 				flashEffects = Boolean.parseBoolean(split[1]);
 			else if(split[0].equals("FlashEffectsID"))
-				flashEffectsID = Integer.parseInt(split[1]);
+				flashEffectsID = Parser.parseInt(split[1]);
 			else if(split[0].equals("FlashEffectsDuration"))
 				flashEffectsDuration = Integer.parseInt(split[1]);
 			else if(split[0].equals("FlashEffectsLevel"))
@@ -317,9 +318,9 @@ public class GrenadeType extends ShootableType
 			else if(split[0].equals("MotionSensor"))
 				motionSensor = Boolean.parseBoolean(split[1]);
 			else if(split[0].equals("MotionSensorRange"))
-				motionSensorRange = Float.parseFloat(split[1]);
+				motionSensorRange = Parser.parseFloat(split[1]);
 			else if(split[0].equals("MotionSoundRange"))
-				motionSoundRange = Float.parseFloat(split[1]);
+				motionSoundRange = Parser.parseFloat(split[1]);
 			else if(split[0].equals("MotionSound"))
 			{
 				motionSound = split[1];
@@ -342,7 +343,11 @@ public class GrenadeType extends ShootableType
 		}
 		catch(Exception e)
 		{
-			FlansMod.log.error("Reading grenade file failed.");
+			FlansMod.log.error("Reading grenade file " + file.name + " failed from content pack " + file.contentPack);
+			if (split != null)
+			{
+				FlansMod.log.error("Errored reading line: " + String.join(" ", split));
+			}
 			FlansMod.log.throwing(e);
 		}
 	}

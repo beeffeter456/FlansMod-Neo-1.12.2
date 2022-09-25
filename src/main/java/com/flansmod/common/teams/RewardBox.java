@@ -9,6 +9,7 @@ import com.flansmod.common.paintjob.PaintableType;
 import com.flansmod.common.types.EnumPaintjobRarity;
 import com.flansmod.common.types.InfoType;
 import com.flansmod.common.types.TypeFile;
+import com.flansmod.common.util.Parser;
 
 public class RewardBox extends InfoType
 {
@@ -57,7 +58,7 @@ public class RewardBox extends InfoType
 		else if(KeyMatches(split, "RarityWeight"))
 		{
 			EnumPaintjobRarity rarity = GetRarity(split[1]);
-			float weight = Float.parseFloat(split[2]);
+			float weight = Parser.parseFloat(split[2]);
 			weightPerRarity[rarity.ordinal()] = weight;
 		}
 	}

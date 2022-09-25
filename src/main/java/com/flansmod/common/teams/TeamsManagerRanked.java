@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import com.flansmod.common.util.Parser;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
@@ -410,7 +411,7 @@ public class TeamsManagerRanked extends TeamsManager
 			return;
 		
 		//Get player class requested
-		int selection = Integer.parseInt(className);
+		int selection = Parser.parseInt(className);
 		PlayerRankData data = rankData.get(player.getUniqueID());
 		//PlayerData data = PlayerHandler.getPlayerData(player);
 		

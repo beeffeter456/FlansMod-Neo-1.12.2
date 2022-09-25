@@ -4,6 +4,7 @@ import java.nio.file.FileSystems;
 import java.util.HashMap;
 import java.util.Random;
 
+import com.flansmod.common.util.Parser;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.model.ModelBase;
@@ -203,7 +204,7 @@ public class InfoType implements IInfoType
 			// More complicated line reads
 			if(split[0].equals("Colour") || split[0].equals("Color"))
 			{
-				colour = (Integer.parseInt(split[1]) << 16) + ((Integer.parseInt(split[2])) << 8) + ((Integer.parseInt(split[3])));
+				colour = (Parser.parseInt(split[1]) << 16) + ((Integer.parseInt(split[2])) << 8) + ((Integer.parseInt(split[3])));
 			}
 			
 			if(split[0].equals("Recipe"))
@@ -242,7 +243,11 @@ public class InfoType implements IInfoType
 		}
 		catch(Exception e)
 		{
-			FlansMod.log.error("Reading file failed : " + shortName + " from pack : " + packName);
+			FlansMod.log.error("Reading file failed: " + file.name + " (" + file.type + ") from content pack : " + packName);
+			if (split != null)
+			{
+				FlansMod.log.error("Errored reading line: " + String.join(" ", split));
+			}
 			FlansMod.log.throwing(e);
 		}
 	}
@@ -289,7 +294,7 @@ public class InfoType implements IInfoType
 			{
 				try
 				{
-					currentValue = Float.parseFloat(split[1]);
+					currentValue = Parser.parseFloat(split[1]);
 				}
 				catch(Exception e)
 				{

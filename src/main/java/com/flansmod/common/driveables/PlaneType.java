@@ -3,6 +3,7 @@ package com.flansmod.common.driveables;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.flansmod.common.util.Parser;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
@@ -146,22 +147,22 @@ public class PlaneType extends DriveableType
 		//Better flight model?
 		parsers.put("NewFlightControl", (split, d) -> d.newFlightControl = Boolean.parseBoolean(split[1]));
 		// Yaw modifiers
-		parsers.put("TurnLeftSpeed", (split, d) -> d.turnLeftModifier = Float.parseFloat(split[1]));
-		parsers.put("TurnRightSpeed", (split, d) -> d.turnRightModifier = Float.parseFloat(split[1]));
+		parsers.put("TurnLeftSpeed", (split, d) -> d.turnLeftModifier = Parser.parseFloat(split[1]));
+		parsers.put("TurnRightSpeed", (split, d) -> d.turnRightModifier = Parser.parseFloat(split[1]));
 		// Pitch modifiers
-		parsers.put("LookUpSpeed", (split, d) -> d.lookUpModifier = Float.parseFloat(split[1]));
-		parsers.put("LookDownSpeed", (split, d) -> d.lookDownModifier = Float.parseFloat(split[1]));
+		parsers.put("LookUpSpeed", (split, d) -> d.lookUpModifier = Parser.parseFloat(split[1]));
+		parsers.put("LookDownSpeed", (split, d) -> d.lookDownModifier = Parser.parseFloat(split[1]));
 		// Roll modifiers
-		parsers.put("RollLeftSpeed", (split, d) -> d.rollLeftModifier = Float.parseFloat(split[1]));
-		parsers.put("RollRightSpeed", (split, d) -> d.rollRightModifier = Float.parseFloat(split[1]));
+		parsers.put("RollLeftSpeed", (split, d) -> d.rollLeftModifier = Parser.parseFloat(split[1]));
+		parsers.put("RollRightSpeed", (split, d) -> d.rollRightModifier = Parser.parseFloat(split[1]));
 		
 		// Lift
-		parsers.put("Lift", (split, d) -> d.lift = Float.parseFloat(split[1]));
+		parsers.put("Lift", (split, d) -> d.lift = Parser.parseFloat(split[1]));
 		// Armaments
-		parsers.put("ShootDelay", (split, d) -> d.planeShootDelay = Integer.parseInt(split[1]));
+		parsers.put("ShootDelay", (split, d) -> d.planeShootDelay = Parser.parseInt(split[1]));
 		parsers.put("BombDelay", (split, d) -> d.planeBombDelay = Integer.parseInt(split[1]));
-		parsers.put("TakeoffSpeed", (split, d) -> d.takeoffSpeed = Float.parseFloat(split[1]));
-		parsers.put("MaxSpeed", (split, d) -> d.maxSpeed = Float.parseFloat(split[1]));
+		parsers.put("TakeoffSpeed", (split, d) -> d.takeoffSpeed = Parser.parseFloat(split[1]));
+		parsers.put("MaxSpeed", (split, d) -> d.maxSpeed = Parser.parseFloat(split[1]));
 		parsers.put("Supersonic", (split, d) -> d.supersonic = Boolean.parseBoolean(split[1]));
 		parsers.put("MaxThrust", (split, d) -> d.maxThrust = Float.parseFloat(split[1]));
 		parsers.put("Mass", (split, d) -> d.mass = Float.parseFloat(split[1]));
@@ -367,7 +368,7 @@ public class PlaneType extends DriveableType
 	 */
 	public void reloadModel()
 	{
-		model = FlansMod.proxy.loadModel(modelString, shortName, ModelPlane.class);
+		model = FlansMod.proxy.loadModel(modelString, shortName, ModelPlane.class, fileName, packName);
 	}
 	
 	@Override

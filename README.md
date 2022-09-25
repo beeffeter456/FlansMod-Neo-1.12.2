@@ -24,6 +24,9 @@ flansmod.api (package finished)
 flansmod.apocalypse.client.model (package modified due change in dependencies)
 - RenderSkullDrone (done)
 
+flansmod.apocalypse.common.entity (package modified - bug fix)
+- FlansModLootGenerator (done - bug fix)
+
 flansmod.apocalypse.common.entity (package modified due change in dependencies)
 - EntitySkullDrone (done)
 

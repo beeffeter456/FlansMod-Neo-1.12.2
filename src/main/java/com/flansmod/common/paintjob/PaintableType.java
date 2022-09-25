@@ -3,6 +3,7 @@ package com.flansmod.common.paintjob;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.flansmod.common.util.Parser;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -101,9 +102,9 @@ public abstract class PaintableType extends InfoType
 				for(int i = 0; i < (split.length - 3) / 2; i++)
 				{
 					if(split[i * 2 + 3].equals("rainbow"))
-						dyeStacks[i] = new ItemStack(FlansMod.rainbowPaintcan, Integer.parseInt(split[i * 2 + 4]));
+						dyeStacks[i] = new ItemStack(FlansMod.rainbowPaintcan, Parser.parseInt(split[i * 2 + 4]));
 					else
-						dyeStacks[i] = new ItemStack(Items.DYE, Integer.parseInt(split[i * 2 + 4]), getDyeDamageValue(split[i * 2 + 3]));
+						dyeStacks[i] = new ItemStack(Items.DYE, Parser.parseInt(split[i * 2 + 4]), getDyeDamageValue(split[i * 2 + 3]));
 				}
 				if(split[1].contains("_"))
 				{
@@ -118,7 +119,11 @@ public abstract class PaintableType extends InfoType
 		}
 		catch(Exception e)
 		{
-			FlansMod.log.error("Reading file failed : " + shortName);
+			FlansMod.log.error("Reading file failed: " + file.name + " (" + file.type + ") from content pack : " + packName);
+			if (split != null)
+			{
+				FlansMod.log.error("Errored reading line: " + String.join(" ", split));
+			}
 			FlansMod.log.throwing(e);
 		}
 	}

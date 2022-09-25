@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import com.flansmod.common.util.Parser;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -61,7 +62,7 @@ public class Team extends InfoType
 		{
 			if(split[0].equals("TeamColour"))
 			{
-				teamColour = (Integer.parseInt(split[1]) << 16) + ((Integer.parseInt(split[2])) << 8) + ((Integer.parseInt(split[3])));
+				teamColour = (Parser.parseInt(split[1]) << 16) + ((Parser.parseInt(split[2])) << 8) + ((Parser.parseInt(split[3])));
 			}
 			if(split[0].equals("TextColour"))
 			{
@@ -149,7 +150,11 @@ public class Team extends InfoType
 		}
 		catch(Exception e)
 		{
-			FlansMod.log.error("Reading team file failed.");
+			FlansMod.log.error("Reading team file " + file.name + " failed from content pack " + file.contentPack);
+			if (split != null)
+			{
+				FlansMod.log.error("Errored reading line: " + String.join(" ", split));
+			}
 			FlansMod.log.throwing(e);
 		}
 	}

@@ -113,7 +113,7 @@ public class ArmourType extends InfoType
 		{
 			if(FMLCommonHandler.instance().getSide().isClient() && split[0].equals("Model"))
 			{
-				model = FlansMod.proxy.loadModel(split[1], shortName, ModelCustomArmour.class);
+				model = FlansMod.proxy.loadModel(split[1], shortName, ModelCustomArmour.class, fileName, packName);
 				model.type = this;
 			}
 			if(split[0].equals("Type"))
@@ -165,7 +165,11 @@ public class ArmourType extends InfoType
 		}
 		catch(Exception e)
 		{
-			FlansMod.log.error("Reading armour file failed : " + this.shortName + " from pack " + this.packName);
+			FlansMod.log.error("Reading armour file failed: " + file.name + " from content pack " + file.contentPack);
+			if (split != null)
+			{
+				FlansMod.log.error("Errored reading line: " + String.join(" ", split));
+			}
 			FlansMod.log.throwing(e);
 		}
 	}

@@ -3,6 +3,7 @@ package com.flansmod.common.tools;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.flansmod.common.util.Parser;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -86,7 +87,7 @@ public class ToolType extends InfoType
 		try
 		{
 			if(FMLCommonHandler.instance().getSide().isClient() && split[0].equals("Model"))
-				model = FlansMod.proxy.loadModel(split[1], shortName, ModelBase.class);
+				model = FlansMod.proxy.loadModel(split[1], shortName, ModelBase.class, fileName, packName);
 			else if(split[0].equals("Parachute"))
 				parachute = Boolean.parseBoolean(split[1].toLowerCase());
 			else if(split[0].equals("ExplosiveRemote"))
@@ -98,16 +99,16 @@ public class ToolType extends InfoType
 			else if(split[0].equals("Repair") || split[0].equals("RepairVehicles"))
 				healDriveables = Boolean.parseBoolean(split[1].toLowerCase());
 			else if(split[0].equals("HealAmount") || split[0].equals("RepairAmount"))
-				healAmount = Integer.parseInt(split[1]);
+				healAmount = Parser.parseInt(split[1]);
 			else if(split[0].equals("ToolLife") || split[0].equals("ToolUses"))
-				toolLife = Integer.parseInt(split[1]);
+				toolLife = Parser.parseInt(split[1]);
 			else if(split[0].equals("EUPerCharge"))
-				EUPerCharge = Integer.parseInt(split[1]);
+				EUPerCharge = Parser.parseInt(split[1]);
 			else if(split[0].equals("RechargeRecipe"))
 			{
 				for(int i = 0; i < (split.length - 1) / 2; i++)
 				{
-					int amount = Integer.parseInt(split[2 * i + 1]);
+					int amount = Parser.parseInt(split[2 * i + 1]);
 					boolean damaged = split[2 * i + 2].contains(".");
 					String itemName = damaged ? split[2 * i + 2].split("\\.")[0] : split[2 * i + 2];
 					int damage = damaged ? Integer.parseInt(split[2 * i + 2].split("\\.")[1]) : 0;
@@ -121,7 +122,11 @@ public class ToolType extends InfoType
 		}
 		catch(Exception e)
 		{
-			FlansMod.log.error("Reading file failed : " + shortName);
+			FlansMod.log.error("Reading tool file " + file.name + " failed from content pack " + file.contentPack);
+			if (split != null)
+			{
+				FlansMod.log.error("Errored reading line: " + String.join(" ", split));
+			}
 			FlansMod.log.throwing(e);
 		}
 	}

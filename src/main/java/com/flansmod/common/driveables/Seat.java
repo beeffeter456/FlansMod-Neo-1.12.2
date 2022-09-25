@@ -1,6 +1,7 @@
 package com.flansmod.common.driveables;
 
 import com.flansmod.common.guns.GunType;
+import com.flansmod.common.util.Parser;
 import com.flansmod.common.vector.Vector3f;
 
 public class Seat
@@ -81,18 +82,18 @@ public class Seat
 	 */
 	public Seat(String[] split)
 	{
-		id = Integer.parseInt(split[1]);
-		x = Integer.parseInt(split[2]);
-		y = Integer.parseInt(split[3]);
-		z = Integer.parseInt(split[4]);
+		id = Parser.parseInt(split[1]);
+		x = Parser.parseInt(split[2]);
+		y = Parser.parseInt(split[3]);
+		z = Parser.parseInt(split[4]);
 		gunOrigin = new Vector3f(x, y, z);
 		part = EnumDriveablePart.getPart(split[5]);
 		if(split.length > 6)
 		{
-			minYaw = Float.parseFloat(split[6]);
-			maxYaw = Float.parseFloat(split[7]);
-			minPitch = Float.parseFloat(split[8]);
-			maxPitch = Float.parseFloat(split[9]);
+			minYaw = Parser.parseFloat(split[6]);
+			maxYaw = Parser.parseFloat(split[7]);
+			minPitch = Parser.parseFloat(split[8]);
+			maxPitch = Parser.parseFloat(split[9]);
 			if(split.length > 10)
 			{
 				gunType = GunType.getGun(split[10]);

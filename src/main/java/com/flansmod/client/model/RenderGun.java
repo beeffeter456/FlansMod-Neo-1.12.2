@@ -2,8 +2,8 @@ package com.flansmod.client.model;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
-import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelBiped;
+import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.texture.TextureManager;
@@ -275,7 +275,7 @@ public class RenderGun implements CustomItemRenderer
 					//GlStateManager.rotate(60f, 0f, 0f, 1f);
 					//GlStateManager.translate(0.25f, 0.25f, -0.5f);
 
-					GlStateManager.rotate(-animations.recoilAngle * (float)Math.sqrt(gunType.recoil) * 1.5f, 0F, 0F, 1F);
+					GlStateManager.rotate(-animations.recoilAngle * (float)Math.sqrt(gunType.recoilPitch) * 1.5f, 0F, 0F, 1F);
 					GlStateManager.translate(animations.recoilOffset.x, animations.recoilOffset.y, animations.recoilOffset.z);
 
 					if(model.spinningCocking)
@@ -1350,8 +1350,18 @@ public class RenderGun implements CustomItemRenderer
 
 	private void renderFirstPersonArm(EntityPlayer player, ModelGun model, GunAnimations anim) {
 		Minecraft mc = Minecraft.getMinecraft();
-		ModelBiped modelBipedMain = new ModelBiped(0.0F);
+		ModelBiped modelBipedMain = new ModelBiped(0.0F, 0.0F, 64, 64);
 		mc.renderEngine.bindTexture(mc.player.getLocationSkin());
+
+		if (mc.player.getSkinType().equals("slim"))
+		{
+			modelBipedMain.bipedLeftArm = new ModelRenderer(modelBipedMain, 32, 48);
+			modelBipedMain.bipedLeftArm.addBox(-1.0F, -2.0F, -2.0F, 3, 12, 4, 0.0F);
+			modelBipedMain.bipedLeftArm.setRotationPoint(5.0F, 2.5F, 0.0F);
+			modelBipedMain.bipedRightArm = new ModelRenderer(modelBipedMain, 40, 16);
+			modelBipedMain.bipedRightArm.addBox(-2.0F, -2.0F, -2.0F, 3, 12, 4, 0.0F);
+			modelBipedMain.bipedRightArm.setRotationPoint(-5.0F, 2.5F, 0.0F);
+		}
 
 		float f = 1.0F;
 		GL11.glColor3f(f, f, f);
@@ -1409,8 +1419,20 @@ public class RenderGun implements CustomItemRenderer
 
 	private void renderAnimArm(EntityPlayer player, ModelGun model, GunType type, GunAnimations anim) {
 		Minecraft mc = Minecraft.getMinecraft();
-		ModelBiped modelBipedMain = new ModelBiped(0.0F);
+		//ModelBiped modelBipedMain = new ModelBiped(0.0F);
+		ModelBiped modelBipedMain = new ModelBiped(0.0F, 0.0F, 64, 64);
 		mc.renderEngine.bindTexture(mc.player.getLocationSkin());
+
+		if (mc.player.getSkinType().equals("slim"))
+		{
+			modelBipedMain.bipedLeftArm = new ModelRenderer(modelBipedMain, 32, 48);
+			modelBipedMain.bipedLeftArm.addBox(-1.0F, -2.0F, -2.0F, 3, 12, 4, 0.0F);
+			modelBipedMain.bipedLeftArm.setRotationPoint(5.0F, 2.5F, 0.0F);
+			modelBipedMain.bipedRightArm = new ModelRenderer(modelBipedMain, 40, 16);
+			modelBipedMain.bipedRightArm.addBox(-2.0F, -2.0F, -2.0F, 3, 12, 4, 0.0F);
+			modelBipedMain.bipedRightArm.setRotationPoint(-5.0F, 2.5F, 0.0F);
+		}
+
 		GL11.glPushMatrix();
 		GL11.glScalef(1 / type.modelScale, 1 / type.modelScale, 1 / type.modelScale);
 		float f = 1.0F;

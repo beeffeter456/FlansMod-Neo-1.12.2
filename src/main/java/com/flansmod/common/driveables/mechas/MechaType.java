@@ -3,6 +3,7 @@ package com.flansmod.common.driveables.mechas;
 import java.util.ArrayList;
 
 import com.flansmod.common.driveables.*;
+import com.flansmod.common.util.Parser;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
@@ -142,22 +143,22 @@ public class MechaType extends DriveableType
 		{
 			//Movement modifiers
 			if(split[0].equals("TurnLeftSpeed"))
-				turnLeftModifier = Float.parseFloat(split[1]);
+				turnLeftModifier = Parser.parseFloat(split[1]);
 			if(split[0].equals("TurnRightSpeed"))
-				turnRightModifier = Float.parseFloat(split[1]);
+				turnRightModifier = Parser.parseFloat(split[1]);
 			if(split[0].equals("MoveSpeed"))
-				moveSpeed = Float.parseFloat(split[1]);
+				moveSpeed = Parser.parseFloat(split[1]);
 			if(split[0].equals("SquashMobs"))
 				squashMobs = Boolean.parseBoolean(split[1].toLowerCase());
 			if(split[0].equals("StepHeight"))
-				stepHeight = Integer.parseInt(split[1]);
+				stepHeight = Parser.parseInt(split[1]);
 			if(split[0].equals("JumpHeight"))
 			{
-				jumpHeight = Float.parseFloat(split[1]);
+				jumpHeight = Parser.parseFloat(split[1]);
 				jumpVelocity = (float)Math.sqrt(Math.abs(9.81F * (jumpHeight + 0.2F) / 200F));
 			}
 			if(split[0].equals("RotateSpeed"))
-				rotateSpeed = Float.parseFloat(split[1]);
+				rotateSpeed = Parser.parseFloat(split[1]);
 
 			else if(split[0].equals("StompSound"))
 			{
@@ -165,14 +166,14 @@ public class MechaType extends DriveableType
 				FlansMod.proxy.loadSound(contentPack, "driveables", split[1]);
 			}
 			else if(split[0].equals("StompSoundLength"))
-				stompSoundLength = Integer.parseInt(split[1]);
+				stompSoundLength = Parser.parseInt(split[1]);
 			else if(split[0].equals("StompRangeLower"))
-				stompRangeLower = Float.parseFloat(split[1]);
+				stompRangeLower = Parser.parseFloat(split[1]);
 			else if(split[0].equals("StompRangeUpper"))
-				stompRangeUpper = Float.parseFloat(split[1]);
+				stompRangeUpper = Parser.parseFloat(split[1]);
 			
 			if(split[0].equals("LeftArmOrigin"))
-				leftArmOrigin = new Vector3f(Float.parseFloat(split[1]) / 16F, Float.parseFloat(split[2]) / 16F, Float.parseFloat(split[3]) / 16F);
+				leftArmOrigin = new Vector3f(Parser.parseFloat(split[1]) / 16F, Float.parseFloat(split[2]) / 16F, Float.parseFloat(split[3]) / 16F);
 			if(split[0].equals("RightArmOrigin"))
 				rightArmOrigin = new Vector3f(Float.parseFloat(split[1]) / 16F, Float.parseFloat(split[2]) / 16F, Float.parseFloat(split[3]) / 16F);
 			if(split[0].equals("ArmLength"))
@@ -275,7 +276,7 @@ public class MechaType extends DriveableType
 	 */
 	public void reloadModel()
 	{
-		model = FlansMod.proxy.loadModel(modelString, shortName, ModelMecha.class);
+		model = FlansMod.proxy.loadModel(modelString, shortName, ModelMecha.class, fileName, packName);
 	}
 
 	private DriveablePosition getShootPoint(String[] split)

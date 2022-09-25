@@ -1,5 +1,6 @@
 package com.flansmod.common.teams;
 
+import com.flansmod.common.util.Parser;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
@@ -46,7 +47,7 @@ public class CommandTeams extends CommandBase
 		if(split == null || split.length == 0 || split[0].equals("help") || split[0].equals("?"))
 		{
 			if(split.length == 2)
-				sendHelpInformation(sender, Integer.parseInt(split[1]));
+				sendHelpInformation(sender, Parser.parseInt(split[1]));
 			else sendHelpInformation(sender, 1);
 			return;
 		}
@@ -231,7 +232,7 @@ public class CommandTeams extends CommandBase
 				sender.sendMessage(new TextComponentString("You need to specify the round index (see /teams listRounds)"));
 				return;
 			}
-			TeamsRound round = teamsManager.rounds.get(Integer.parseInt(split[1]));
+			TeamsRound round = teamsManager.rounds.get(Parser.parseInt(split[1]));
 			if(round != null)
 			{
 				teamsManager.nextRound = round;
@@ -404,7 +405,7 @@ public class CommandTeams extends CommandBase
 				sender.sendMessage(new TextComponentString("Incorrect Usage : Should be /teams " + split[0] + " <ID>"));
 				return;
 			}
-			int map = Integer.parseInt(split[1]);
+			int map = Parser.parseInt(split[1]);
 			sender.sendMessage(new TextComponentString("Removed map " + map + " (" + TeamsManager.getInstance().rounds.get(map).map.shortName + ") from rotation"));
 			TeamsManager.getInstance().rounds.remove(map);
 			return;
@@ -439,7 +440,7 @@ public class CommandTeams extends CommandBase
 				teams[i] = Team.getTeam(split[3 + i]);
 			}
 			sender.sendMessage(new TextComponentString("Added map (" + map.shortName + ") to rotation"));
-			TeamsManager.getInstance().rounds.add(new TeamsRound(map, gametype, teams, Integer.parseInt(split[3 + gametype.numTeamsRequired]), Integer.parseInt(split[4 + gametype.numTeamsRequired])));
+			TeamsManager.getInstance().rounds.add(new TeamsRound(map, gametype, teams, Parser.parseInt(split[3 + gametype.numTeamsRequired]), Integer.parseInt(split[4 + gametype.numTeamsRequired])));
 			return;
 		}
 		if(split[0].equals("start") || split[0].equals("begin"))

@@ -155,9 +155,8 @@ public class EntitySeat extends Entity implements IControllable, IEntityAddition
 			}
 		}
 
-		EntityDriveable entD;
-		entD = (EntityDriveable) world.getEntityByID(driveableID);
-		if (entD == null) {
+		Entity entD = world.getEntityByID(driveableID);
+		if (!(entD instanceof EntityDriveable)) {
 			this.timeLimitDriveableNull++;
 		} else {
 			this.timeLimitDriveableNull = 0;
@@ -613,7 +612,7 @@ public class EntitySeat extends Entity implements IControllable, IEntityAddition
 			driveable.onMouseMoved(deltaX, deltaY);
 		}
 		// Other seats should look around, but also the driver seat if mouse control mode is disabled
-		if(!isDriverSeat() || !FlansModClient.controlModeMouse || !driveable.hasMouseControlMode())
+		if(!isDriverSeat() || !FlansModClient.controlModeMouse || !driveable.hasMouseControlMode() && seatInfo != null)
 		{
 			float lookSpeed = 4F;
 			

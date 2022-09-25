@@ -130,9 +130,9 @@ public class EntityWheel extends Entity implements IEntityAdditionalSpawnData
 			return;
 		}
 
-		EntityDriveable entD;
-		entD = (EntityDriveable)world.getEntityByID(vehicleID);
-		if(entD == null){
+		Entity entD;
+		entD = world.getEntityByID(vehicleID);
+		if(!(entD instanceof EntityDriveable)){
 			this.timeLimitDriveableNull++;
 		}else{
 			this.timeLimitDriveableNull = 0;

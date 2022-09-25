@@ -3,6 +3,7 @@ package com.flansmod.common.guns;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.flansmod.common.util.Parser;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.item.Item;
 import net.minecraft.potion.PotionEffect;
@@ -84,11 +85,6 @@ public class BulletType extends ShootableType
 
 	public ArrayList<PotionEffect> hitEffects = new ArrayList<>();
 
-	/** Number of bullets to fire per shot if allowNumBulletsByBulletType = true */
-	public int numBullets = -1;
-	/** Ammo based spread setting if allowSpreadByBullet = true */
-	public float bulletSpread = -1;
-
 	public float dragInAir   = 0.99F;
 	public float dragInWater = 0.80F;
 
@@ -153,7 +149,7 @@ public class BulletType extends ShootableType
 		try
 		{
 			if(split[0].equals("FlakParticles"))
-				flak = Integer.parseInt(split[1]);
+				flak = Parser.parseInt(split[1]);
 			else if(split[0].equals("FlakParticleType"))
 				flakParticles = split[1];
 			else if(split[0].equals("SetEntitiesOnFire"))
@@ -168,61 +164,61 @@ public class BulletType extends ShootableType
 				FlansMod.proxy.loadSound(contentPack, "sound", split[1]);
 			}
 			else if(split[0].equals("HitSoundRange"))
-				hitSoundRange = Float.parseFloat(split[1]);
+				hitSoundRange = Parser.parseFloat(split[1]);
 			else if(split[0].equals("Penetrates"))
 				penetratingPower = (Boolean.parseBoolean(split[1].toLowerCase()) ? 1F : 0.7F);
 			else if(split[0].equals("Penetration") || split[0].equals("PenetratingPower"))
-				penetratingPower = Float.parseFloat(split[1]);
+				penetratingPower = Parser.parseFloat(split[1]);
 			else if(split[0].equals("PenetrationDecay"))
-				penetrationDecay = Float.parseFloat(split[1]);
+				penetrationDecay = Parser.parseFloat(split[1]);
 			else if(split[0].equals("DragInAir"))
 			{
-				dragInAir = Float.parseFloat(split[1]);
+				dragInAir = Parser.parseFloat(split[1]);
 				dragInAir = dragInAir<0? 0: dragInAir>1? 1: dragInAir;
 			}
 			else if(split[0].equals("DragInWater"))
 			{
-				dragInWater = Float.parseFloat(split[1]);
+				dragInWater = Parser.parseFloat(split[1]);
 				dragInWater = dragInWater<0? 0: dragInWater>1? 1: dragInWater;
 			}
 
 			else if(split[0].equals("NumBullets"))
-				numBullets = Integer.parseInt(split[1]);
+				numBullets = Parser.parseInt(split[1]);
 			else if(split[0].equals("Accuracy") || split[0].equals("Spread"))
-				bulletSpread = Float.parseFloat(split[1]);
+				bulletSpread = Parser.parseFloat(split[1]);
 
 			else if(split[0].equals("LivingProximityTrigger"))
-				livingProximityTrigger = Float.parseFloat(split[1]);
+				livingProximityTrigger = Parser.parseFloat(split[1]);
 			else if(split[0].equals("VehicleProximityTrigger"))
-				driveableProximityTrigger = Float.parseFloat(split[1]);
+				driveableProximityTrigger = Parser.parseFloat(split[1]);
 			else if(split[0].equals("DamageToTriggerer"))
-				damageToTriggerer = Float.parseFloat(split[1]);
+				damageToTriggerer = Parser.parseFloat(split[1]);
 			else if(split[0].equals("PrimeDelay") || split[0].equals("TriggerDelay"))
-				primeDelay = Integer.parseInt(split[1]);
+				primeDelay = Parser.parseInt(split[1]);
 			else if(split[0].equals("NumExplodeParticles"))
-				explodeParticles = Integer.parseInt(split[1]);
+				explodeParticles = Parser.parseInt(split[1]);
 			else if(split[0].equals("ExplodeParticles"))
 				explodeParticleType = split[1];
 			else if(split[0].equals("SmokeTime"))
-				smokeTime = Integer.parseInt(split[1]);
+				smokeTime = Parser.parseInt(split[1]);
 			else if(split[0].equals("SmokeParticles"))
 				smokeParticleType = split[1];
 			else if(split[0].equals("SmokeEffect"))
 				smokeEffects.add(getPotionEffect(split));
 			else if(split[0].equals("SmokeRadius"))
-				smokeRadius = Float.parseFloat(split[1]);
+				smokeRadius = Parser.parseFloat(split[1]);
 			else if(split[0].equals("VLS") || split[0].equals("HasDeadZone"))
 				VLS = Boolean.parseBoolean(split[1]);
 			else if(split[0].equals("VLSTime") || split[0].equals("DeadZoneTime"))
-				VLSTime = Integer.parseInt(split[1]);
+				VLSTime = Parser.parseInt(split[1]);
 			else if(split[0].equals("FixedTrackDirection"))
 				fixedDirection = Boolean.parseBoolean(split[1]);
 			else if(split[0].equals("GuidedTurnRadius"))
-				turnRadius = Float.parseFloat(split[1]);
+				turnRadius = Parser.parseFloat(split[1]);
 			else if(split[0].equals("GuidedPhaseSpeed"))
-				trackPhaseSpeed = Float.parseFloat(split[1]);
+				trackPhaseSpeed = Parser.parseFloat(split[1]);
 			else if(split[0].equals("GuidedPhaseTurnSpeed"))
-				trackPhaseTurn = Float.parseFloat(split[1]);
+				trackPhaseTurn = Parser.parseFloat(split[1]);
 			else if(split[0].equals("BoostParticle"))
 				boostPhaseParticle = split[1];
 			else if(split[0].equals("Torpedo"))
@@ -255,29 +251,29 @@ public class BulletType extends ShootableType
 			else if(split[0].equals("LockOnToLivings"))
 				lockOnToLivings = Boolean.parseBoolean(split[1].toLowerCase());
 			else if(split[0].equals("MaxLockOnAngle"))
-				maxLockOnAngle = Float.parseFloat(split[1]);
+				maxLockOnAngle = Parser.parseFloat(split[1]);
 			else if(split[0].equals("LockOnForce") || split[0].equals("TurningForce"))
-				lockOnForce = Float.parseFloat(split[1]);
+				lockOnForce = Parser.parseFloat(split[1]);
 			else if(split[0].equals("MaxDegreeOfLockOnMissile"))
-				maxDegreeOfMissile = Integer.parseInt(split[1]);
+				maxDegreeOfMissile = Parser.parseInt(split[1]);
 			else if(split[0].equals("TickStartHoming"))
-				tickStartHoming = Integer.parseInt(split[1]);
+				tickStartHoming = Parser.parseInt(split[1]);
 			else if(split[0].equals("EnableSACLOS"))
 				enableSACLOS = Boolean.parseBoolean(split[1]);
 			else if(split[0].equals("MaxDegreeOFSACLOS"))
-				maxDegreeOfSACLOS = Integer.parseInt(split[1]);
+				maxDegreeOfSACLOS = Parser.parseInt(split[1]);
 			else if(split[0].equals("MaxRangeOfMissile"))
-				maxRangeOfMissile = Integer.parseInt(split[1]);
+				maxRangeOfMissile = Parser.parseInt(split[1]);
 			else if(split[0].equals("CanSpotEntityDriveable"))
 				canSpotEntityDriveable = Boolean.parseBoolean(split[1].toLowerCase());
 			else if(split[0].equals("ShootForSettingPos"))
 				shootForSettingPos = Boolean.parseBoolean(split[1].toLowerCase());
 			else if(split[0].equals("ShootForSettingPosHeight"))
-				shootForSettingPosHeight = Integer.parseInt(split[1]);
+				shootForSettingPosHeight = Parser.parseInt(split[1]);
 			else if(split[0].equals("IsDoTopAttack"))
 				isDoTopAttack = Boolean.parseBoolean(split[1].toLowerCase());
 			else if(split[0].equals("KnockbackModifier"))
-				knockbackModifier = Float.parseFloat(split[1]);
+				knockbackModifier = Parser.parseFloat(split[1]);
 			
 			else if(split[0].equals("PotionEffect"))
 				hitEffects.add(getPotionEffect(split));
@@ -286,18 +282,22 @@ public class BulletType extends ShootableType
 			else if(split[0].equals("LaserGuidance"))
 				laserGuidance = Boolean.parseBoolean(split[1].toLowerCase());
 			else if(split[0].equals("LockOnFuse"))
-				lockOnFuse = Integer.parseInt(split[1]);
+				lockOnFuse = Parser.parseInt(split[1]);
 			else if(split[0].equals("MaxRange"))
-				maxRange = Integer.parseInt(split[1]);
+				maxRange = Parser.parseInt(split[1]);
 			
 			else if(split[0].equals("FancyDescription"))
 				fancyDescription = Boolean.parseBoolean(split[1]);
 			else if(split[0].equals("BulletSpeedMultiplier"))
-				speedMultiplier = Float.parseFloat(split[1]);
+				speedMultiplier = Parser.parseFloat(split[1]);
 		}
 		catch(Exception e)
 		{
-			FlansMod.log.error("Reading bullet file failed.");
+			FlansMod.log.error("Reading bullet file " + file.name + " failed from content pack " + file.contentPack);
+			if (split != null)
+			{
+				FlansMod.log.error("Errored reading line: " + String.join(" ", split));
+			}
 			FlansMod.log.throwing(e);
 		}
 	}

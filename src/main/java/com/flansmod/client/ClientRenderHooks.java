@@ -961,13 +961,23 @@ public class ClientRenderHooks
 				double dX = ent.posX - ent.prevPosX;
 				double dY = ent.posY - ent.prevPosY;
 				double dZ = ent.posZ - ent.prevPosZ;
+
+				double distance = Math.sqrt(dX * dX + dY * dY + dZ * dZ);
 				
-				// Convert to chunks per Minecraft hour
-				float speed = (float)Math.sqrt(dX * dX + dY * dY + dZ * dZ) * 1000F / 16F;
-				
-				speed = (int)(speed * 10F) / 10F;
-				
-				mc.fontRenderer.drawString("Speed: " + speed + " chunks per hour", 2, 2, 0xffffff);
+				// Convert to chunks per Minecraft hour (1 Minecraft hour = 50 seconds = 1000 Ticks)
+				double speed = distance * 1000D / 16D;
+
+				// Speed in Km/h
+				double speedkmh = distance * 3600D * 20D / 1000D;
+
+				// Approximate to one decimal
+				speed = (int)(speed * 10D) / 10D;
+				speedkmh = (int)(speedkmh * 10D) / 10D;
+
+				// TODO: make this configurable: choose between km/h and chunks per Minecraft hour
+				//mc.fontRenderer.drawString("Speed: " + speed + " chunks per hour", 2, 2, 0xffffff);
+				mc.fontRenderer.drawString("Speed: " + speedkmh + " km/h", 2, 2, 0xffffff);
+
 				
 				if(FlansMod.DEBUG)
 				{

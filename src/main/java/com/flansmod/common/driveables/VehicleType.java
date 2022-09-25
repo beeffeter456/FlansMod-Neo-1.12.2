@@ -3,6 +3,7 @@ package com.flansmod.common.driveables;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.flansmod.common.util.Parser;
 import com.flansmod.common.vector.Vector3f;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
@@ -93,20 +94,20 @@ public class VehicleType extends DriveableType
 		parsers.put("TankMode", (split, d) -> d.tank = Boolean.parseBoolean(split[1]));
 		parsers.put("HasDoor", (split, d) -> d.hasDoor = Boolean.parseBoolean(split[1]));
 		parsers.put("RotateWheels", (split, d) -> d.rotateWheels = Boolean.parseBoolean(split[1]));
-		parsers.put("ThrottleDecay", (split, d) -> d.throttleDecay = Float.parseFloat(split[1]));
-		parsers.put("Mass", (split, d) -> d.mass = Float.parseFloat(split[1]));
+		parsers.put("ThrottleDecay", (split, d) -> d.throttleDecay = Parser.parseFloat(split[1]));
+		parsers.put("Mass", (split, d) -> d.mass = Parser.parseFloat(split[1]));
 		parsers.put("UseRealisticAcceleration", (split, d) -> d.useRealisticAcceleration = Boolean.parseBoolean(split[1]));
-		parsers.put("Gravity", (split, d) -> d.gravity = Float.parseFloat(split[1]));
-		parsers.put("MaxFallSpeed", (split, d) -> d.maxFallSpeed = Float.parseFloat(split[1]));
-		parsers.put("BrakingModifier", (split, d) -> d.brakingModifier = Float.parseFloat(split[1]));
+		parsers.put("Gravity", (split, d) -> d.gravity = Parser.parseFloat(split[1]));
+		parsers.put("MaxFallSpeed", (split, d) -> d.maxFallSpeed = Parser.parseFloat(split[1]));
+		parsers.put("BrakingModifier", (split, d) -> d.brakingModifier = Parser.parseFloat(split[1]));
 		parsers.put("ShootWithOpenDoor", (split, d) -> d.shootWithOpenDoor = Boolean.parseBoolean(split[1]));
-		parsers.put("FixTrackLink", (split, d) -> d.trackLinkFix = Integer.parseInt(split[1]));
+		parsers.put("FixTrackLink", (split, d) -> d.trackLinkFix = Parser.parseInt(split[1]));
 		parsers.put("FlipLinkFix", (split, d) -> d.flipLinkFix = Boolean.parseBoolean(split[1]));
 			
-		parsers.put("TurnLeftSpeed", (split, d) -> d.turnLeftModifier = Float.parseFloat(split[1]));
-		parsers.put("TurnRightSpeed", (split, d) -> d.turnRightModifier = Float.parseFloat(split[1]));
-		parsers.put("ShootDelay", (split, d) -> d.shootDelaySecondary = Integer.parseInt(split[1]));
-		parsers.put("ShellDelay", (split, d) -> d.shootDelayPrimary = Integer.parseInt(split[1]));
+		parsers.put("TurnLeftSpeed", (split, d) -> d.turnLeftModifier = Parser.parseFloat(split[1]));
+		parsers.put("TurnRightSpeed", (split, d) -> d.turnRightModifier = Parser.parseFloat(split[1]));
+		parsers.put("ShootDelay", (split, d) -> d.shootDelaySecondary = Parser.parseInt(split[1]));
+		parsers.put("ShellDelay", (split, d) -> d.shootDelayPrimary = Parser.parseInt(split[1]));
 		
 		parsers.put("ShellSound", (split, d) -> 
 		{
@@ -134,7 +135,7 @@ public class VehicleType extends DriveableType
 		parsers.put("Door2Rate", (split, d) -> d.door2Rate = new Vector3f(split[1], d.shortName));
 		parsers.put("Door2RotRate", (split, d) -> d.door2RotRate = new Vector3f(split[1], d.shortName));
 
-		parsers.put("DriftSoundLength", (split, d) -> d.driftSoundLength = Integer.parseInt(split[1]));
+		parsers.put("DriftSoundLength", (split, d) -> d.driftSoundLength = Parser.parseInt(split[1]));
 		parsers.put("DriftSound", (split, d) -> {
 				d.driftSound = split[1];
 				FlansMod.proxy.loadSound(d.contentPack, "driveables", split[1]);
@@ -143,7 +144,7 @@ public class VehicleType extends DriveableType
 			SmokePoint smoke = new SmokePoint();
 			smoke.position = new Vector3f(split[1], d.shortName);
 			smoke.direction = new Vector3f(split[2], d.shortName);
-			smoke.detTime = Integer.parseInt(split[3]);
+			smoke.detTime = Parser.parseInt(split[3]);
 			smoke.part = split[4];
 			d.smokers.add(smoke);
 		});
@@ -151,7 +152,7 @@ public class VehicleType extends DriveableType
 			SmokePoint smoke = new SmokePoint();
 			smoke.position = new Vector3f(split[1], d.shortName);
 			smoke.direction = new Vector3f(split[2], d.shortName);
-			smoke.detTime = Integer.parseInt(split[3]);
+			smoke.detTime = Parser.parseInt(split[3]);
 			smoke.part = split[4];
 			d.smokers.add(smoke);
 		});
@@ -230,7 +231,7 @@ public class VehicleType extends DriveableType
 	 */
 	public void reloadModel()
 	{
-		model = FlansMod.proxy.loadModel(modelString, shortName, ModelVehicle.class);
+		model = FlansMod.proxy.loadModel(modelString, shortName, ModelVehicle.class, fileName, packName);
 	}
 	
 	@Override

@@ -37,5 +37,13 @@
     "sounds": [
       "flansmod:skullboss_spawn"
     ]
+  },
+  "emptyclick": {
+    "category": "player",
+    "sounds": ["flansmod:emptyclick"]
+  },
+  "defaultshellinsert": {
+    "category": "player",
+    "sounds": ["flansmod:defaultshellinsert"]
   }
 }

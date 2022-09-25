@@ -3,6 +3,7 @@ package com.flansmod.common.teams;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.flansmod.common.util.Parser;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
@@ -244,7 +245,7 @@ public class GametypeZombies extends GameType
 	{
 		if(variable.toLowerCase().equals("humanpreptime"))
 		{
-			humanPrepTime = Integer.parseInt(value) * 20;
+			humanPrepTime = Parser.parseInt(value) * 20;
 			return true;
 		}
 		return false;

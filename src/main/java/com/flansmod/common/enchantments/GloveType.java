@@ -13,6 +13,7 @@ import com.flansmod.common.types.InfoType;
 import com.flansmod.common.types.TypeFile;
 import com.flansmod.common.types.InfoType.ParseFunc;
 
+import com.flansmod.common.util.Parser;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public class GloveType extends InfoType
@@ -22,8 +23,8 @@ public class GloveType extends InfoType
 	static
 	{
 		// BASICS /////////////////////////////////////////////////////////////////////////////
-		parsers.put("Enchantability", (split, d) -> d.Enchantability = Integer.parseInt(split[1]));
-		parsers.put("Durability", (split, d) -> d.Durability = Integer.parseInt(split[1]));
+		parsers.put("Enchantability", (split, d) -> d.Enchantability = Parser.parseInt(split[1]));
+		parsers.put("Durability", (split, d) -> d.Durability = Parser.parseInt(split[1]));
 	}
 	
 	public int Enchantability = 20;

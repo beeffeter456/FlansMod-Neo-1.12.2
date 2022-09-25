@@ -94,6 +94,11 @@ public class CommonProxy
 	{
 		return null;
 	}
+
+	public <T> T loadModel(String s, String shortName, Class<T> typeClass, String fileName, String packName)
+	{
+		return null;
+	}
 	
 	public void loadSound(String contentPack, String type, String sound)
 	{

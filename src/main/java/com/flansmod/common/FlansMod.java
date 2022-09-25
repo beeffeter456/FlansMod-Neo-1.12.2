@@ -1,11 +1,8 @@
 package com.flansmod.common;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -332,6 +329,11 @@ public class FlansMod
 		GameRegistry.registerTileEntity(TileEntitySpawner.class, new ResourceLocation("flansmod:teamsSpawner"));
 		GameRegistry.registerTileEntity(TileEntityPaintjobTable.class, new ResourceLocation("flansmod:paintjobTable"));
 		GameRegistry.registerTileEntity(TileEntityItemHolder.class, new ResourceLocation("flansmod:itemHolder"));
+
+		//Add missing pack.mcmeta files in content packs so that lang files are properly loaded
+		addMissingPackMcMeta();
+		//Convert assets from old content packs in Flan folder
+		convertAssets();
 		
 		//Read content packs
 		contentManager.FindContentInModsFolder();
@@ -356,7 +358,100 @@ public class FlansMod
 		Team.spectators = spectators;
 		log.debug("Pre-initializing complete.");
 	}
-	
+
+	public void addMissingPackMcMeta() {
+		File[] packs = flanDir.listFiles();
+		if (packs != null)
+		{
+			for (File packFile : packs)
+			{
+				if (packFile.isDirectory())
+				{
+					File packMcMeta = new File(packFile, "pack.mcmeta");
+					if (!packMcMeta.exists())
+					{
+						try
+						{
+							if (packMcMeta.createNewFile())
+							{
+								FileWriter myWriter = new FileWriter(packMcMeta);
+								myWriter.write("{\n  \"pack\": {\n    \"pack_format\": 3,\n    \"description\": \"Flan's Mod Defaults\"\n  }\n}\n");
+								myWriter.close();
+							}
+							else
+							{
+								log.error("Could not create pack.mcmeta file in " + packFile.getPath());
+							}
+						}
+						catch (IOException e)
+						{
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+
+	public void convertAssets()
+	{
+		File[] packs = flanDir.listFiles();
+		if (packs != null)
+		{
+			for (File packFile : packs)
+			{
+				if (packFile.isDirectory() && !packFile.getName().contains("1.12.2"))
+				{
+					File assetsDir = new File(packFile, "assets" + File.separator + "flansmod");
+					if (assetsDir.isDirectory())
+					{
+						File armorDir = new File(assetsDir, "armor");
+						File guiDir = new File(assetsDir, "gui");
+						File langDir = new File(assetsDir, "lang");
+						File skinsDir = new File(assetsDir, "skins");
+						File soundsDir = new File(assetsDir, "sounds");
+						File blockIconsDir = new File(assetsDir, "textures" + File.separator + "blocks");
+						File itemIconsDir = new File(assetsDir, "textures" + File.separator + "items");
+
+						renameFilesInDirToLowercase(armorDir, ".png");
+						renameFilesInDirToLowercase(guiDir, ".png");
+						renameFilesInDirToLowercase(langDir, ".lang");
+						renameFilesInDirToLowercase(skinsDir, ".png");
+						renameFilesInDirToLowercase(soundsDir, ".ogg");
+						renameFilesInDirToLowercase(blockIconsDir, ".png");
+						renameFilesInDirToLowercase(itemIconsDir, ".png");
+					}
+				}
+			}
+		}
+	}
+
+	private void renameFilesInDirToLowercase(File directory, String filesExtension)
+	{
+		if (directory.isDirectory())
+		{
+			File[] files = directory.listFiles((dir, name) -> name.toLowerCase().endsWith(filesExtension));
+			if (files != null)
+			{
+				for (File file : files)
+				{
+					String fileName = file.getName();
+					if (!fileName.equals(fileName.toLowerCase()))
+					{
+						File renamedFile = new File(directory, file.getName().toLowerCase());
+						boolean success = file.renameTo(renamedFile);
+						if (!success)
+						{
+							FlansMod.log.warn(fileName + " could not be renamed to " + fileName.toLowerCase() + " in " + file.getPath());
+						}
+					}
+				}
+			}
+		}
+	}
+
 	/**
 	 * The mod initialiser method
 	 */

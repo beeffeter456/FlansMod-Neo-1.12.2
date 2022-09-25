@@ -92,7 +92,11 @@ public class ArmourBoxType extends BoxType
 		}
 		catch(Exception e)
 		{
-			FlansMod.log.error("Reading armour box file failed : " + shortName);
+			FlansMod.log.error("Reading armour box file " + file.name + " failed from content pack " + file.contentPack);
+			if (split != null)
+			{
+				FlansMod.log.error("Errored reading line: " + String.join(" ", split));
+			}
 			FlansMod.log.throwing(e);
 		}
 	}

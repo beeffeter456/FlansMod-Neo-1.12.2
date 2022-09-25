@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import com.flansmod.common.util.Parser;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.relauncher.Side;
@@ -121,25 +122,25 @@ public class PartType extends InfoType
 			if(split[0].equals("Category"))
 				category = getCategory(split[1]);
 			else if(split[0].equals("StackSize"))
-				stackSize = Integer.parseInt(split[1]);
+				stackSize = Parser.parseInt(split[1]);
 			else if(split[0].equals("EngineSpeed"))
-				engineSpeed = Float.parseFloat(split[1]);
+				engineSpeed = Parser.parseFloat(split[1]);
 			else if(split[0].equals("FuelConsumption"))
-				fuelConsumption = Float.parseFloat(split[1]);
+				fuelConsumption = Parser.parseFloat(split[1]);
 			else if (split[0].equals("EnginePower"))
-                enginePower = Float.parseFloat(split[1]);
+                enginePower = Parser.parseFloat(split[1]);
 			else if(split[0].equals("Fuel"))
-				fuel = Integer.parseInt(split[1]);
+				fuel = Parser.parseInt(split[1]);
 				//Recipe
 			else if(split[0].equals("PartBoxRecipe"))
 			{
 				ItemStack[] stacks = new ItemStack[(split.length - 2) / 2];
 				for(int i = 0; i < (split.length - 2) / 2; i++)
 				{
-					int amount = Integer.parseInt(split[2 * i + 2]);
+					int amount = Parser.parseInt(split[2 * i + 2]);
 					boolean damaged = split[2 * i + 3].contains(".");
 					String itemName = damaged ? split[2 * i + 3].split("\\.")[0] : split[2 * i + 3];
-					int damage = damaged ? Integer.parseInt(split[2 * i + 3].split("\\.")[1]) : 0;
+					int damage = damaged ? Parser.parseInt(split[2 * i + 3].split("\\.")[1]) : 0;
 					stacks[i] = getRecipeElement(itemName, amount, damage);
 				}
 				partBoxRecipe.addAll(Arrays.asList(stacks));
@@ -157,7 +158,7 @@ public class PartType extends InfoType
 			else if(split[0].equals("UseRF") || split[0].equals("UseRFPower"))
 				useRFPower = Boolean.parseBoolean(split[1]);
 			else if(split[0].equals("RFDrawRate"))
-				RFDrawRate = Integer.parseInt(split[1]);
+				RFDrawRate = Parser.parseInt(split[1]);
 				//-----------------------------
 			
 			else if(split[0].equals("IsAIChip"))
@@ -167,7 +168,11 @@ public class PartType extends InfoType
 		}
 		catch(Exception e)
 		{
-			FlansMod.log.error("Reading part file failed : " + shortName + " in pack " + packName);
+			FlansMod.log.error("Reading part file failed: " + file.name + " from content pack " + file.contentPack);
+			if (split != null)
+			{
+				FlansMod.log.error("Errored reading line: " + String.join(" ", split));
+			}
 			FlansMod.log.throwing(e);
 		}
 	}

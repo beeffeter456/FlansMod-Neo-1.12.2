@@ -404,6 +404,8 @@ public class FlansModLootGenerator
 	
 	private ItemStack getRandomAmmo(Random rand)
 	{
+		if(validGuns.size() <= 0)
+			return null;
 		GunType randomGun = validGuns.get(rand.nextInt(validGuns.size()));
 		if(randomGun.ammo.size() <= 0)
 			return null;

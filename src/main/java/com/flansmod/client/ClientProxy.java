@@ -428,7 +428,7 @@ public class ClientProxy extends CommonProxy
 	@Override
 	public <T> T loadModel(String s, String shortName, Class<T> typeClass)
 	{
-		if(s == null || shortName == null)
+		if(s == null || shortName == null || s.equalsIgnoreCase("none"))
 			return null;
 		try
 		{
@@ -437,6 +437,24 @@ public class ClientProxy extends CommonProxy
 		catch(Exception e)
 		{
 			FlansMod.log.error("Failed to load model : " + shortName + " (" + s + ")");
+			FlansMod.log.throwing(e);
+		}
+		return null;
+	}
+
+	public <T> T loadModel(String s, String shortName, Class<T> typeClass, String fileName, String packName)
+	{
+		if(s == null || shortName == null || s.equalsIgnoreCase("none"))
+			return null;
+		try
+		{
+			return typeClass.cast(Class.forName(getModelName(s)).getConstructor().newInstance());
+		}
+		catch(Exception e)
+		{
+			FlansMod.log.error("Failed to load model : " + shortName + " (" + s + " extends " +  typeClass.getSimpleName() + ")");
+			if (fileName != null && packName != null)
+				FlansMod.log.error("Reading file " + fileName + " in content pack " + packName);
 			FlansMod.log.throwing(e);
 		}
 		return null;
@@ -628,7 +646,7 @@ public class ClientProxy extends CommonProxy
 					{
 						BoxType box = (BoxType)type;
 						
-						createJSONFile(new File(itemModelsDir, type.shortName.toLowerCase() + "_item.json"), "{ \"parent\": \"flansmod:block/" + type.shortName + "\", \"display\": { \"thirdperson\": { \"rotation\": [ 10, -45, 170 ], \"translation\": [ 0, 1.5, -2.75 ], \"scale\": [ 0.375, 0.375, 0.375 ] } } }");
+						createJSONFile(new File(itemModelsDir, type.shortName.toLowerCase() + ".json"), "{ \"parent\": \"flansmod:block/" + type.shortName + "\", \"display\": { \"thirdperson\": { \"rotation\": [ 10, -45, 170 ], \"translation\": [ 0, 1.5, -2.75 ], \"scale\": [ 0.375, 0.375, 0.375 ] } } }");
 						createJSONFile(new File(blockModelsDir, type.shortName.toLowerCase() + ".json"), "{ \"parent\": \"block/cube\", \"textures\": { \"particle\": \"flansmod:blocks/" + box.sideTexturePath +
 								"\", \"down\": \"flansmod:blocks/" + box.bottomTexturePath + "\", \"up\": \"flansmod:blocks/" + box.topTexturePath + "\", \"north\": \"flansmod:blocks/" + box.sideTexturePath +
 								"\", \"east\": \"flansmod:blocks/" + box.sideTexturePath + "\", \"south\": \"flansmod:blocks/" + box.sideTexturePath + "\", \"west\": \"flansmod:blocks/" + box.sideTexturePath + "\" } } ");

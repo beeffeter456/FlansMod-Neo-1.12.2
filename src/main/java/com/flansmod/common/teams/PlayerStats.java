@@ -55,7 +55,7 @@ public class PlayerStats {
 		dir.mkdirs();
 		dir.setReadable(true);
 		dir.setWritable(true);
-		File file = new File(dir, getPlayer(nickname).getDisplayName() + " " + getPlayer(nickname).getUniqueID().toString() + ".dat");
+		File file = new File(dir, getPlayer(nickname).getName() + " " + getPlayer(nickname).getUniqueID().toString() + ".dat");
 		dir.mkdirs();
 		dir.setReadable(true);
 		dir.setWritable(true);

@@ -2,6 +2,7 @@ package com.flansmod.common.driveables.mechas;
 
 import java.util.ArrayList;
 
+import com.flansmod.common.util.Parser;
 import net.minecraft.client.model.ModelBase;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
@@ -101,11 +102,11 @@ public class MechaItemType extends InfoType
 			if(split[0].equals("ToolType"))
 				function = EnumMechaToolType.getToolType(split[1]);
 			if(split[0].equals("Speed"))
-				speed = Float.parseFloat(split[1]);
+				speed = Parser.parseFloat(split[1]);
 			if(split[0].equals("ToolHardness"))
-				toolHardness = Float.parseFloat(split[1]);
+				toolHardness = Parser.parseFloat(split[1]);
 			if(split[0].equals("Reach"))
-				reach = Float.parseFloat(split[1]);
+				reach = Parser.parseFloat(split[1]);
 			
 			/** The following are the upgrade booleans and multipliers, which
 			 *  are alphabetised. Mess with the order at your peril*/
@@ -113,9 +114,9 @@ public class MechaItemType extends InfoType
 			if(split[0].equals("AutoFuel"))
 				autoCoal = Boolean.parseBoolean(split[1].toLowerCase());
 			if(split[0].equals("Armour"))
-				damageResistance = Float.parseFloat(split[1]);
+				damageResistance = Parser.parseFloat(split[1]);
 			if(split[0].equals("CoalMultiplier"))
-				fortuneCoal = Float.parseFloat(split[1]);
+				fortuneCoal = Parser.parseFloat(split[1]);
 			if(split[0].equals("DetectSound"))
 			{
 				detectSound = split[1];
@@ -124,9 +125,9 @@ public class MechaItemType extends InfoType
 			if(split[0].equals("DiamondDetect"))
 				diamondDetect = Boolean.parseBoolean(split[1].toLowerCase());
 			if(split[0].equals("DiamondMultiplier"))
-				fortuneDiamond = Float.parseFloat(split[1]);
+				fortuneDiamond = Parser.parseFloat(split[1]);
 			if(split[0].equals("EmeraldMultiplier"))
-				fortuneEmerald = Float.parseFloat(split[1]);
+				fortuneEmerald = Parser.parseFloat(split[1]);
 			if(split[0].equals("FlameBurst"))
 				flameBurst = Boolean.parseBoolean(split[1].toLowerCase());
 			if(split[0].equals("Floatation"))

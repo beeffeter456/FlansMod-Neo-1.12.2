@@ -38,11 +38,11 @@ public class GunType extends PaintableType implements IScope
 	/**
 	 * The amount to recoil the player's view by when firing a single shot from this gun
 	 */
-	public int recoil;
+	//public int recoil = 0;
     /**
      * Base value for Upwards cursor/view recoil
      */
-    public float recoilPitch = 0.0F;
+	public float recoilPitch = 0.0F;
     /**
      * Base value for Left/Right cursor/view recoil
      */
@@ -549,7 +549,7 @@ public class GunType extends PaintableType implements IScope
 			damage = Read(split, "Damage", damage);
 			canForceReload = Read(split, "CanForceReload", canForceReload);
 			reloadTime = Read(split, "ReloadTime", reloadTime);
-			recoil = Read(split, "Recoil", recoil);
+			recoilPitch = Read(split, "Recoil", recoilPitch);
 			knockback = Read(split, "Knockback", knockback);
 			bulletSpread = Read(split, "Accuracy", bulletSpread);
 			bulletSpread = Read(split, "Spread", bulletSpread);
@@ -748,15 +748,15 @@ public class GunType extends PaintableType implements IScope
 				deployable = split[1].equals("True");
 			else if(FMLCommonHandler.instance().getSide().isClient() && deployable && split[0].equals("DeployedModel"))
 			{
-				deployableModel = FlansMod.proxy.loadModel(split[1], shortName, ModelMG.class);
+				deployableModel = FlansMod.proxy.loadModel(split[1], shortName, ModelMG.class, fileName, packName);
 			}
 			else if(FMLCommonHandler.instance().getSide().isClient() && (split[0].equals("Model")))
 			{
-				model = FlansMod.proxy.loadModel(split[1], shortName, ModelGun.class);
+				model = FlansMod.proxy.loadModel(split[1], shortName, ModelGun.class, fileName, packName);
 			}
 			else if (FMLCommonHandler.instance().getSide().isClient() && (split[0].equals("CasingModel"))) 
 			{
-                casingModel = FlansMod.proxy.loadModel(split[1], shortName, ModelCasing.class);
+                casingModel = FlansMod.proxy.loadModel(split[1], shortName, ModelCasing.class, fileName, packName);
                 casingModelString = split[1];
             }
 			else if (split[0].equals("CasingTexture"))
@@ -781,12 +781,12 @@ public class GunType extends PaintableType implements IScope
                 hitTexture = split[1];
 			else if(FMLCommonHandler.instance().getSide().isClient() && (split[0].equals("MuzzleFlashModel")))
 			{
-				muzzleFlashModel = FlansMod.proxy.loadModel(split[1], shortName, ModelMuzzleFlash.class);
+				muzzleFlashModel = FlansMod.proxy.loadModel(split[1], shortName, ModelMuzzleFlash.class, fileName, packName);
 				muzzleFlashModelString = split[1];
 			}
 			else if (FMLCommonHandler.instance().getSide().isClient() && (split[0].equals("FlashModel"))) 
 			{
-	            flashModel = FlansMod.proxy.loadModel(split[1], shortName, ModelFlash.class);
+	            flashModel = FlansMod.proxy.loadModel(split[1], shortName, ModelFlash.class, fileName, packName);
 	            flashModelString = split[1];
 	        }
 			deployableTexture = Read(split, "DeployedTexture", deployableTexture);
@@ -904,10 +904,14 @@ public class GunType extends PaintableType implements IScope
 			if (split != null) {
                 StringBuilder msg = new StringBuilder(" : ");
                 for (String s : split) msg.append(" ").append(s);
-                FlansMod.log.error("Reading gun file failed. " + file.name + msg);
+				FlansMod.log.error("Reading gun file" + file.name + " failed from content pack " + file.contentPack + ": " + msg);
             } else {
-                FlansMod.log.error("Reading gun file failed. " + file.name);
+				FlansMod.log.error("Reading gun file" + file.name + " failed from content pack " + file.contentPack);
             }
+			if (split != null)
+			{
+				FlansMod.log.error("Errored reading line: " + String.join(" ", split));
+			}
 			FlansMod.log.throwing(e);		
 		}
 	}
@@ -1653,7 +1657,7 @@ public class GunType extends PaintableType implements IScope
 	 */
 	public float getRecoil(ItemStack stack)
 	{
-		float stackRecoil = recoil;
+		float stackRecoil = recoilPitch;
 		for(AttachmentType attachment : getCurrentAttachments(stack))
 		{
 			stackRecoil *= attachment.recoilMultiplier;

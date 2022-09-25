@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 
+import com.flansmod.common.util.Parser;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
@@ -54,9 +55,9 @@ public class ModelPoolObjEntry extends ModelPoolEntry
 					{
 						int ind = s.indexOf(" ");
 						if(ind > -1)
-							v[i] = Float.parseFloat(s.substring(0, ind));
+							v[i] = Parser.parseFloat(s.substring(0, ind));
 						else
-							v[i] = Float.parseFloat(s);
+							v[i] = Parser.parseFloat(s);
 						s = s.substring(s.indexOf(" ") + 1).trim();
 					}
 					
@@ -75,9 +76,9 @@ public class ModelPoolObjEntry extends ModelPoolEntry
 					{
 						int ind = s.indexOf(" ");
 						if(ind > -1)
-							v[i] = Float.parseFloat(s.substring(0, ind));
+							v[i] = Parser.parseFloat(s.substring(0, ind));
 						else
-							v[i] = Float.parseFloat(s);
+							v[i] = Parser.parseFloat(s);
 						s = s.substring(s.indexOf(" ") + 1).trim();
 					}
 					
@@ -92,9 +93,9 @@ public class ModelPoolObjEntry extends ModelPoolEntry
 					{
 						int ind = s.indexOf(" ");
 						if(ind > -1)
-							v[i] = Float.parseFloat(s.substring(0, ind));
+							v[i] = Parser.parseFloat(s.substring(0, ind));
 						else
-							v[i] = Float.parseFloat(s);
+							v[i] = Parser.parseFloat(s);
 						s = s.substring(s.indexOf(" ") + 1).trim();
 					}
 					
@@ -125,10 +126,10 @@ public class ModelPoolObjEntry extends ModelPoolEntry
 						if(s1.contains("/"))
 						{
 							String[] f = s1.split("/");
-							vInt = Integer.parseInt(f[0]) - 1;
+							vInt = Parser.parseInt(f[0]) - 1;
 							if(f[1].equals(""))
 								f[1] = f[0];
-							int vtInt = Integer.parseInt(f[1]) - 1;
+							int vtInt = Parser.parseInt(f[1]) - 1;
 							if(uvs.size() > vtInt)
 								curUV = uvs.get(vtInt);
 							else
@@ -138,10 +139,10 @@ public class ModelPoolObjEntry extends ModelPoolEntry
 							{
 								if(f[2].equals(""))
 									f[2] = f[0];
-								vnInt = Integer.parseInt(f[2]) - 1;
+								vnInt = Parser.parseInt(f[2]) - 1;
 							}
 							else
-								vnInt = Integer.parseInt(f[0]) - 1;
+								vnInt = Parser.parseInt(f[0]) - 1;
 							if(normals.size() > vnInt)
 								curNormals = normals.get(vnInt);
 							else
@@ -149,7 +150,7 @@ public class ModelPoolObjEntry extends ModelPoolEntry
 						}
 						else
 						{
-							vInt = Integer.parseInt(s1) - 1;
+							vInt = Parser.parseInt(s1) - 1;
 							if(uvs.size() > vInt)
 								curUV = uvs.get(vInt);
 							else

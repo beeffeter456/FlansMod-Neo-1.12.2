@@ -3,6 +3,7 @@ package com.flansmod.common.teams;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.flansmod.common.util.Parser;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.DamageSource;
@@ -241,7 +242,7 @@ public class GametypeCTF extends GameType
 		}
 		if(variable.toLowerCase().equals("flagtime"))
 		{
-			flagReturnTime = Integer.parseInt(value);
+			flagReturnTime = Parser.parseInt(value);
 			return true;
 		}
 		return false;

@@ -3,6 +3,7 @@ package com.flansmod.common.guns;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.flansmod.common.util.Parser;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -169,9 +170,9 @@ public class AttachmentType extends PaintableType implements IScope
 			else if(FMLCommonHandler.instance().getSide().isClient()
 					&& (split[0].equals("Model")))
 				model = FlansMod.proxy.loadModel(split[1], shortName,
-						ModelAttachment.class);
+						ModelAttachment.class, fileName, packName);
 			else if(split[0].equals("ModelScale"))
-				modelScale = Float.parseFloat(split[1]);
+				modelScale = Parser.parseFloat(split[1]);
 			else if(split[0].equals("Texture"))
 				texture = split[1];
 			
@@ -184,9 +185,9 @@ public class AttachmentType extends PaintableType implements IScope
 			else if(split[0].equals("Flashlight"))
 				flashlight = Boolean.parseBoolean(split[1].toLowerCase());
 			else if(split[0].equals("FlashlightRange"))
-				flashlightRange = Float.parseFloat(split[1]);
+				flashlightRange = Parser.parseFloat(split[1]);
 			else if(split[0].equals("FlashlightStrength"))
-				flashlightStrength = Integer.parseInt(split[1]);
+				flashlightStrength = Parser.parseInt(split[1]);
 				// Mode override
 			else if(split[0].equals("ModeOverride"))
 				modeOverride = EnumFireMode.getFireMode(split[1]);
@@ -197,21 +198,21 @@ public class AttachmentType extends PaintableType implements IScope
 			else if(split[0].equals("SecondaryAmmo"))
 				secondaryAmmo.add(split[1]);
 			else if(split[0].equals("SecondaryDamage"))
-				secondaryDamage = Float.parseFloat(split[1]);
+				secondaryDamage = Parser.parseFloat(split[1]);
 			else if(split[0].equals("SecondarySpread") || split[0].equals("SecondaryAccuracy"))
-				secondarySpread = secondaryDefaultSpread = Float.parseFloat(split[1]);
+				secondarySpread = secondaryDefaultSpread = Parser.parseFloat(split[1]);
 			else if(split[0].equals("SecondaryBulletSpeed"))
-				secondarySpeed = Float.parseFloat(split[1]);
+				secondarySpeed = Parser.parseFloat(split[1]);
 			else if(split[0].equals("SecondaryShootDelay"))
-				secondaryShootDelay = Integer.parseInt(split[1]);
+				secondaryShootDelay = Parser.parseInt(split[1]);
 			else if(split[0].equals("SecondaryReloadTime"))
-				secondaryReloadTime = Integer.parseInt(split[1]);
+				secondaryReloadTime = Parser.parseInt(split[1]);
 			else if(split[0].equals("SecondaryShootDelay"))
-				secondaryShootDelay = Integer.parseInt(split[1]);
+				secondaryShootDelay = Parser.parseInt(split[1]);
 			else if(split[0].equals("SecondaryNumBullets"))
-				secondaryNumBullets = Integer.parseInt(split[1]);
+				secondaryNumBullets = Parser.parseInt(split[1]);
 			else if(split[0].equals("LoadSecondaryIntoGun"))
-				numSecAmmoItems = Integer.parseInt(split[1]);
+				numSecAmmoItems = Parser.parseInt(split[1]);
 			else if(split[0].equals("SecondaryFireMode"))
 				secondaryFireMode = EnumFireMode.getFireMode(split[1]);
 			else if(split[0].equals("SecondaryShootSound"))
@@ -232,17 +233,17 @@ public class AttachmentType extends PaintableType implements IScope
 			
 				// Multipliers
 			else if(split[0].equals("MeleeDamageMultiplier"))
-				meleeDamageMultiplier = Float.parseFloat(split[1]);
+				meleeDamageMultiplier = Parser.parseFloat(split[1]);
 			else if(split[0].equals("DamageMultiplier"))
-				damageMultiplier = Float.parseFloat(split[1]);
+				damageMultiplier = Parser.parseFloat(split[1]);
 			else if(split[0].equals("SpreadMultiplier"))
-				spreadMultiplier = Float.parseFloat(split[1]);
+				spreadMultiplier = Parser.parseFloat(split[1]);
 			else if(split[0].equals("RecoilMultiplier"))
-				recoilMultiplier = Float.parseFloat(split[1]);
+				recoilMultiplier = Parser.parseFloat(split[1]);
 			else if(split[0].equals("RecoilControlMultiplier"))
-				recoilControlMultiplier = Float.parseFloat(split[1]);
+				recoilControlMultiplier = Parser.parseFloat(split[1]);
 			else if(split[0].equals("RecoilControlMultiplierSneaking"))
-				recoilControlMultiplierSneaking = Float.parseFloat(split[1]);
+				recoilControlMultiplierSneaking = Parser.parseFloat(split[1]);
 			else if(split[0].equals("RecoilControlMultiplierSprinting"))
 				recoilControlMultiplierSprinting = Float.parseFloat(split[1]);
 			else if(split[0].equals("BulletSpeedMultiplier"))
@@ -275,7 +276,11 @@ public class AttachmentType extends PaintableType implements IScope
 		}
 		catch(Exception e)
 		{
-			FlansMod.log.error("Reading attachment file failed.");
+			FlansMod.log.error("Reading attachment file" + file.name + " failed from content pack " + file.contentPack);
+			if (split != null)
+			{
+				FlansMod.log.error("Errored reading line: " + String.join(" ", split));
+			}
 			FlansMod.log.throwing(e);
 		}
 	}

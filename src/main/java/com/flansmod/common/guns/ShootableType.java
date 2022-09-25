@@ -2,6 +2,7 @@ package com.flansmod.common.guns;
 
 import java.util.HashMap;
 
+import com.flansmod.common.util.Parser;
 import net.minecraft.client.model.ModelBase;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
@@ -171,11 +172,11 @@ public abstract class ShootableType extends InfoType
 		{
 			//Model and Texture
 			if(FMLCommonHandler.instance().getSide().isClient() && split[0].equals("Model"))
-				model = FlansMod.proxy.loadModel(split[1], shortName, ModelBase.class);
+				model = FlansMod.proxy.loadModel(split[1], shortName, ModelBase.class, fileName, packName);
 				
 				//Item Stuff
 			else if(split[0].equals("StackSize") || split[0].equals("MaxStackSize"))
-				maxStackSize = Integer.parseInt(split[1]);
+				maxStackSize = Parser.parseInt(split[1]);
 			else if(split[0].equals("DropItemOnShoot"))
 				dropItemOnShoot = split[1];
 			else if(split[0].equals("DropItemOnReload"))
@@ -183,34 +184,34 @@ public abstract class ShootableType extends InfoType
 			else if(split[0].equals("DropItemOnHit"))
 				dropItemOnHit = split[1];
 			else if(split[0].equals("RoundsPerItem"))
-				roundsPerItem = Integer.parseInt(split[1]);
+				roundsPerItem = Parser.parseInt(split[1]);
 			else if(split[0].equals("NumBullets"))
-				numBullets = Integer.parseInt(split[1]);
+				numBullets = Parser.parseInt(split[1]);
 			else if(split[0].equals("Accuracy") || split[0].equals("Spread"))
-				bulletSpread = Float.parseFloat(split[1]);
+				bulletSpread = Parser.parseFloat(split[1]);
 				
 				//Physics
 			else if(split[0].equals("FallSpeed"))
-				fallSpeed = Float.parseFloat(split[1]);
+				fallSpeed = Parser.parseFloat(split[1]);
 			else if(split[0].equals("ThrowSpeed") || split[0].equals("ShootSpeed"))
-				throwSpeed = Float.parseFloat(split[1]);
+				throwSpeed = Parser.parseFloat(split[1]);
 			else if(split[0].equals("HitBoxSize"))
-				hitBoxSize = Float.parseFloat(split[1]);
+				hitBoxSize = Parser.parseFloat(split[1]);
 				
 				//Hit stuff
 			else if (split[0].equals("Damage") || split[0].equals("HitEntityDamage") || split[0].equals("DamageVsEntity"))
-				damageVsLiving = damageVsDriveable = Float.parseFloat(split[1]);
+				damageVsLiving = damageVsDriveable = Parser.parseFloat(split[1]);
 			else if (split[0].equals("DamageVsLiving") || split[0].equals("DamageVsPlayer")) {
-				damageVsLiving = Float.parseFloat(split[1]);
+				damageVsLiving = Parser.parseFloat(split[1]);
 			} else if (split[0].equals("DamageVsVehicles")) {
-				damageVsDriveable = Float.parseFloat(split[1]);
+				damageVsDriveable = Parser.parseFloat(split[1]);
 				readDamageVsDriveable = true;
 			} else if (split[0].equals("DamageVsPlanes") && !readDamageVsDriveable) { // only when no "DamageVsVehicles"
-				damageVsDriveable = Float.parseFloat(split[1]);
+				damageVsDriveable = Parser.parseFloat(split[1]);
 			} else if (split[0].equals("IgnoreArmorProbability"))
-				ignoreArmorProbability = Float.parseFloat(split[1]);
+				ignoreArmorProbability = Parser.parseFloat(split[1]);
 			else if (split[0].equals("IgnoreArmorDamageFactor"))
-				ignoreArmorDamageFactor = Float.parseFloat(split[1]);
+				ignoreArmorDamageFactor = Parser.parseFloat(split[1]);
 			else if(split[0].equals("BreaksGlass"))
 				breaksGlass = Boolean.parseBoolean(split[1].toLowerCase());
 			else if(split[0].equals("Bounciness"))
@@ -223,9 +224,9 @@ public abstract class ShootableType extends InfoType
 				
 				//Detonation conditions etc
 			else if(split[0].equals("Fuse"))
-				fuse = Integer.parseInt(split[1]);
+				fuse = Parser.parseInt(split[1]);
 			else if(split[0].equals("DespawnTime"))
-				despawnTime = Integer.parseInt(split[1]);
+				despawnTime = Parser.parseInt(split[1]);
 			else if(split[0].equals("ExplodeOnImpact") || split[0].equals("DetonateOnImpact"))
 				explodeOnImpact = Boolean.parseBoolean(split[1].toLowerCase());
 				
@@ -260,16 +261,16 @@ public abstract class ShootableType extends InfoType
 			else if (split[0].equals("Submunition"))
 				submunition = split[1];
 			else if (split[0].equals("NumSubmunitions"))
-				numSubmunitions = Integer.parseInt(split[1]);
+				numSubmunitions = Parser.parseInt(split[1]);
 			else if (split[0].equals("SubmunitionDelay"))
-				subMunitionTimer = Integer.parseInt(split[1]);
+				subMunitionTimer = Parser.parseInt(split[1]);
 			else if (split[0].equals("SubmunitionSpread"))
 				submunitionSpread = Float.parseFloat(split[1]);
 
 			else if (split[0].equals("FlareParticleCount"))
-				smokeParticleCount = Integer.parseInt(split[1]);
+				smokeParticleCount = Parser.parseInt(split[1]);
 			else if (split[0].equals("DebrisParticleCount"))
-				debrisParticleCount = Integer.parseInt(split[1]);
+				debrisParticleCount = Parser.parseInt(split[1]);
 			
 			//Particles
 			else if(split[0].equals("TrailParticles") || split[0].equals("SmokeTrail"))
@@ -282,9 +283,13 @@ public abstract class ShootableType extends InfoType
 			if (split != null) {
 				String msg = " : ";
 				for (String s : split) msg = msg + " " + s;
-				FlansMod.log.error("Reading grenade file failed. " + file.name + msg);
+				FlansMod.log.error("Reading grenade file " + file.name + " failed from content pack " + file.contentPack + ": " + msg);
 			} else {
-				FlansMod.log.error("Reading grenade file failed. " + file.name);
+				FlansMod.log.error("Reading grenade file " + file.name + " failed from content pack " + file.contentPack);
+			}
+			if (split != null)
+			{
+				FlansMod.log.error("Errored reading line: " + String.join(" ", split));
 			}
 			FlansMod.log.throwing(e);
 		}

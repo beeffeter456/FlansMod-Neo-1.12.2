@@ -2,6 +2,7 @@ package com.flansmod.common.teams;
 
 import java.util.ArrayList;
 
+import com.flansmod.common.util.Parser;
 import net.minecraft.item.ItemStack;
 
 import com.flansmod.client.gui.teams.EnumLoadoutSlot;
@@ -72,7 +73,7 @@ public class LoadoutPool extends InfoType
 		
 		if(KeyMatches(split, "MaxLevel"))
 		{
-			maxLevel = Integer.parseInt(split[1]);
+			maxLevel = Parser.parseInt(split[1]);
 			XPPerLevel = new int[maxLevel];
 			rewardsPerLevel = new ArrayList[maxLevel];
 			for(int i = 0; i < maxLevel; i++)
@@ -87,7 +88,7 @@ public class LoadoutPool extends InfoType
 			{
 				if(i + 1 < split.length)
 				{
-					XPPerLevel[i] = Integer.parseInt(split[i + 1]);
+					XPPerLevel[i] = Parser.parseInt(split[i + 1]);
 				}
 			}
 		}
@@ -110,12 +111,12 @@ public class LoadoutPool extends InfoType
 		{
 			for(int i = 0; i < 5; i++)
 			{
-				slotUnlockLevels[i] = Integer.parseInt(split[i + 1]);
+				slotUnlockLevels[i] = Parser.parseInt(split[i + 1]);
 			}
 		}
 		else if(KeyMatches(split, "DefaultLoadout"))
 		{
-			int index = Integer.parseInt(split[1]) - 1;
+			int index = Parser.parseInt(split[1]) - 1;
 			
 			for(int i = 0; i < EnumLoadoutSlot.values().length; i++)
 			{
@@ -159,7 +160,7 @@ public class LoadoutPool extends InfoType
 			}
 			else
 			{
-				rewardsPerLevel[Integer.parseInt(split[2]) - 1].add(box);
+				rewardsPerLevel[Parser.parseInt(split[2]) - 1].add(box);
 			}
 		}
 	}
@@ -171,7 +172,7 @@ public class LoadoutPool extends InfoType
 			LoadoutEntryInfoType entry = new LoadoutEntryInfoType();
 			
 			entry.type = InfoType.getType(split[1]);
-			entry.unlockLevel = Integer.parseInt(split[2]);
+			entry.unlockLevel = Parser.parseInt(split[2]);
 			int numAdditionalItems = (split.length - 3) / 2;
 			for(int i = 0; i < numAdditionalItems; i++)
 			{
@@ -182,7 +183,7 @@ public class LoadoutPool extends InfoType
 				}
 				else
 				{
-					stack.setCount(Integer.parseInt(split[2 * i + 4]));
+					stack.setCount(Parser.parseInt(split[2 * i + 4]));
 					if(stack.getItemDamage() == Short.MAX_VALUE)
 						stack.setItemDamage(0);
 					entry.extraItems.add(stack);

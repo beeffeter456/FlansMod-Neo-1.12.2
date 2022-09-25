@@ -3,6 +3,7 @@ package com.flansmod.common.guns;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.flansmod.common.util.Parser;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.event.LootTableLoadEvent;
@@ -69,7 +70,7 @@ public class AAGunType extends InfoType
 		{
 			if(FMLCommonHandler.instance().getSide().isClient() && split[0].equals("Model"))
 			{
-				model = FlansMod.proxy.loadModel(split[1], shortName, ModelAAGun.class);
+				model = FlansMod.proxy.loadModel(split[1], shortName, ModelAAGun.class, fileName, packName);
 			}
 			
 			damage = Read(split, "Damage", damage);
@@ -105,21 +106,21 @@ public class AAGunType extends InfoType
 			}
 			if(split[0].equals("NumBarrels"))
 			{
-				numBarrels = Integer.parseInt(split[1]);
+				numBarrels = Parser.parseInt(split[1]);
 				barrelX = new int[numBarrels];
 				barrelY = new int[numBarrels];
 				barrelZ = new int[numBarrels];
 			}
 			if(split[0].equals("Barrel"))
 			{
-				int id = Integer.parseInt(split[1]);
-				barrelX[id] = Integer.parseInt(split[2]);
-				barrelY[id] = Integer.parseInt(split[3]);
-				barrelZ[id] = Integer.parseInt(split[4]);
+				int id = Parser.parseInt(split[1]);
+				barrelX[id] = Parser.parseInt(split[2]);
+				barrelY[id] = Parser.parseInt(split[3]);
+				barrelZ[id] = Parser.parseInt(split[4]);
 			}
 			if(split[0].equals("Health"))
 			{
-				health = Integer.parseInt(split[1]);
+				health = Parser.parseInt(split[1]);
 			}
 			if(split[0].equals("Ammo"))
 			{
@@ -131,20 +132,25 @@ public class AAGunType extends InfoType
 			}
 			if(split[0].equals("GunnerPos"))
 			{
-				gunnerX = Integer.parseInt(split[1]);
-				gunnerY = Integer.parseInt(split[2]);
-				gunnerZ = Integer.parseInt(split[3]);
+				gunnerX = Parser.parseInt(split[1]);
+				gunnerY = Parser.parseInt(split[2]);
+				gunnerZ = Parser.parseInt(split[3]);
 			}
 			else if(split[0].equals("CanShootHomingMissile"))
 				canShootHomingMissile = Boolean.parseBoolean(split[1]);
 			else if (split[0].equals("CountExplodeAfterShoot"))
-				countExplodeAfterShoot = Integer.parseInt(split[1]);
+				countExplodeAfterShoot = Parser.parseInt(split[1]);
 			else if(split[0].equals("IsDropThis"))
 				isDropThis = Boolean.parseBoolean(split[1]);
 		}
 		catch(Exception e)
 		{
-			FlansMod.log.error("" + e);
+			FlansMod.log.error("Reading aagun file failed: " + file.name + " from content pack " + file.contentPack);
+			if (split != null)
+			{
+				FlansMod.log.error("Errored reading line: " + String.join(" ", split));
+			}
+			FlansMod.log.throwing(e);
 		}
 	}
 	
