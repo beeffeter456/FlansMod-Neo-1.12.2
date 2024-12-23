@@ -1,10 +1,12 @@
-# Flan's Mod Ultimate 1.12.2
+# Flan's Mod Neo 1.12.2
 
-Unofficial attempt to update Flan's Mod Ultimate Stability Edition to 1.12.2.
+Unofficial attempt to update Flan's Mod Ultimate Stability Edition to 1.12.2, with added features pertaining to the guns.
+Designed for the TN'T modpack.
 
 Project is still WIP so errors and bugs may be present.
 
 Please don't redistribute any code without permission.
+^ This doesnt neccesarily consititute a license. If the original author wants me to take this down, contact me personally
 
 ## How to use 1.7.10 content packs
 
